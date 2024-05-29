@@ -13,6 +13,8 @@ services:
       options:
         max-file: '10'
         max-size: 200k
+    networks:
+      internal:
     restart: unless-stopped
     volumes:
       - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
