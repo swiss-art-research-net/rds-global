@@ -5,7 +5,6 @@ services:
   blazegraph:
     container_name: ${COMPOSE_PROJECT_NAME}-blazegraph
     environment:
-      JAVA_OPTS: -Xmx24g
       QUERY_TIMEOUT: '0'
     image: ${BLAZEGRAPH_IMAGE}
     logging:
@@ -13,9 +12,8 @@ services:
       options:
         max-file: '10'
         max-size: 200k
-    networks:
-      internal:
-    restart: unless-stopped
+    ports:
+      - ${PORT_BLAZEGRAPH}:8080
     volumes:
       - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
       - ${DIRECTORY_BLAZEGRAPH_EXCHANGE}:/blazegraph-exchange:rw
@@ -25,29 +23,13 @@ services:
     depends_on:
       blazegraph:
         condition: service_started
-    environment:
-      GENERATE_METAPHACTORY_PASSWORD: ''
-      JAVA_OPTS: ''
-      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
-      LETSENCRYPT_HOST: ${HOST_NAME}
-      PLATFORM_OPTS: ${METAPHACTORY_OPTS}
-      VIRTUAL_HOST: ${HOST_NAME}
-      VIRTUAL_PORT: '8080'
     image: ${METAPHACTORY_IMAGE}
     logging:
       driver: json-file
       options:
         max-file: '10'
         max-size: 200k
-    networks:
-      internal:
-      proxy:
-    restart: unless-stopped
+    ports:
+      - ${PORT_RDS}:8080
     volumes:
     - ${DIRECTORY_METAPHACTORY_RUNTIME}:/runtime-data:rw
-
-networks:
-  internal:
-  proxy:
-    name: ${PROXY_NETWORK}
-    external: true
