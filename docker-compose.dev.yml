@@ -23,6 +23,8 @@ services:
     depends_on:
       blazegraph:
         condition: service_started
+    environment:
+      METAPHACTORY_OPTS: METAPHACTORY_OPTS=-Dconfig.storage.rds-global.type=nonVersionedFile -Dconfig.storage.rds-global.mutable=true -Dconfig.storage.rds-global.root=/rdsapps/rds-global
     image: ${METAPHACTORY_IMAGE}
     logging:
       driver: json-file
