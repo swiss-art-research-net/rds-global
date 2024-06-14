@@ -2,7 +2,7 @@ export DATA_DIRECTORY=$(pwd)/geonames-data
 export DATA_URL=http://download.geonames.org/all-geonames-rdf.zip
 # For the test in the platform put content of 'assets_to_tests' to
 # 'runtime/assets' folder, then use follwoing line instead
-export DATA_URL=http://localhost:8084/assets/no_auth/geonames-data/geonames-data.zip
+# export DATA_URL=http://localhost:8084/assets/no_auth/geonames-data/geonames-data.zip
 export FILE_FORMAT=nt
 
 NAMED_GRAPH="http://sws.geonames.org/graph"
