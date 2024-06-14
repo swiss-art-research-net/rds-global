@@ -5,15 +5,20 @@ export DATA_URL=https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
 # export DATA_URL=http://localhost:10214/assets/no_auth/bibliographical-data/bibliographical-data.ttl.gz
 export FILE_FORMAT=ttl
 DATA_FORMAT="application/x-turtle"
-NAMED_GRAPH=https%3A%2F%2Fd-nb.info%2Fgnd%2Fauthorities%2Fgraph
+NAMED_GRAPH="https://d-nb.info/gnd/authorities/graph"
 # ================================================================
-if [ -z "${BLAZEGRAPH_ENDPOINT}" ]; then
-    BLAZEGRAPH_ENDPOINT="http://localhost:8080/blazegraph/namespace/kb/sparql"
+if [ -z "${BLAZEGRAPH_PATH}" ]; then
+    echo "BLAZEGRAPH_PATH is not set. Using default location in ../data/blazegraph-data/blazegraph.jnl"
+    export BLAZEGRAPH_PATH=../../data/blazegraph-data/blazegraph.jnl
 fi
+# Check if Blazegraph Runner is present in ../utils/blazegraph-runner/bin
+if [ ! -f "../utils/blazegraph-runner/bin/blazegraph-runner" ]; then
+    echo "Blazegraph Runner is not present. Downloading it now."
+    ./_downloadBlazegraphRunner.sh
+fi
+
 SCRIPT_DIR=$(pwd)
 set -e
-function urldecode() { : "${*//+/ }"; echo -e "${_//%/\\x}"; }
-NAMED_GRAPH_DECODED="$(urldecode ${NAMED_GRAPH})"
 # ================================================================
 
 echo "Start script updateGndAuthorities.sh."
@@ -23,26 +28,15 @@ USE_GUNZIP=true ./_downloadAndUnzip.sh
 echo "Remove old data from the database"
 
 #blazegraph-runner method
-echo "DROP GRAPH <${NAMED_GRAPH_DECODED}>" > tmp.rq
-../utils/blazegraph-runner/target/universal/stage/bin/blazegraph-runner update --journal=${BLAZEGRAPH_PATH} tmp.rq
+echo "DROP GRAPH <${NAMED_GRAPH}>" > tmp.rq
+../utils/blazegraph-runner/bin/blazegraph-runner update --journal=${BLAZEGRAPH_PATH} tmp.rq
 rm tmp.rq
-
-#HTTP method
-#echo "Remove old data from the database"
-#curl --location --request POST "${BLAZEGRAPH_ENDPOINT}" \
-#--header 'Content-Type: application/x-www-form-urlencoded' \
-#--data-urlencode "update=DROP GRAPH <${NAMED_GRAPH_DECODED}>"
 
 echo "Upload data to the database"
 # ========================
 
 #blazegraph-runner method
-../utils/blazegraph-runner/target/universal/stage/bin/blazegraph-runner load --journal=${BLAZEGRAPH_PATH} --graph=${NAMED_GRAPH_DECODED} ${DATA_DIRECTORY}/*.${FILE_FORMAT}
-
-#HTTP method
-#for filename in ${DATA_DIRECTORY}/*.${FILE_FORMAT}; do
-#    echo "\nUploading: ".${filename}
-#    curl -D- -L -u guest:guest -H "Content-Type: ${DATA_FORMAT}" --upload-file ${filename} -X POST "${BLAZEGRAPH_ENDPOINT}?context-uri=${NAMED_GRAPH}"
-#done
+../utils/blazegraph-runner/bin/blazegraph-runner load --journal=${BLAZEGRAPH_PATH} --graph=${NAMED_GRAPH} ${DATA_DIRECTORY}/*.${FILE_FORMAT}
 
 echo "Script updateGndAuthorities.sh finished."
+echo "Make sure to restart the Blazegraph server to apply the changes."
