@@ -8,13 +8,12 @@
 
 set -e
 if [ -d "${DATA_DIRECTORY}" ] && [ ! "${SKIP_DELETING}" == true ]; then
-    read -p "Do you want to remove previous data from the directory and dowload new ones?" -n 1 -r
+    read -p "Do you want to remove previous data from the directory and download new ones? (y/n)" -n 1 -r
     echo
-    if [[ $REPLY =~ ^[Nn]$ ]]
-    then
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         exit
     fi
-    echo "Delet the old data directory..."
+    echo "Deleting the old data directory..."
     rm -r -d ${DATA_DIRECTORY}
     echo "Deletion completed."
 fi
