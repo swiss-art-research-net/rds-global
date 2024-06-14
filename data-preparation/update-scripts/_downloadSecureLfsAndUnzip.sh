@@ -16,9 +16,9 @@
 
 set -e
 if [ -d "${DATA_DIRECTORY}" ] && [ ! "${SKIP_DELETING}" == true ]; then
-    read -p "Do you want to remove previous data from the directory and dowload new ones?" -n 1 -r
+    read -p "Do you want to remove previous data from the directory and dowload new ones? (y/n)" -n 1 -r
     echo
-    if [[ $REPLY =~ ^[Nn]$ ]]
+    if [[ ! $REPLY =~ ^[Yy]$ ]]
     then
         exit
     fi
