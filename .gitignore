@@ -1,2 +1,12 @@
 .env
 data/**/*
+
+data-preparation/update-scripts/aat-data/*
+data-preparation/update-scripts/geonames-data/*
+data-preparation/update-scripts/gnd-authorities-data/*
+data-preparation/update-scripts/gnd-bibliographic-data/*
+data-preparation/update-scripts/gnd-facts-data/*
+data-preparation/update-scripts/ulan-data/*
+data-preparation/groupingFeatureAdjustment/data*
+data-preparation/groupingFeatureAdjustment/output*
+data-preparation/utils/blazegraph-runner/**/*

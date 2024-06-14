@@ -1,0 +1,63 @@
+@prefix workflow: <http://www.metaphacts.com/ontologies/platform/workflow#> .
+@prefix Platform: <http://www.metaphacts.com/ontologies/platform#> .
+@prefix sp: <http://spinrdf.org/sp#> .
+@prefix User: <http://www.metaphacts.com/resource/user/> .
+
+<http://www.metaphacts.com/ontologies/platform#workflowDefinitionContainer/context> {
+  Platform:workflowDefinitionContainer a <http://www.w3.org/ns/ldp#Container>, <http://www.w3.org/ns/ldp#Resource>,
+      prov:Entity;
+    rdfs:label "Workflow Definitions Container";
+    prov:generatedAtTime "2021-02-09T16:16:20.999+03:00"^^xsd:dateTime;
+    prov:wasAttributedTo User:admin .
+}
+
+<http://schema.swissartresearch.net/workflow_definition/context> {
+    Platform:workflowDefinitionContainer <http://www.w3.org/ns/ldp#contains> <http://schema.swissartresearch.net/workflow_definition> .
+    <http://schema.swissartresearch.net/workflow_definition> a workflow:WorkflowDefinition, <http://www.w3.org/ns/ldp#Resource> ;
+        rdfs:label "Workflow Definition" ;
+        workflow:hasStep <http://schema.swissartresearch.net/step/inProgress> ,
+            <http://schema.swissartresearch.net/step/readyToReview> ,
+            <http://schema.swissartresearch.net/step/inReview> ,
+            <http://schema.swissartresearch.net/step/accepted> ,
+            <http://schema.swissartresearch.net/step/rejected> .
+
+    <http://schema.swissartresearch.net/step/inProgress> a workflow:WorkflowStep ;
+        rdfs:label "In progress" ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/readyToReview> ;
+        workflow:assigneeQuery <http://schema.swissartresearch.net/anyAssigneeQuery> .
+    <http://schema.swissartresearch.net/step/readyToReview> a workflow:WorkflowStep ;
+        rdfs:label "Ready to review" ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/inProgress> ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/inReview> ;
+        workflow:assigneeQuery <http://schema.swissartresearch.net/editorAssigneeQuery> .
+    <http://schema.swissartresearch.net/step/inReview> a workflow:WorkflowStep ;
+        rdfs:label "In review" ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/inProgress> ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/accepted> ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/rejected> ;
+        workflow:assigneeQuery <http://schema.swissartresearch.net/editorAssigneeQuery> .
+    <http://schema.swissartresearch.net/step/accepted> a workflow:WorkflowStep ;
+        rdfs:label "Accepted" ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/inReview> ;
+        workflow:assigneeQuery <http://schema.swissartresearch.net/editorAssigneeQuery> .
+    <http://schema.swissartresearch.net/step/rejected> a workflow:WorkflowStep ;
+        rdfs:label "Rejected" ;
+        workflow:nextStep <http://schema.swissartresearch.net/step/inReview> ;
+        workflow:assigneeQuery <http://schema.swissartresearch.net/editorAssigneeQuery> .
+
+    <http://schema.swissartresearch.net/anyAssigneeQuery> a sp:Query ;
+        sp:text """PREFIX Platform: <http://www.metaphacts.com/ontologies/platform#>
+            SELECT DISTINCT ?assignee WHERE {
+                ?assignee a Platform:User .
+            }""" .
+    <http://schema.swissartresearch.net/editorAssigneeQuery> a sp:Query ;
+        sp:text """PREFIX Platform: <http://www.metaphacts.com/ontologies/platform#>
+            SELECT DISTINCT ?assignee WHERE {
+                ?assignee a Platform:User ;
+                    Platform:hasGroup <https://resources.swissartresearch.net/workflow/editor> .
+            }""" .
+}
+
+<http://www.metaphacts.com/ontologies/platform#workflowDefinitionContainer/context> {
+  _:node1d7uf1hdsx397 <http://www.w3.org/ns/ldp#contains> Platform:workflowDefinitionContainer .
+}

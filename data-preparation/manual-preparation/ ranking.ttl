@@ -1,0 +1,7 @@
+@prefix rds: <http://schema.swissartresearch.net/ontology/rds#> .
+
+<http://vocab.getty.edu/aat/graph> rds:hasRankModifier "1"^^xsd:integer .
+<http://vocab.getty.edu/ulan/graph>  rds:hasRankModifier "1"^^xsd:integer .
+<https://d-nb.info/gnd/bibliographicdata/graph>  rds:hasRankModifier "1"^^xsd:integer .
+<https://d-nb.info/gnd/entityfacts/graph>  rds:hasRankModifier "1"^^xsd:integer .
+<http://sws.geonames.org/graph>  rds:hasRankModifier "1"^^xsd:integer .

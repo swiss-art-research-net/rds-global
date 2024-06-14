@@ -1,0 +1,6 @@
+FROM python:latest
+
+WORKDIR /usr/src/convertingScriptFolder
+
+RUN pip install rdflib
+CMD ["python","convert2ntriples.py"]

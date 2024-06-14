@@ -1,0 +1,20 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX Repository: <http://www.metaphacts.com/ontologies/repository#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX mwapi: <https://www.mediawiki.org/ontology#API/>
+
+SELECT ?wikidataValues WHERE {
+  {SELECT (GROUP_CONCAT(DISTINCT ?valueRow;SEPARATOR=" \n") as ?valueRows) WHERE {
+    GRAPH <http://schema.swissartresearch.net/rds/type-mapping> {
+      ?targetType rdfs:subClassOf ?definedType.
+      BIND (
+        CONCAT("( <", STR(?definedType), "> <", STR(?targetType), "> )")
+      as ?valueRow)
+    }
+  }}
+  BIND (
+  	CONCAT ("VALUES(?boundType ?mappedType) {\n", ?valueRows, "\n}") as 
+  ?wikidataValues)
+}

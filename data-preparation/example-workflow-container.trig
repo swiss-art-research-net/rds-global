@@ -1,0 +1,45 @@
+@prefix Platform: <http://www.metaphacts.com/ontologies/platform#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix workflow: <http://www.metaphacts.com/ontologies/platform/workflow#> .
+
+<http://www.metaphacts.com/ontologies/platform#workflowContainer/context> {
+  Platform:workflowContainer a <http://www.w3.org/ns/ldp#Container>, <http://www.w3.org/ns/ldp#Resource>, prov:Entity;
+    rdfs:label "Workflow Container" .
+}
+
+<http://localhost:10214/container/workflow/demo1/context> {
+    Platform:workflowContainer <http://www.w3.org/ns/ldp#contains> <http://localhost:10214/container/workflow/demo1> .
+
+    <http://localhost:10214/container/workflow/demo1> a workflow:WorkflowInstantiation, <http://www.w3.org/ns/ldp#Resource>;
+        rdfs:label "Workflow Instantiation 1";
+        workflow:subject <http://example.com/workflow/demo1/subject>;
+        workflow:hasState <http://example.com/workflow/demo1/state1>;
+        workflow:currentState <http://example.com/workflow/demo1/state1>;
+        workflow:metadata <http://example.com/workflow/demo1/metadata> .
+
+    <http://example.com/workflow/demo1/state1> a workflow:WorkflowState;
+        workflow:step <http://example.com/workflow/todo>;
+        workflow:assignee <http://example.com/assignee2>;
+        workflow:startTime "2019-04-10T13:30:44+03:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<http://localhost:10214/container/workflow/demo2/context> {
+    Platform:workflowContainer <http://www.w3.org/ns/ldp#contains> <http://localhost:10214/container/workflow/demo2> .
+
+    <http://localhost:10214/container/workflow/demo2> a workflow:WorkflowInstantiation, <http://www.w3.org/ns/ldp#Resource>;
+        rdfs:label "Workflow Instantiation 2";
+        workflow:subject <http://example.com/workflow/demo2/subject>;
+        workflow:hasState <http://example.com/workflow/demo2/state1>;
+        workflow:currentState <http://example.com/workflow/demo2/state1>;
+        workflow:metadata <http://example.com/workflow/demo2/metadata> .
+
+    <http://example.com/workflow/demo2/state1> a workflow:WorkflowState;
+        workflow:step <http://example.com/workflow/todo>;
+        workflow:assignee <http://example.com/assignee2>;
+        workflow:startTime "2019-04-10T13:30:44+03:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<http://www.metaphacts.com/ontologies/platform#workflowContainer/context> {
+  _:node1 <http://www.w3.org/ns/ldp#contains> Platform:workflowContainer .
+}

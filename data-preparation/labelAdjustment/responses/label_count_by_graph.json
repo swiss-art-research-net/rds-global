@@ -1,0 +1,98 @@
+{
+  "head" : {
+    "vars" : [ "graph_name", "count" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "file:///_datasetsMetadata.ttl"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "24"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "https://d-nb.info/gnd/bibliographicdata/graph"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "519589"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "https://d-nb.info/gnd/entityfacts/graph"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "28373836"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "http://vocab.getty.edu/ulan/graph"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "3870252"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "14691"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "http://vocab.getty.edu/aat/graph"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "1034892"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "http://sws.geonames.org/graph"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "11985741"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "http://schema.swissartresearch.net/rds/type-mapping"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "8"
+      }
+    }, {
+      "graph_name" : {
+        "type" : "uri",
+        "value" : "file:///rds-ontologies-description.ttl"
+      },
+      "count" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal",
+        "value" : "1"
+      }
+    } ]
+  }
+}
