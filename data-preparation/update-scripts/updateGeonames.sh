@@ -69,3 +69,4 @@ echo "../utils/blazegraph-runner/bin/blazegraph-runner load --journal=${BLAZEGRA
 ../utils/blazegraph-runner/bin/blazegraph-runner load --journal=${BLAZEGRAPH_PATH} --graph=${NAMED_GRAPH} ${DATA_DIRECTORY}/*.part.${FILE_FORMAT}
 
 echo "Script updateGeonames.sh finished."
+echo "Make sure to restart the Blazegraph server to apply the changes."

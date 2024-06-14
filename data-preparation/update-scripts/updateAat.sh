@@ -57,5 +57,4 @@ echo "Upload data to the database"
 ../utils/blazegraph-runner/bin/blazegraph-runner load --journal=${BLAZEGRAPH_PATH} --graph=${NAMED_GRAPH} ${DATA_DIRECTORY}/*.${FILE_FORMAT}
 
 echo "Script updateAat.sh finished."
-
-
+echo "Make sure to restart the Blazegraph server to apply the changes."
