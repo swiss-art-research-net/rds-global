@@ -9,6 +9,7 @@ data-preparation/update-scripts/gnd-bibliographic-data/*
 data-preparation/update-scripts/gnd-facts-data/*
 data-preparation/update-scripts/sikart-data/*
 data-preparation/update-scripts/thes-arch-esp-data/*
+data-preparation/update-scripts/thes-obj-mob-data/*
 data-preparation/update-scripts/ulan-data/*
 data-preparation/groupingFeatureAdjustment/data*
 data-preparation/groupingFeatureAdjustment/output*

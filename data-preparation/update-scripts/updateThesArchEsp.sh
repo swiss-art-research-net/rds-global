@@ -5,13 +5,9 @@ export SKIP_UNZIPPING=true
 DATA_FORMAT="text/turtle"
 NAMED_GRAPH="http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph"
 # ================================================================
-if [ -z "${BLAZEGRAPH_ENDPOINT}" ]; then
-    BLAZEGRAPH_ENDPOINT="http://localhost:8080/blazegraph/namespace/kb/sparql"
-fi
 SCRIPT_DIR=$(pwd)
 set -e
 
-# ================================================================
 if [ -z "${BLAZEGRAPH_PATH}" ]; then
     echo "BLAZEGRAPH_PATH is not set. Using default location in ../data/blazegraph-data/blazegraph.jnl"
     export BLAZEGRAPH_PATH=../../data/blazegraph-data/blazegraph.jnl
@@ -22,6 +18,7 @@ if [ ! -f "../utils/blazegraph-runner/bin/blazegraph-runner" ]; then
     echo "Blazegraph Runner is not present. Downloading it now."
     ./_downloadBlazegraphRunner.sh
 fi
+# ================================================================
 
 echo "Start script updateThesArchEsp.sh."
 # ========================
@@ -45,3 +42,4 @@ echo "Upload data to the database"
 ../utils/blazegraph-runner/bin/blazegraph-runner load --journal=${BLAZEGRAPH_PATH} --graph=${NAMED_GRAPH} ${DATA_DIRECTORY}/*.${FILE_FORMAT}
 
 echo "Script updateThesArchEsp.sh finished."
+echo "Make sure to restart the Blazegraph server to apply the changes."
