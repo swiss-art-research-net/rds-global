@@ -1,12 +1,14 @@
 .env
 data/**/*
 
+data-preparation/labelAdjustment/*/*
 data-preparation/update-scripts/aat-data/*
 data-preparation/update-scripts/geonames-data/*
 data-preparation/update-scripts/gnd-authorities-data/*
 data-preparation/update-scripts/gnd-bibliographic-data/*
 data-preparation/update-scripts/gnd-facts-data/*
 data-preparation/update-scripts/sikart-data/*
+data-preparation/update-scripts/thes-arch-esp-data/*
 data-preparation/update-scripts/ulan-data/*
 data-preparation/groupingFeatureAdjustment/data*
 data-preparation/groupingFeatureAdjustment/output*
