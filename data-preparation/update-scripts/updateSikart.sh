@@ -13,7 +13,7 @@ export SKIP_UNZIPPING=false
 export REPOSITORY_LOCATION="swiss-art-research-net"
 export REPOSITORY_NAME="sikart-data"
 DATA_FORMAT="application/x-turtle"
-NAMED_GRAPH="http://recherche.sik-isea/graph"
+NAMED_GRAPH="http://recherche.sik-isea.ch/graph"
 # ================================================================
 if [ -z "${BLAZEGRAPH_PATH}" ]; then
     echo "BLAZEGRAPH_PATH is not set. Using default location in ../data/blazegraph-data/blazegraph.jnl"

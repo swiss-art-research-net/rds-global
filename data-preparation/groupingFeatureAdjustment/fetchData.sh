@@ -160,7 +160,7 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX crmdig: <http://www.ics.forth.gr/isl/CRMdig/>
 CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-GRAPH <http://recherche.sik-isea/graph> {
+GRAPH <http://recherche.sik-isea.ch/graph> {
   ?candidate2 crmdig:L54_same_as ?candidate1 .
   }
 }' ./data/sikartSameAs.ttl
