@@ -10,10 +10,11 @@
 #   REPOSITORY_LOCATION (String)
 #   REPOSITORY_NAME (String)
 
-#PARAMETERS TO SET
-#export GITHUB_USERNAME
-#export GITHUB_TOKEN
+#PARAMETERS TO SET IN .env FILE
+# GITHUB_USERNAME
+# GITHUB_TOKEN
 
+source .env
 set -e
 if [ -d "${DATA_DIRECTORY}" ] && [ ! "${SKIP_DELETING}" == true ]; then
     read -p "Do you want to remove previous data from the directory and dowload new ones? (y/n)" -n 1 -r
