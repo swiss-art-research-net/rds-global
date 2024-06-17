@@ -3,7 +3,7 @@
 mkdir -p ./data
 
 if [ -z "${BLAZEGRAPH_ENDPOINT}" ]; then
-    BLAZEGRAPH_ENDPOINT="http://localhost:8080/blazegraph/namespace/kb/sparql"
+    BLAZEGRAPH_ENDPOINT="http://localhost:8081/blazegraph/namespace/kb/sparql"
 fi
 
 if [ -z "${WIKIDATA_ENDPOINT}" ]; then

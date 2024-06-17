@@ -8,7 +8,7 @@ DATA_FORMAT="text/plain"
 NAMED_GRAPH=http%3A%2F%2Fvocab.getty.edu%2Fulan%2Fgraph
 # ================================================================
 if [ -z "${BLAZEGRAPH_ENDPOINT}" ]; then
-    BLAZEGRAPH_ENDPOINT="http://localhost:8080/blazegraph/namespace/kb/sparql"
+    BLAZEGRAPH_ENDPOINT="http://localhost:8081/blazegraph/namespace/kb/sparql"
 fi
 SCRIPT_DIR=$(pwd)
 set -e
