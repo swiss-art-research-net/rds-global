@@ -18,7 +18,7 @@
 @prefix gn: <http://www.geonames.org/ontology#> .
 @prefix frbroo: <http://iflastandards.info/ns/fr/frbr/frbroo/> .
 @prefix rds: <http://schema.swissartresearch.net/ontology/rds#> .
-
+@prefix sik: <https://recherche.sik-isea.ch/> .
 
 
 
@@ -38,7 +38,7 @@ wd:Q154954 rdfs:subClassOf rds:Person . #natural person in wikidata
 wd:Q1415187 rdfs:subClassOf rds:Person . #economic agent in wikidata
 gvp:UnknownPersonConcept rdfs:subClassOf rds:Person .
 gnd:DifferentiatedPerson rdfs:subClassOf rds:Person .
-
+sik:SIK-ACTOR rdfs:subClassOf rds:Person .
 
 crm:E21_Person rdf:type rdfs:Class ;
     owl:equivalentClass gnd:Person ; 
@@ -131,6 +131,9 @@ rds:crmArtwork rdf:type rdfs:Class ;
 wd:Q18593264 rdfs:subClassOf rds:Artwork .
 wd:Q838948 rdfs:subClassOf rds:Artwork .
 rds:crmArtwork rdfs:subClassOf rds:Artwork .
+sik:SIK-WORK rdfs:subClassOf rds:Artwork .
+sik:SIK-WORK_GROUP rdfs:subClassOf rds:Artwork .
+sik:SIK-PARENT_WORK rdfs:subClassOf rds:Artwork .
 
 # Bibliographic item equivalences 
 
@@ -143,12 +146,17 @@ wd:Q2342494 rdfs:subClassOf rds:BibliographicItem .
 wd:Q732577 rdfs:subClassOf rds:BibliographicItem .
 wd:Q47461344 rdfs:subClassOf rds:BibliographicItem .
 frbroo:F24_Publication_Expression rdfs:subClassOf rds:BibliographicItem .
+sik:SIK-DOCUMENT rdfs:subClassOf rds:BibliographicItem .
+sik:SIK-PUBLICATION rdfs:subClassOf rds:BibliographicItem .
+sik:SIK-PARENT_DOCUMENT rdfs:subClassOf rds:BibliographicItem .
 
 frbroo:F24_Publication_Expression rdf:type rdfs:Class;
     owl:equivalentClass wd:Q47461344 ; # written work
     owl:equivalentClass wd:Q732577 ; # publication
     owl:equivalentClass wd:Q2342494 ; #collectible 
     owl:equivalentClass gnd:Work .
+
+
 
 # Event/Activity equivalences 
 
@@ -161,6 +169,8 @@ rds:Event a rdfs:Class;
 crm:E5_Event rdfs:subClassOf rds:Event .
 gnd:ConferenceOrEvent rdfs:subClassOf rds:Event .
 wd:Q1190554 rdfs:subClassOf rds:Event .
+sik:SIK-EXHIBITION rdfs:subClassOf rds:Event .
+sik:SIK-AWARD_CEREMONY rdfs:subClassOf rds:Event .
 
 crm:E5_Event rdf:type rdfs:Class ;
     owl:equivalentClass gnd:ConferenceOrEvent ;
@@ -198,3 +208,4 @@ rds:Type a rdfs:Class;
 crm:E55_Type rdfs:subClassOf rds:Type .
 gvp:Concept rdfs:subClassOf rds:Type .
 skos:Concept rdfs:subClassOf rds:Type .
+sik:SIK-TYPE rdfs:subClassOf rds:Type .
