@@ -26,7 +26,7 @@ def main(predicate_file, blazegraph_journal):
             print(graph)
             with open('label_query.rq', 'w') as f:
                 f.write(query)
-            bash_command = '../utils/blazegraph-runner/target/universal/stage/bin/blazegraph-runner construct --journal={0} --outformat=turtle label_query.rq output/labels_{1}.ttl'.format(blazegraph_journal, file_num)
+            bash_command = '../utils/blazegraph-runner/bin/blazegraph-runner construct --journal={0} --outformat=turtle label_query.rq output/labels_{1}.ttl'.format(blazegraph_journal, file_num)
             print('QUERYING: {}'.format(query))
             os.system(bash_command)
             print('Saved output/labels_{0}.ttl'.format(file_num))

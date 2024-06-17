@@ -11,7 +11,7 @@ def main(predicate_file, blazegraph_journal):
     graph_create_query = 'CREATE GRAPH <http://schema.swissartresearch.net/rds/labels>'
     with open('requests/graph_create_query.rq', 'w') as f:
         f.write(graph_create_query)    
-    bash_command = '../utils/blazegraph-runner/target/universal/stage/bin/blazegraph-runner update --journal={0} requests/graph_create_query.rq'.format(blazegraph_journal)
+    bash_command = '../utils/blazegraph-runner/bin/blazegraph-runner update --journal={0} requests/graph_create_query.rq'.format(blazegraph_journal)
     try:
         os.system(bash_command)
     except:
@@ -42,7 +42,7 @@ def main(predicate_file, blazegraph_journal):
             with open('requests/label_query.rq', 'w') as f:
                 f.write(query)
             print(query)
-            bash_command = '../utils/blazegraph-runner/target/universal/stage/bin/blazegraph-runner update --journal={0} requests/label_query.rq'.format(blazegraph_journal, file_num)
+            bash_command = '../utils/blazegraph-runner/bin/blazegraph-runner update --journal={0} requests/label_query.rq'.format(blazegraph_journal, file_num)
             os.system(bash_command)
 
             file_num = file_num + 1
