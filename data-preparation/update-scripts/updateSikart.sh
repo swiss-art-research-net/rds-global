@@ -56,5 +56,6 @@ echo "Upload data to the database"
 #end=`date +%s`
 
 echo "Script updateSikart.sh finished."
+echo "Make sure to restart the Blazegraph server to apply the changes."
 
 #echo Execution time for graph uplodad was `expr $end - $start` seconds.
