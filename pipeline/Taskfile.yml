@@ -1,0 +1,40 @@
+# https://taskfile.dev
+
+version: '3'
+
+env:
+  BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
+  BLAZEGRAPH_PATH: /blazegraph-data/blazegraph.jnl
+
+tasks:
+
+  update-data-aat:
+    desc: Update data for AAT
+    interactive: True
+    vars:
+      GRAPH: http://vocab.getty.edu/aat/graph
+      DATA_DIRECTORY: ./aat-data
+      DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+
+  _downloadAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data
+    cmds:
+      - # If the directory already exists, ask the user if they want to delete it
+      - |
+        if [ -d "{{.DIRECTORY }}" ]; then
+          read -p "Do you want to remove previous data from the directory {{.DIRECTORY}} and download new ones? (y/n)" -n 1 -r
+          echo
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}"
+          else
+            exit 1
+          fi
+        fi
+      - echo "OK"

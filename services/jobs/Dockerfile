@@ -23,10 +23,12 @@ RUN rm blazegraph-runner.tgz
 RUN sh -c "$(curl -ssL https://taskfile.dev/install.sh)" -- -d
 
 # Prepare directories and volumes
-RUN mkdir /scripts
+RUN mkdir /pipeline
+ADD ./pipeline /pipeline
+WORKDIR /pipeline
+
 RUN mkdir /data
-WORKDIR /scripts
-WORKDIR /data
+VOLUME /data
 
 # Run idling
 ENTRYPOINT tail -f /dev/null
