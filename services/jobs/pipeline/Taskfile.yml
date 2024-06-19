@@ -10,7 +10,7 @@ env:
 tasks:
 
   update-data-aat:
-    desc: Update data for AAT
+    desc: Update data for Getty AAT
     vars:
       GRAPH: http://vocab.getty.edu/aat/graph
       DATA_DIRECTORY: /data/aat-data
@@ -134,7 +134,31 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
+  update-data-ulan:
+    desc: Update data for Getty ULAN
+    vars:
+      GRAPH: http://vocab.getty.edu/ulan/graph
+      DATA_DIRECTORY: /data/ulan-data
+      DATA_URL: http://ulandownloads.getty.edu/VocabData/full.zip
+      GUNZIP: false
+      FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
 
+    
   _downloadAndUnzip:
     internal: True
     interactive: True
