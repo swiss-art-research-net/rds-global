@@ -33,6 +33,32 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
+  update-data-geonames:
+    desc: Update data for GeoNames
+    vars:
+      GRAPH: http://sws.geonames.org/graph
+      DATA_DIRECTORY: /data/geonames-data
+      DATA_URL: http://download.geonames.org/all-geonames-rdf.zip
+      GUNZIP: false
+      FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - echo "Preparing Geonames Data"
+      - cp /pipeline/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+  
   update-data-gnd:
     desc: Update data for GND
     vars:
