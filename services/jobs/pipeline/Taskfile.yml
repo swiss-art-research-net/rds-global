@@ -74,5 +74,5 @@ tasks:
     cmds:
       - echo "DROP GRAPH <{{.GRAPH}}>" > tmp.rq
       - echo $BLAZEGRAPH_JOURNAL
-      - #$BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL tmp.rq
+      - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL tmp.rq
       - rm tmp.rq
