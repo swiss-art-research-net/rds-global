@@ -38,6 +38,8 @@ tasks:
     internal: True
     interactive: True
     desc: Download and unzip data
+    requires:
+      vars: [URL, DIRECTORY, GUNZIP, FILE_FORMAT]
     cmds:
       - # If the directory already exists, ask the user if they want to delete it
       - |
@@ -65,12 +67,16 @@ tasks:
   _loadDataFromDirectory:
     desc: Load data from directory
     internal: True
+    requires:
+      vars: [GRAPH, DIRECTORY, FILE_FORMAT]
     cmds:
       - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.DIRECTORY}}/*.{{.FILE_FORMAT}}
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
     internal: True
+    requires:
+      vars: [GRAPH]
     cmds:
       - echo "DROP GRAPH <{{.GRAPH}}>" > tmp.rq
       - echo $BLAZEGRAPH_JOURNAL
