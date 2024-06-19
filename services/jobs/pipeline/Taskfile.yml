@@ -83,6 +83,58 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
+  update-data-sikart:
+    desc: TODO
+
+  update-data-thesarchesp:
+    desc: Update data for Thesaurus Architecture/Espace 
+    vars:
+      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+      DATA_DIRECTORY: /data/thes-arch-esp-data
+      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-thesobjmob:
+    desc: Update data for Thesaurus Object/Mobiliers
+    vars:
+      GRAPH: http://Fdata.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+      DATA_DIRECTORY: /data/thes-obj-mob-data
+      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+
   _downloadAndUnzip:
     internal: True
     interactive: True
