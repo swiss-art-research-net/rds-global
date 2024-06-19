@@ -37,6 +37,7 @@ services:
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
+    image: swissartresearx/rds-global-jobs
     volumes:
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
