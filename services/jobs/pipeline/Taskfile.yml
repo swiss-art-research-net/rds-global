@@ -1,0 +1,78 @@
+# https://taskfile.dev
+
+version: '3'
+
+env:
+  BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
+  BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
+  BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
+
+tasks:
+
+  update-data-aat:
+    desc: Update data for AAT
+    interactive: True
+    vars:
+      GRAPH: http://vocab.getty.edu/aat/graph
+      DATA_DIRECTORY: /data/aat-data
+      DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
+      GUNZIP: false
+      FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  _downloadAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data
+    cmds:
+      - # If the directory already exists, ask the user if they want to delete it
+      - |
+        if [ -d "{{.DIRECTORY }}" ]; then
+          read -p "Do you want to remove previous data from the directory and download new ones? (y/n) " REPLY
+          echo
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}"
+          fi
+        fi
+      - # If the directory does not exist, download the data
+      - |
+        if [ ! -d "{{.DIRECTORY }}" ]; then
+          mkdir -p "{{.DIRECTORY}}"
+          cd "{{.DIRECTORY}}"
+          echo "Fetching datasources..."
+          if [ "{{.GUNZIP}}" == true ]; then
+            curl -k {{.URL}} -o data.{{.FILE_FORMAT}}.gz
+          else
+            curl -k {{.URL}} -o data.zip
+          fi
+          echo "Fetching completed."
+        fi
+
+  _loadDataFromDirectory:
+    desc: Load data from directory
+    internal: True
+    cmds:
+      - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.DIRECTORY}}/*.{{.FILE_FORMAT}}
+
+  _removeGraphFromTripleStore:
+    desc: Remove graph from triple store
+    internal: True
+    cmds:
+      - echo "DROP GRAPH <{{.GRAPH}}>" > tmp.rq
+      - echo $BLAZEGRAPH_JOURNAL
+      - #$BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL tmp.rq
+      - rm tmp.rq

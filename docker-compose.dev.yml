@@ -38,6 +38,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
     volumes:
-      - ./pipeline:/pipeline
+      - ./services/jobs/pipeline:/pipeline
       - ./data:/data
       - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw

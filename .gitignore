@@ -1,6 +1,6 @@
 .env
 binds/**/*
-data/*.*
+data/**/*
 !data/.gitkeep
 data-preparation/labelAdjustment/*/*
 data-preparation/update-scripts/aat-data/*
