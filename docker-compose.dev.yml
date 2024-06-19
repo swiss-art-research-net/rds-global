@@ -33,3 +33,10 @@ services:
       - ${PORT_RDS}:8080
     volumes:
     - ${DIRECTORY_METAPHACTORY_RUNTIME}:/runtime-data:rw
+
+  pipeline:
+    container_name: ${COMPOSE_PROJECT_NAME}-pipeline
+    build: ./services/pipeline
+    volumes:
+      - ./data-preparation:/data-preparation
+      - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw

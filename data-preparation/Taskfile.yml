@@ -1,0 +1,6 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
