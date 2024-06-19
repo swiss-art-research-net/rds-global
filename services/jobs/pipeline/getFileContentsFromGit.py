@@ -5,8 +5,9 @@ import json
 import re
 import os
 import argparse
+import sys
 
-def getFileContentsFromGit(username, token, repo, path, localfile):
+def getFileContentsFromGit(*, username, token, repo, path, localfile):
     folder = path.rsplit('/', 1)[0]
     file = path.rsplit('/', 1)[1]
 
@@ -70,12 +71,12 @@ def getFileContentsFromGit(username, token, repo, path, localfile):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Get file contents from GitHub repository')
-    parser.add_argument('username', help='GitHub username')
-    parser.add_argument('token', help='GitHub personal access token')
-    parser.add_argument('repo', help='Repository')
-    parser.add_argument('path', help='Path to file')
-    parser.add_argument('localfile', help='Local file path')
+    parser.add_argument('--username', help='GitHub username')
+    parser.add_argument('--token', help='GitHub personal access token')
+    parser.add_argument('--repo', help='Repository')
+    parser.add_argument('--path', help='Path to file')
+    parser.add_argument('--localfile', help='Local file path')
 
     args = parser.parse_args()
 
-    getFileContentsFromGit(args.username, args.token, args.repo, args.path, args.localfile)
+    getFileContentsFromGit(username=args.username, token=args.token, repo=args.repo, path=args.path, localfile=args.localfile)

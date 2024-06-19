@@ -84,7 +84,26 @@ tasks:
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
   update-data-sikart:
-    desc: TODO
+    desc: Update data for SIKART
+    vars:
+      GRAPH: http://recherche.sik-isea.ch/graph
+      DATA_DIRECTORY: /data/sikart-data
+      DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
+      DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadFromGitHubAndUnzip
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DATA_DIRECTORY: "{{.DATA_DIRECTORY}}"
+          DATA_GIT_REPOSITORY: "{{.DATA_GIT_REPOSITORY}}"
+          DATA_GIT_PATH: "{{.DATA_GIT_PATH}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+          FILE_NAME: "data"
+          GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
+          GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
 
   update-data-thesarchesp:
     desc: Update data for Thesaurus Architecture/Espace 
@@ -157,7 +176,6 @@ tasks:
           GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-
     
   _downloadAndUnzip:
     internal: True
@@ -188,6 +206,13 @@ tasks:
           fi
           echo "Fetching completed."
         fi
+
+  _downloadFromGitHubAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data from GitHub
+    cmds:
+      - python /pipeline/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
 
   _loadDataFromDirectory:
     desc: Load data from directory

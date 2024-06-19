@@ -10,7 +10,7 @@ RUN apt clean
 RUN apt update
 RUN apt install -y default-jre
 # Install Python packages
-RUN pip install rdflib
+RUN pip install rdflib requests
 
 # Install Blazegraph Runner
 RUN wget -O blazegraph-runner.tgz https://github.com/balhoff/blazegraph-runner/releases/download/v1.7/blazegraph-runner-1.7.tgz
