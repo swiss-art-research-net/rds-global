@@ -11,13 +11,36 @@ tasks:
 
   update-data-aat:
     desc: Update data for AAT
-    interactive: True
     vars:
       GRAPH: http://vocab.getty.edu/aat/graph
       DATA_DIRECTORY: /data/aat-data
       DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
       GUNZIP: false
       FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-gnd:
+    desc: Update data for GND
+    vars:
+      GRAPH: https://d-nb.info/gnd/authorities/graph
+      DATA_DIRECTORY: /data/gnd-authorities-data
+      DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+      GUNZIP: true
+      FILE_FORMAT: ttl
     cmds:
       - task: _downloadAndUnzip
         vars:
