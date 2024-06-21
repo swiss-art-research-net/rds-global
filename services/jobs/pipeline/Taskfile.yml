@@ -48,9 +48,8 @@ tasks:
       - task: _ingest-data-from-file
         vars: 
           NAME: Dataset Metadata
-          FILE:
-          TYPE:
-          GRAPH:
+          FILE: /data/rds-metadata/_datasetsMetadata.ttl
+          GRAPH: http://rds.swissartresarch.net/graph/datasetMetadata
 
 
   update-data-aat:
@@ -265,6 +264,14 @@ tasks:
     desc: Download and unzip data from GitHub
     cmds:
       - python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
+
+  _ingest-data-from-file:
+    desc: Ingest data from file
+    internal: True
+    requires:
+      vars: [NAME, FILE, GRAPH]
+    cmds:
+      - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
 
   _loadDataFromDirectory:
     desc: Load data from directory
