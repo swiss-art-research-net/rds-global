@@ -38,6 +38,9 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
     image: swissartresearx/rds-global-jobs
+    environment:
+      GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
+      GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
     volumes:
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data

@@ -104,6 +104,14 @@ tasks:
           FILE_NAME: "data"
           GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
           GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
 
   update-data-thesarchesp:
     desc: Update data for Thesaurus Architecture/Espace 
