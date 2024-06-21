@@ -14,10 +14,19 @@ tasks:
 
   generate-labels:
     desc: Generate labels for URIs
-    vars:
-      GRAPH: http://rds.swissartresearch.net/graph/labels
     cmds:
-
+      - mkdir -p /pipeline/tmp/requests
+      - mkdir -p /pipeline/tmp/responses
+      - |
+        echo "SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE
+          {
+            GRAPH ?graph_name
+            {
+              ?subject ?predicates ?label .
+            }
+          }
+        GROUP BY ?graph_name" > /pipeline/tmp/requests/label_count_by_graph.rq
+      - $BLAZEGRAPH_RUNNER select --journal=$BLAZEGRAPH_JOURNAL --outformat=json /pipeline/tmp/requests/label_count_by_graph.rq  /pipeline/tmp/responses/label_count_by_graph.json
 
   update-data-aat:
     desc: Update data for Getty AAT

@@ -15,3 +15,4 @@ data-preparation/update-scripts/ulan-data/*
 data-preparation/groupingFeatureAdjustment/data*
 data-preparation/groupingFeatureAdjustment/output*
 data-preparation/utils/blazegraph-runner/**/*
+services/jobs/pipeline/tmp
