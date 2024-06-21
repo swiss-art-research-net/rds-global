@@ -44,12 +44,26 @@ tasks:
 
   ingest-metadata:
     desc: Ingest metadata
+    sources:
+      - /data/rds-metadata/_datasetsMetadata.ttl
+      - /data/rds-metadata/rds-ontologies-description.ttl
+      - /data/rds-metadata/type-mapping.ttl
     cmds:
       - task: _ingest-data-from-file
         vars: 
           NAME: Dataset Metadata
           FILE: /data/rds-metadata/_datasetsMetadata.ttl
           GRAPH: http://rds.swissartresarch.net/graph/datasetMetadata
+      - task: _ingest-data-from-file
+        vars:
+          NAME: RDS Ontologies
+          FILE: /data/rds-metadata/rds-ontologies-description.ttl
+          GRAPH: http://rds.swissartresarch.net/graph/rdsOntologies
+      - task: _ingest-data-from-file
+        vars:
+          NAME: Type Mappings
+          FILE: /data/rds-metadata/type-mapping.ttl
+          GRAPH: http://schema.swissartresarch.net/rds/type-mapping
 
 
   update-data-aat:

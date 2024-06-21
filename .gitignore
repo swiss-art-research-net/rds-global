@@ -17,3 +17,4 @@ data-preparation/groupingFeatureAdjustment/data*
 data-preparation/groupingFeatureAdjustment/output*
 data-preparation/utils/blazegraph-runner/**/*
 services/jobs/pipeline/tmp
+services/jobs/pipeline/.task
