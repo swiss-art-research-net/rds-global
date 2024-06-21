@@ -12,6 +12,18 @@ env:
 
 tasks:
 
+  default:
+    desc: Run entire pipeline
+    cmds:
+      - task: update-data-aat
+      - task: update-data-geonames
+      - task: update-data-gnd
+      - task: update-data-sikart
+      - task: update-data-thesarchesp
+      - task: update-data-thesobjmob
+      - task: update-data-ulan
+      - task: generate-labels
+
   generate-labels:
     desc: Generate labels for URIs
     cmds:
