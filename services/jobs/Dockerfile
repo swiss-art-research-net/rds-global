@@ -9,6 +9,12 @@ RUN locale-gen en_US.UTF-8
 RUN apt clean
 RUN apt update
 RUN apt install -y default-jre
+
+# Install Node 14
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt update
+RUN apt install -y nodejs
+
 # Install Python packages
 RUN pip install rdflib requests
 
