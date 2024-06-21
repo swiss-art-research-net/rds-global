@@ -2,12 +2,22 @@
 
 version: '3'
 
+vars:
+  PREDICATES_FILE: /pipeline/config/predicates.txt
+
 env:
   BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
   BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
   BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
 
 tasks:
+
+  generate-labels:
+    desc: Generate labels for URIs
+    vars:
+      GRAPH: http://rds.swissartresearch.net/graph/labels
+    cmds:
+
 
   update-data-aat:
     desc: Update data for Getty AAT
@@ -49,7 +59,7 @@ tasks:
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
       - echo "Preparing Geonames Data"
-      - cp /pipeline/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
+      - cp /pipeline/scripts/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
       - task: _removeGraphFromTripleStore
         vars:
           GRAPH: "{{.GRAPH}}"
@@ -220,7 +230,7 @@ tasks:
     interactive: True
     desc: Download and unzip data from GitHub
     cmds:
-      - python /pipeline/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
+      - python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
 
   _loadDataFromDirectory:
     desc: Load data from directory
