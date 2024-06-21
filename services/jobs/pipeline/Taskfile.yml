@@ -23,6 +23,7 @@ tasks:
       - task: update-data-thesobjmob
       - task: update-data-ulan
       - task: generate-labels
+      - task: ingest-metadata
 
   generate-labels:
     desc: Generate labels for URIs
@@ -40,6 +41,17 @@ tasks:
         GROUP BY ?graph_name" > /pipeline/tmp/requests/label_count_by_graph.rq
       - $BLAZEGRAPH_RUNNER select --journal=$BLAZEGRAPH_JOURNAL --outformat=json /pipeline/tmp/requests/label_count_by_graph.rq  /pipeline/tmp/responses/label_count_by_graph.json
       - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --blazegraph_journal "$BLAZEGRAPH_JOURNAL"
+
+  ingest-metadata:
+    desc: Ingest metadata
+    cmds:
+      - task: _ingest-data-from-file
+        vars: 
+          NAME: Dataset Metadata
+          FILE:
+          TYPE:
+          GRAPH:
+
 
   update-data-aat:
     desc: Update data for Getty AAT
