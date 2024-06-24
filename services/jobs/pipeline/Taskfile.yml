@@ -163,7 +163,12 @@ tasks:
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
       - echo "Preparing Geonames Data"
-      - cp /pipeline/scripts/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
+      - |
+        if [ ! -f "{{.DATA_DIRECTORY}}/geonames.nt" ]; then
+          cp /pipeline/scripts/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
+        else
+          echo "Geonames data already exists. Skipping conversion."
+        fi
       - task: _removeGraphFromTripleStore
         vars:
           GRAPH: "{{.GRAPH}}"
