@@ -27,11 +27,21 @@ tasks:
       - task: generate-sameas-statements
       - task: ingest-metadata
 
-  fetch-sameas-statements:
+  fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
     cmds: 
       - mkdir -p /data/sameAsStatements
-      - task: _fetch-sameas-statements-local
+      - task: fetch-sameas-statements-aat
+      - task: fetch-sameas-statements-ulan
+      - task: fetch-sameas-statements-gnd
+      - task: fetch-sameas-statements-thesobjmob
+      - task: fetch-sameas-statements-thesarchesp
+      - task: fetch-sameas-statements-sikart
+
+  fetch-sameas-statements-aat:
+    desc: Fetch SameAs statements contained in AAT
+    cmds:
+     - task: _fetch-sameas-statements-local
         vars:
           DATASET: AAT
           OUTPUT_FILE: /data/sameAsStatements/aatSameAs.ttl
@@ -43,18 +53,10 @@ tasks:
                 ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
               }
             }
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET: ULAN
-          OUTPUT_FILE: /data/sameAsStatements/ulanSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://vocab.getty.edu/ulan/graph> {
-                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
-              }
-            }
+  
+  fetch-sameas-statements-gnd:
+    desc: Fetch SameAs statements contained in GND
+    cmds:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: GND
@@ -76,32 +78,10 @@ tasks:
                   }
               }}
             }
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET: Thesaurus Objects Mobiliers
-          OUTPUT_FILE: /data/sameAsStatements/thesobjmobSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph> {
-                ?candidate2 skos:exactMatch ?candidate1 .
-              }
-            }
-      - task: _fetch-sameas-statements-local
-        vars: 
-          DATASET: Thesaurus Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
-          OUTPUT_FILE: /data/sameAsStatements/thesarchespSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph> {
-                ?candidate2 skos:exactMatch ?candidate1 .
-              }
-            }
+  
+  fetch-sameas-statements-sikart:
+    desc: Fetch SameAs statements contained in SIKART
+    cmds:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: SIKART
@@ -117,6 +97,56 @@ tasks:
               }
             }
 
+
+  fetch-sameas-statements-thesarchesp:
+    desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars: 
+          DATASET: Thesaurus Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
+          OUTPUT_FILE: /data/sameAsStatements/thesarchespSameAs.ttl
+          QUERY: |
+            PREFIX schema: <http://schema.org/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph> {
+                ?candidate2 skos:exactMatch ?candidate1 .
+              }
+            }
+
+  fetch-sameas-statements-thesobjmob:
+    desc: Fetch SameAs statements contained in Thesaurus Object/Mobiliers
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: Thesaurus Objects Mobiliers
+          OUTPUT_FILE: /data/sameAsStatements/thesobjmobSameAs.ttl
+          QUERY: |
+            PREFIX schema: <http://schema.org/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph> {
+                ?candidate2 skos:exactMatch ?candidate1 .
+              }
+            }
+
+  fetch-sameas-statements-ulan:
+    desc: Fetch SameAs statements contained in ULAN
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: ULAN
+          OUTPUT_FILE: /data/sameAsStatements/ulanSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://vocab.getty.edu/ulan/graph> {
+                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
+              }
+            }
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
@@ -344,6 +374,8 @@ tasks:
           GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  ##### INTERNAL TASKS #####
     
   _downloadAndUnzip:
     internal: True
