@@ -271,6 +271,16 @@ tasks:
           fi
           echo "Fetching completed."
         fi
+      - |
+        if [ "{{.SKIP_UNZIPPING}}" != true ]; then
+            echo "Unzip datasources..."
+            if [ "{{.USE_GUNZIP}}" == true ]; then
+                gunzip data.{{.FILE_FORMAT}}.gz
+            else
+                unzip data.zip
+            fi
+            echo "Unzipping completed."
+        fi
 
   _downloadFromGitHubAndUnzip:
     internal: True
