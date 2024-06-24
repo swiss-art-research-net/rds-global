@@ -147,6 +147,29 @@ tasks:
                 ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
               }
             }
+  
+  fetch-sameas-statements-wikidata:
+    desc: Fetch SameAs statements from Wikidata
+    cmds:
+      - task: _fetch-sameas-statements-remote-chunked
+        vars:
+          DATASET: Wikidata VIAF
+          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsVIAF.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              {
+                SELECT ?candidate ?sameAsID WHERE {
+                    ?candidate wdt:P214 ?sameAsID .
+                  } $LIMIT_STATEMENT
+                }
+              BIND (IRI(CONCAT(\"http://viaf.org/viaf/\", ?sameAsID)) as ?sameAs)
+            }
+          NUM_CHUNKS: 20
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
@@ -437,6 +460,39 @@ tasks:
       - echo "{{.QUERY}}" > "{{.QUERY_FILE}}"
       - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.OUTPUT_FILE}}"
       - rm "{{.QUERY_FILE}}"
+
+  _fetch-sameas-statements-remote-chunked:
+    desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
+    internal: True
+    vars:
+      MAX_RESULTS_PER_REQUEST: 200000
+      NUM_DOWNLOAD_ATTEMPTS: 5
+      CONNECTION_TIMEOUT: 10
+      MAX_TIME: 1200
+    status:
+      - test -f {{.OUTPUT_FILE}}
+    cmds:
+      - echo "" > {{.OUTPUT_FILE}}
+      - |
+        for ((n=0; n<="{{.NUM_CHUNKS}}"; n++)) do
+          OFFSET=$((n * {{.MAX_RESULTS_PER_REQUEST}}))
+          if (( n==0 )); then
+            OFFSET_STR=""
+          else
+            OFFSET_STR="OFFSET $OFFSET"
+          fi
+          echo "Fetching SameAs Statements for {{.DATASET}} (Chunk $n of {{.NUM_CHUNKS}})"
+          OUTPUT_FILE_CHUNK="{{.OUTPUT_FILE}}.$n.chunk"
+          for ((i=0; i<{{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
+            if [[ ! -f $OUTPUT_FILE_CHUNK ]]; then
+              LIMIT_STATEMENT="LIMIT {{.MAX_RESULTS_PER_REQUEST}} $OFFSET_STR"
+              curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > $OUTPUT_FILE_CHUNK
+            fi
+          done
+        done
+      - # Combine all the chunks into a single file
+      - cat {{.OUTPUT_FILE}}.*.chunk > {{.OUTPUT_FILE}}
+      - rm {{.OUTPUT_FILE}}.*.chunk
 
   _ingest-data-from-file:
     desc: Ingest data from file
