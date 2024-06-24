@@ -27,9 +27,9 @@ tasks:
       - task: generate-sameas-statements
       - task: ingest-metadata
 
-  generate-sameas-statements:
-    desc: Generates SameAs statements between entities
-    cmds:
+  fetch-sameas-statements:
+    desc: Fetch data reuired for SameAs statements
+    cmds: 
       - mkdir -p /data/sameAsStatements
       - task: _fetch-sameas-statements-local
         vars:
@@ -43,6 +43,44 @@ tasks:
                 ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
               }
             }
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: ULAN
+          OUTPUT_FILE: /data/sameAsStatements/ulanSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://vocab.getty.edu/ulan/graph> {
+                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
+              }
+            }
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: GND
+          OUTPUT_FILE: /data/sameAsStatements/gndSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX schema: <http://schema.org/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              {SELECT * WHERE {
+                  VALUES (?predicate) {
+                      (schema:sameAs)
+                      (rdfs:seeAlso)
+                      (skos:exactMatch)
+                  }
+                  GRAPH <https://d-nb.info/gnd/authorities/graph> {
+                  ?candidate2 ?predicate ?candidate1 .
+                  }
+              }}
+            }
+
+  generate-sameas-statements:
+    desc: Generates SameAs statements between entities
+    cmds:
+      - task: fetch-sameas-statements
   
   generate-labels:
     desc: Generate labels for URIs
