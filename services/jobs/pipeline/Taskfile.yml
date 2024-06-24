@@ -9,6 +9,7 @@ env:
   BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
   BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
   BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
+  WIKIDATA_ENDPOINT: https://query.wikidata.org/sparql
 
 tasks:
 
@@ -23,8 +24,26 @@ tasks:
       - task: update-data-thesobjmob
       - task: update-data-ulan
       - task: generate-labels
+      - task: generate-sameas-statements
       - task: ingest-metadata
 
+  generate-sameas-statements:
+    desc: Generates SameAs statements between entities
+    cmds:
+      - mkdir -p /data/sameAsStatements
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: AAT
+          OUTPUT_FILE: /data/sameAsStatements/aatSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://vocab.getty.edu/aat/graph> {
+                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
+              }
+            }
+  
   generate-labels:
     desc: Generate labels for URIs
     cmds:
@@ -276,8 +295,6 @@ tasks:
             echo "Unzip datasources..."
             cd "{{.DIRECTORY}}"
             if [ "{{.USE_GUNZIP}}" == true ]; then
-                gunzip data.{{.FILE_FORMAT}}.gz
-            else
               gunzip data.{{.FILE_FORMAT}}.gz
             elif [ -f "data.zip" ]; then
                 unzip data.zip
@@ -291,6 +308,19 @@ tasks:
     desc: Download and unzip data from GitHub
     cmds:
       - python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
+
+  _fetch-sameas-statements-local:
+    desc: Fetch SameAs Statements for different datasets
+    internal: True
+    status:
+      - test -f {{.OUTPUT_FILE}}
+    vars:
+      QUERY_FILE: /pipeline/tmp/sameas{{.DATASET}}.rq
+    cmds:
+      - echo "Fetching SameAs Statements for {{.DATASET}}"
+      - echo "{{.QUERY}}" > "{{.QUERY_FILE}}"
+      - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.OUTPUT_FILE}}"
+      - rm "{{.QUERY_FILE}}"
 
   _ingest-data-from-file:
     desc: Ingest data from file
