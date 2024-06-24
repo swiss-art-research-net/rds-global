@@ -41,7 +41,7 @@ tasks:
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
     cmds:
-     - task: _fetch-sameas-statements-local
+      - task: _fetch-sameas-statements-local
         vars:
           DATASET: AAT
           OUTPUT_FILE: /data/sameAsStatements/aatSameAs.ttl
