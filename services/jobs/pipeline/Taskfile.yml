@@ -186,6 +186,41 @@ tasks:
               FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
               BIND (IRI(CONCAT("https://d-nb.info/gnd/", ?sameAsID)) as ?sameAs)
             }
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata BNF
+          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsBNF.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P268 ?sameAsID .
+              FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
+              BIND (IRI(CONCAT("http://data.bnf.fr/ark:/12148/", ?sameAsID)) as ?sameAs)
+            }
+        - task: _fetch-sameas-statements-remote-chunked
+          vars:
+            DATASET: Wikidata LOC
+            OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsLOC.ttl
+            ENDPOINT: $WIKIDATA_ENDPOINT
+            QUERY: |
+              PREFIX owl: <http://www.w3.org/2002/07/owl#>
+              PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+              CONSTRUCT {
+                  ?candidate owl:sameAs ?sameAs .
+              } WHERE {
+                {
+                  SELECT ?candidate ?sameAsID WHERE {
+                    ?candidate wdt:P244 ?sameAsID .
+                  } $LIMIT_STATEMENT
+                }
+                BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
+              }
+            NUM_CHUNKS: 7
+
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
