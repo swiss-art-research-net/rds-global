@@ -158,7 +158,7 @@ function storeToTtl() {
                 wd: 'http://www.wikidata.org/entity/',
                 wdt: 'http://www.wikidata.org/prop/direct/',
                 rds: 'https://static.swissartresearch.net/',
-		crmdig: 'http://www.ics.forth.gr/isl/CRMdig/',
+                crmdig: 'http://www.ics.forth.gr/isl/CRMdig/',
             }
         });
     };
