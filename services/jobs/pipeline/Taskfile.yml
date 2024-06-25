@@ -27,6 +27,7 @@ tasks:
       - task: generate-labels
       - task: generate-sameas-statements
       - task: ingest-metadata
+      #TODO - task: ingest-sameas-statements
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
