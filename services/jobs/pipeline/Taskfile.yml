@@ -220,6 +220,20 @@ tasks:
                 BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
               }
             NUM_CHUNKS: 7
+        - task: _fetch-sameas-statements-remote
+          vars:
+            DATASET: Wikidata ULAN
+            OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsULAN.ttl
+            ENDPOINT: $WIKIDATA_ENDPOINT
+            QUERY: |
+              PREFIX owl: <http://www.w3.org/2002/07/owl#>
+              PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+              CONSTRUCT {
+                  ?candidate owl:sameAs ?sameAs .
+              } WHERE {
+                ?candidate wdt:P245 ?sameAsID .
+                BIND (IRI(CONCAT("http://vocab.getty.edu/ulan/", ?sameAsID)) as ?sameAs)
+              }
 
 
   generate-sameas-statements:
