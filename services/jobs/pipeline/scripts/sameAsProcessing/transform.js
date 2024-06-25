@@ -9,8 +9,8 @@ const { DataFactory } = N3;
 const { namedNode } = DataFactory;
 
 const SAME_AS_PREDICATE = namedNode("http://schema.swissartresearch.net/ontology/rds#related");
-const DATA_FOLDER = 'data';
-const OUTPUT_FOLDER = 'output';
+const DATA_FOLDER = '/data/sameAsStatements';
+const OUTPUT_FOLDER = '/data/rds-metadata';
 const HEAP_SIZE = 1000000;
 const WRITING_STRING_SIZE = 1000000;
 
