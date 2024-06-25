@@ -234,6 +234,24 @@ tasks:
                 ?candidate wdt:P245 ?sameAsID .
                 BIND (IRI(CONCAT("http://vocab.getty.edu/ulan/", ?sameAsID)) as ?sameAs)
               }
+        - task: _fetch-sameas-statements-remote
+          vars:
+            DATASET: Wikidata SIKART (Persons)
+            OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsSIKARTPersons.ttl
+            ENDPOINT: $WIKIDATA_ENDPOINT
+            QUERY: |
+              PREFIX wd: <http://www.wikidata.org/entity/>
+              PREFIX owl: <http://www.w3.org/2002/07/owl#>
+              PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+              CONSTRUCT {
+                  ?candidate owl:sameAs ?sameAs .
+              } WHERE {
+                ?candidate wdt:P781 ?sameAsID .
+                FILTER EXISTS {
+                  ?candidate wdt:P31 wd:Q5 .
+                }
+                BIND (IRI(CONCAT("https://recherche.sik-isea.ch/person-", ?sameAsID)) as ?sameAs) .
+              }
 
 
   generate-sameas-statements:
