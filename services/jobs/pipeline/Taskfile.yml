@@ -185,7 +185,7 @@ tasks:
               ?candidate wdt:P227 ?sameAsID .
               FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
               BIND (IRI(CONCAT("https://d-nb.info/gnd/", ?sameAsID)) as ?sameAs)
-            }
+            }           
       - task: _fetch-sameas-statements-remote
         vars:
           DATASET: Wikidata BNF
@@ -201,57 +201,57 @@ tasks:
               FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
               BIND (IRI(CONCAT("http://data.bnf.fr/ark:/12148/", ?sameAsID)) as ?sameAs)
             }
-        - task: _fetch-sameas-statements-remote-chunked
-          vars:
-            DATASET: Wikidata LOC
-            OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsLOC.ttl
-            ENDPOINT: $WIKIDATA_ENDPOINT
-            QUERY: |
-              PREFIX owl: <http://www.w3.org/2002/07/owl#>
-              PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-              CONSTRUCT {
-                  ?candidate owl:sameAs ?sameAs .
-              } WHERE {
-                {
-                  SELECT ?candidate ?sameAsID WHERE {
-                    ?candidate wdt:P244 ?sameAsID .
-                  } $LIMIT_STATEMENT
-                }
-                BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
+      - task: _fetch-sameas-statements-remote-chunked
+        vars:
+          DATASET: Wikidata LOC
+          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsLOC.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              {
+                SELECT ?candidate ?sameAsID WHERE {
+                  ?candidate wdt:P244 ?sameAsID .
+                } $LIMIT_STATEMENT
               }
-            NUM_CHUNKS: 7
-        - task: _fetch-sameas-statements-remote
-          vars:
-            DATASET: Wikidata ULAN
-            OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsULAN.ttl
-            ENDPOINT: $WIKIDATA_ENDPOINT
-            QUERY: |
-              PREFIX owl: <http://www.w3.org/2002/07/owl#>
-              PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-              CONSTRUCT {
-                  ?candidate owl:sameAs ?sameAs .
-              } WHERE {
-                ?candidate wdt:P245 ?sameAsID .
-                BIND (IRI(CONCAT("http://vocab.getty.edu/ulan/", ?sameAsID)) as ?sameAs)
+              BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
+            }
+          NUM_CHUNKS: 7
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata ULAN
+          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsULAN.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P245 ?sameAsID .
+              BIND (IRI(CONCAT("http://vocab.getty.edu/ulan/", ?sameAsID)) as ?sameAs)
+            }
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata SIKART (Persons)
+          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsSIKARTPersons.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX wd: <http://www.wikidata.org/entity/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P781 ?sameAsID .
+              FILTER EXISTS {
+                ?candidate wdt:P31 wd:Q5 .
               }
-        - task: _fetch-sameas-statements-remote
-          vars:
-            DATASET: Wikidata SIKART (Persons)
-            OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsSIKARTPersons.ttl
-            ENDPOINT: $WIKIDATA_ENDPOINT
-            QUERY: |
-              PREFIX wd: <http://www.wikidata.org/entity/>
-              PREFIX owl: <http://www.w3.org/2002/07/owl#>
-              PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-              CONSTRUCT {
-                  ?candidate owl:sameAs ?sameAs .
-              } WHERE {
-                ?candidate wdt:P781 ?sameAsID .
-                FILTER EXISTS {
-                  ?candidate wdt:P31 wd:Q5 .
-                }
-                BIND (IRI(CONCAT("https://recherche.sik-isea.ch/person-", ?sameAsID)) as ?sameAs) .
-              }
+              BIND (IRI(CONCAT("https://recherche.sik-isea.ch/person-", ?sameAsID)) as ?sameAs) .
+            }
 
 
   generate-sameas-statements:
