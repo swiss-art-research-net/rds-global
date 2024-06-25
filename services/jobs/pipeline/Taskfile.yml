@@ -183,8 +183,7 @@ tasks:
                 ?candidate owl:sameAs ?sameAs .
             } WHERE {
               ?candidate wdt:P227 ?sameAsID .
-              FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
-              BIND (IRI(CONCAT("https://d-nb.info/gnd/", ?sameAsID)) as ?sameAs)
+              BIND (IRI(CONCAT(\"https://d-nb.info/gnd/\", ?sameAsID)) as ?sameAs)
             }           
       - task: _fetch-sameas-statements-remote
         vars:
@@ -198,8 +197,7 @@ tasks:
                 ?candidate owl:sameAs ?sameAs .
             } WHERE {
               ?candidate wdt:P268 ?sameAsID .
-              FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
-              BIND (IRI(CONCAT("http://data.bnf.fr/ark:/12148/", ?sameAsID)) as ?sameAs)
+              BIND(IRI(CONCAT('http://data.bnf.fr/ark:/12148/', ?sameAsID)) as ?sameAs)
             }
       - task: _fetch-sameas-statements-remote-chunked
         vars:
@@ -232,7 +230,7 @@ tasks:
                 ?candidate owl:sameAs ?sameAs .
             } WHERE {
               ?candidate wdt:P245 ?sameAsID .
-              BIND (IRI(CONCAT("http://vocab.getty.edu/ulan/", ?sameAsID)) as ?sameAs)
+              BIND (IRI(CONCAT(\"http://vocab.getty.edu/ulan/\", ?sameAsID)) as ?sameAs)
             }
       - task: _fetch-sameas-statements-remote
         vars:
@@ -250,7 +248,7 @@ tasks:
               FILTER EXISTS {
                 ?candidate wdt:P31 wd:Q5 .
               }
-              BIND (IRI(CONCAT("https://recherche.sik-isea.ch/person-", ?sameAsID)) as ?sameAs) .
+              BIND (IRI(CONCAT(\"https://recherche.sik-isea.ch/person-\", ?sameAsID)) as ?sameAs) .
             }
 
 
@@ -554,9 +552,9 @@ tasks:
     status:
       - test -f {{.OUTPUT_FILE}}
     cmds:
-      - echo "" > {{.OUTPUT_FILE}}
+      - rm -f {{.OUTPUT_FILE}}
       - |
-        for ((i=0; i<{{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
+        for ((i=1; i<={{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
           if [[ ! -f {{.OUTPUT_FILE}} ]]; then
             echo "Fetching SameAs Statements for {{.DATASET}} (Attempt $i of {{.NUM_DOWNLOAD_ATTEMPTS}})"
             curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > {{.OUTPUT_FILE}}
