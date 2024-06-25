@@ -4,6 +4,7 @@ version: '3'
 
 vars:
   PREDICATES_FILE: /pipeline/config/predicates.txt
+  DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements
 
 env:
   BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
@@ -30,7 +31,7 @@ tasks:
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
     cmds: 
-      - mkdir -p /data/sameAsStatements
+      - mkdir -p {{.DIRECTORY_SAMEAS_STATEMENTS}}
       - task: fetch-sameas-statements-aat
       - task: fetch-sameas-statements-ulan
       - task: fetch-sameas-statements-gnd
@@ -45,7 +46,7 @@ tasks:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: AAT
-          OUTPUT_FILE: /data/sameAsStatements/aatSameAs.ttl
+          OUTPUT_FILE: aatSameAs.ttl
           QUERY: |
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -61,7 +62,7 @@ tasks:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: GND
-          OUTPUT_FILE: /data/sameAsStatements/gndSameAs.ttl
+          OUTPUT_FILE: gndSameAs.ttl
           QUERY: |
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX schema: <http://schema.org/>
@@ -86,7 +87,7 @@ tasks:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: SIKART
-          OUTPUT_FILE: /data/sameAsStatements/sikartSameAs.ttl
+          OUTPUT_FILE: sikartSameAs.ttl
           QUERY: |
             PREFIX schema: <http://schema.org/>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -105,7 +106,7 @@ tasks:
       - task: _fetch-sameas-statements-local
         vars: 
           DATASET: Thesaurus Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
-          OUTPUT_FILE: /data/sameAsStatements/thesarchespSameAs.ttl
+          OUTPUT_FILE: thesarchespSameAs.ttl
           QUERY: |
             PREFIX schema: <http://schema.org/>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -122,7 +123,7 @@ tasks:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: Thesaurus Objects Mobiliers
-          OUTPUT_FILE: /data/sameAsStatements/thesobjmobSameAs.ttl
+          OUTPUT_FILE: thesobjmobSameAs.ttl
           QUERY: |
             PREFIX schema: <http://schema.org/>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -139,7 +140,7 @@ tasks:
       - task: _fetch-sameas-statements-local
         vars:
           DATASET: ULAN
-          OUTPUT_FILE: /data/sameAsStatements/ulanSameAs.ttl
+          OUTPUT_FILE: ulanSameAs.ttl
           QUERY: |
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -155,7 +156,7 @@ tasks:
       - task: _fetch-sameas-statements-remote-chunked
         vars:
           DATASET: Wikidata VIAF
-          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsVIAF.ttl
+          OUTPUT_FILE: wikidataSameAsVIAF.ttl
           ENDPOINT: $WIKIDATA_ENDPOINT
           QUERY: |
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -174,7 +175,7 @@ tasks:
       - task: _fetch-sameas-statements-remote
         vars:
           DATASET: Wikidata GND
-          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsGND.ttl
+          OUTPUT_FILE: wikidataSameAsGND.ttl
           ENDPOINT: $WIKIDATA_ENDPOINT
           QUERY: |
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -188,7 +189,7 @@ tasks:
       - task: _fetch-sameas-statements-remote
         vars:
           DATASET: Wikidata BNF
-          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsBNF.ttl
+          OUTPUT_FILE: wikidataSameAsBNF.ttl
           ENDPOINT: $WIKIDATA_ENDPOINT
           QUERY: |
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -202,7 +203,7 @@ tasks:
       - task: _fetch-sameas-statements-remote-chunked
         vars:
           DATASET: Wikidata LOC
-          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsLOC.ttl
+          OUTPUT_FILE: wikidataSameAsLOC.ttl
           ENDPOINT: $WIKIDATA_ENDPOINT
           QUERY: |
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -221,7 +222,7 @@ tasks:
       - task: _fetch-sameas-statements-remote
         vars:
           DATASET: Wikidata ULAN
-          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsULAN.ttl
+          OUTPUT_FILE: wikidataSameAsULAN.ttl
           ENDPOINT: $WIKIDATA_ENDPOINT
           QUERY: |
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -235,7 +236,7 @@ tasks:
       - task: _fetch-sameas-statements-remote
         vars:
           DATASET: Wikidata SIKART (Persons)
-          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsSIKARTPersons.ttl
+          OUTPUT_FILE: wikidataSameAsSIKARTPersons.ttl
           ENDPOINT: $WIKIDATA_ENDPOINT
           QUERY: |
             PREFIX wd: <http://www.wikidata.org/entity/>
@@ -533,13 +534,13 @@ tasks:
     desc: Fetch SameAs Statements for different datasets
     internal: True
     status:
-      - test -f {{.OUTPUT_FILE}}
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     vars:
       QUERY_FILE: /pipeline/tmp/sameas{{.DATASET}}.rq
     cmds:
       - echo "Fetching SameAs Statements for {{.DATASET}}"
       - echo "{{.QUERY}}" > "{{.QUERY_FILE}}"
-      - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.OUTPUT_FILE}}"
+      - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
       - rm "{{.QUERY_FILE}}"
 
   _fetch-sameas-statements-remote:
@@ -550,14 +551,14 @@ tasks:
       CONNECTION_TIMEOUT: 10
       MAX_TIME: 1200
     status:
-      - test -f {{.OUTPUT_FILE}}
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     cmds:
-      - rm -f {{.OUTPUT_FILE}}
+      - rm -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
       - |
         for ((i=1; i<={{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
-          if [[ ! -f {{.OUTPUT_FILE}} ]]; then
+          if [[ ! -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}" ]]; then
             echo "Fetching SameAs Statements for {{.DATASET}} (Attempt $i of {{.NUM_DOWNLOAD_ATTEMPTS}})"
-            curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > {{.OUTPUT_FILE}}
+            curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
           fi
         done
 
@@ -570,9 +571,9 @@ tasks:
       CONNECTION_TIMEOUT: 10
       MAX_TIME: 1200
     status:
-      - test -f {{.OUTPUT_FILE}}
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     cmds:
-      - echo "" > {{.OUTPUT_FILE}}
+      - rm -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
       - |
         for ((n=0; n<="{{.NUM_CHUNKS}}"; n++)) do
           OFFSET=$((n * {{.MAX_RESULTS_PER_REQUEST}}))
@@ -582,7 +583,7 @@ tasks:
             OFFSET_STR="OFFSET $OFFSET"
           fi
           echo "Fetching SameAs Statements for {{.DATASET}} (Chunk $n of {{.NUM_CHUNKS}})"
-          OUTPUT_FILE_CHUNK="{{.OUTPUT_FILE}}.$n.chunk"
+          OUTPUT_FILE_CHUNK="{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.$n.chunk"
           for ((i=0; i<{{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
             if [[ ! -f $OUTPUT_FILE_CHUNK ]]; then
               LIMIT_STATEMENT="LIMIT {{.MAX_RESULTS_PER_REQUEST}} $OFFSET_STR"
@@ -591,8 +592,8 @@ tasks:
           done
         done
       - # Combine all the chunks into a single file
-      - cat {{.OUTPUT_FILE}}.*.chunk > {{.OUTPUT_FILE}}
-      - rm {{.OUTPUT_FILE}}.*.chunk
+      - cat "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk" > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+      - rm "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk"
 
   _ingest-data-from-file:
     desc: Ingest data from file
