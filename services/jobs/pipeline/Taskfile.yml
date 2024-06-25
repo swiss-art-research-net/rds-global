@@ -257,6 +257,7 @@ tasks:
     desc: Generates SameAs statements between entities
     cmds:
       - task: fetch-sameas-statements
+      - task: process-sameas-statements
   
   generate-labels:
     desc: Generate labels for URIs
@@ -298,6 +299,10 @@ tasks:
           FILE: /data/rds-metadata/type-mapping.ttl
           GRAPH: http://schema.swissartresarch.net/rds/type-mapping
 
+  process-sameas-statements:
+    desc: Process SameAs statements
+    cmds:
+      - cd /pipeline/scripts/sameAsProcessing; npm run start
 
   update-data-aat:
     desc: Update data for Getty AAT
