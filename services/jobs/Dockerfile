@@ -14,6 +14,7 @@ RUN apt install -y default-jre
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt update
 RUN apt install -y nodejs
+RUN apt install -y npm
 
 # Install Python packages
 RUN pip install rdflib requests
@@ -31,10 +32,16 @@ RUN sh -c "$(curl -ssL https://taskfile.dev/install.sh)" -- -d
 # Prepare directories and volumes
 RUN mkdir /pipeline
 ADD ./pipeline /pipeline
-WORKDIR /pipeline
 
+# Install tools
+WORKDIR /pipeline/scripts/sameAsProcessing
+RUN npm install
+WORKDIR /
+
+# Prepare directories and volumes
 RUN mkdir /data
 VOLUME /data
 
 # Run idling
+WORKDIR /pipeline
 ENTRYPOINT tail -f /dev/null
