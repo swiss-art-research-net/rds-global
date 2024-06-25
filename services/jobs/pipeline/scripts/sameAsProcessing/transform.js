@@ -174,7 +174,7 @@ function storeToTtl() {
     const readStream = db.createReadStream();
         
     let resultIndex = 0;
-    let fileId = `result_${resultIndex++}.ttl`;
+    let fileId = `sameAsStatements_${resultIndex++}.ttl`;
     let index = 0;
     let writer = createWriter();
     console.log(`Preparing data for ${fileId}.`);
@@ -187,7 +187,7 @@ function storeToTtl() {
                 writeToFile(result, fileId);
             });
             writer = createWriter();
-            fileId = `result_${resultIndex++}.ttl`;
+            fileId = `sameAsStatements_${resultIndex++}.ttl`;
             console.log(`Preparing data for ${fileId}.`);
         }
         const key = String.fromCharCode.apply(null, data.key);
