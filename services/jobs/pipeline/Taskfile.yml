@@ -37,6 +37,7 @@ tasks:
       - task: fetch-sameas-statements-thesobjmob
       - task: fetch-sameas-statements-thesarchesp
       - task: fetch-sameas-statements-sikart
+      - task: fetch-sameas-statements-wikidata
 
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
@@ -170,6 +171,21 @@ tasks:
               BIND (IRI(CONCAT(\"http://viaf.org/viaf/\", ?sameAsID)) as ?sameAs)
             }
           NUM_CHUNKS: 20
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata GND
+          OUTPUT_FILE: /data/sameAsStatements/wikidataSameAsGND.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P227 ?sameAsID .
+              FILTER (!(REGEX(?sameAsID, "[\", ]", "i")))
+              BIND (IRI(CONCAT("https://d-nb.info/gnd/", ?sameAsID)) as ?sameAs)
+            }
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
@@ -460,6 +476,25 @@ tasks:
       - echo "{{.QUERY}}" > "{{.QUERY_FILE}}"
       - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.OUTPUT_FILE}}"
       - rm "{{.QUERY_FILE}}"
+
+  _fetch-sameas-statements-remote:
+    desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
+    internal: True
+    vars:
+      NUM_DOWNLOAD_ATTEMPTS: 5
+      CONNECTION_TIMEOUT: 10
+      MAX_TIME: 1200
+    status:
+      - test -f {{.OUTPUT_FILE}}
+    cmds:
+      - echo "" > {{.OUTPUT_FILE}}
+      - |
+        for ((i=0; i<{{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
+          if [[ ! -f {{.OUTPUT_FILE}} ]]; then
+            echo "Fetching SameAs Statements for {{.DATASET}} (Attempt $i of {{.NUM_DOWNLOAD_ATTEMPTS}})"
+            curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > {{.OUTPUT_FILE}}
+          fi
+        done
 
   _fetch-sameas-statements-remote-chunked:
     desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
