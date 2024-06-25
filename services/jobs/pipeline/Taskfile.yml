@@ -214,6 +214,7 @@ tasks:
               {
                 SELECT ?candidate ?sameAsID WHERE {
                   ?candidate wdt:P244 ?sameAsID .
+                  FILTER(! CONTAINS(STR(?sameAsID), \" \") && ! CONTAINS(STR(?sameAsID), \"|\"))
                 } $LIMIT_STATEMENT
               }
               BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
