@@ -1,0 +1,655 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  PREDICATES_FILE: /pipeline/config/predicates.txt
+  DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements
+
+env:
+  BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
+  BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
+  BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
+  WIKIDATA_ENDPOINT: https://query.wikidata.org/sparql
+
+tasks:
+
+  default:
+    desc: Run entire pipeline
+    cmds:
+      - task: update-data-aat
+      - task: update-data-geonames
+      - task: update-data-gnd
+      - task: update-data-sikart
+      - task: update-data-thesarchesp
+      - task: update-data-thesobjmob
+      - task: update-data-ulan
+      - task: generate-labels
+      - task: generate-sameas-statements
+      - task: ingest-metadata
+      - task: ingest-sameas-statements
+
+  fetch-all-sameas-statements:
+    desc: Fetch data reuired for SameAs statements
+    cmds: 
+      - mkdir -p {{.DIRECTORY_SAMEAS_STATEMENTS}}
+      - task: fetch-sameas-statements-aat
+      - task: fetch-sameas-statements-ulan
+      - task: fetch-sameas-statements-gnd
+      - task: fetch-sameas-statements-thesobjmob
+      - task: fetch-sameas-statements-thesarchesp
+      - task: fetch-sameas-statements-sikart
+      - task: fetch-sameas-statements-wikidata
+
+  fetch-sameas-statements-aat:
+    desc: Fetch SameAs statements contained in AAT
+    sources:
+      - /data/aat-data/*.nt
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: AAT
+          OUTPUT_FILE: aatSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://vocab.getty.edu/aat/graph> {
+                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
+              }
+            }
+  
+  fetch-sameas-statements-gnd:
+    desc: Fetch SameAs statements contained in GND
+    sources:
+      - /data/gnd-authorities-data/*.ttl
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: GND
+          OUTPUT_FILE: gndSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX schema: <http://schema.org/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              {SELECT * WHERE {
+                  VALUES (?predicate) {
+                      (schema:sameAs)
+                      (rdfs:seeAlso)
+                      (skos:exactMatch)
+                  }
+                  GRAPH <https://d-nb.info/gnd/authorities/graph> {
+                  ?candidate2 ?predicate ?candidate1 .
+                  }
+              }}
+            }
+  
+  fetch-sameas-statements-sikart:
+    desc: Fetch SameAs statements contained in SIKART
+    sources:
+      - /data/sikart-data/*.ttl
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: SIKART
+          OUTPUT_FILE: sikartSameAs.ttl
+          QUERY: |
+            PREFIX schema: <http://schema.org/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX crmdig: <http://www.ics.forth.gr/isl/CRMdig/>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+            GRAPH <http://recherche.sik-isea.ch/graph> {
+              ?candidate2 crmdig:L54_same_as ?candidate1 .
+              }
+            }
+
+
+  fetch-sameas-statements-thesarchesp:
+    desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
+    sources:
+      - /data/thes-arch-esp-data/*.ttl
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars: 
+          DATASET: Thesaurus Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
+          OUTPUT_FILE: thesarchespSameAs.ttl
+          QUERY: |
+            PREFIX schema: <http://schema.org/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph> {
+                ?candidate2 skos:exactMatch ?candidate1 .
+              }
+            }
+
+  fetch-sameas-statements-thesobjmob:
+    desc: Fetch SameAs statements contained in Thesaurus Object/Mobiliers
+    sources:
+      - /data/thes-obj-mob-data/*.ttl
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: Thesaurus Objects Mobiliers
+          OUTPUT_FILE: thesobjmobSameAs.ttl
+          QUERY: |
+            PREFIX schema: <http://schema.org/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph> {
+                ?candidate2 skos:exactMatch ?candidate1 .
+              }
+            }
+
+  fetch-sameas-statements-ulan:
+    desc: Fetch SameAs statements contained in ULAN
+    sources:
+      - /data/ulan-data/*.nt
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: ULAN
+          OUTPUT_FILE: ulanSameAs.ttl
+          QUERY: |
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
+              GRAPH <http://vocab.getty.edu/ulan/graph> {
+                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
+              }
+            }
+  
+  fetch-sameas-statements-wikidata:
+    desc: Fetch SameAs statements from Wikidata
+    cmds:
+      - task: _fetch-sameas-statements-remote-chunked
+        vars:
+          DATASET: Wikidata VIAF
+          OUTPUT_FILE: wikidataSameAsVIAF.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              {
+                SELECT ?candidate ?sameAsID WHERE {
+                    ?candidate wdt:P214 ?sameAsID .
+                  } $LIMIT_STATEMENT
+                }
+              BIND (IRI(CONCAT(\"http://viaf.org/viaf/\", ?sameAsID)) as ?sameAs)
+            }
+          NUM_CHUNKS: 20
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata GND
+          OUTPUT_FILE: wikidataSameAsGND.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P227 ?sameAsID .
+              BIND (IRI(CONCAT(\"https://d-nb.info/gnd/\", ?sameAsID)) as ?sameAs)
+            }           
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata BNF
+          OUTPUT_FILE: wikidataSameAsBNF.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P268 ?sameAsID .
+              BIND(IRI(CONCAT('http://data.bnf.fr/ark:/12148/', ?sameAsID)) as ?sameAs)
+            }
+      - task: _fetch-sameas-statements-remote-chunked
+        vars:
+          DATASET: Wikidata LOC
+          OUTPUT_FILE: wikidataSameAsLOC.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              {
+                SELECT ?candidate ?sameAsID WHERE {
+                  ?candidate wdt:P244 ?sameAsID .
+                  FILTER(! CONTAINS(STR(?sameAsID), \" \") && ! CONTAINS(STR(?sameAsID), \"|\"))
+                } $LIMIT_STATEMENT
+              }
+              BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
+            }
+          NUM_CHUNKS: 7
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata ULAN
+          OUTPUT_FILE: wikidataSameAsULAN.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P245 ?sameAsID .
+              BIND (IRI(CONCAT(\"http://vocab.getty.edu/ulan/\", ?sameAsID)) as ?sameAs)
+            }
+      - task: _fetch-sameas-statements-remote
+        vars:
+          DATASET: Wikidata SIKART (Persons)
+          OUTPUT_FILE: wikidataSameAsSIKARTPersons.ttl
+          ENDPOINT: $WIKIDATA_ENDPOINT
+          QUERY: |
+            PREFIX wd: <http://www.wikidata.org/entity/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+            CONSTRUCT {
+                ?candidate owl:sameAs ?sameAs .
+            } WHERE {
+              ?candidate wdt:P781 ?sameAsID .
+              FILTER EXISTS {
+                ?candidate wdt:P31 wd:Q5 .
+              }
+              BIND (IRI(CONCAT(\"https://recherche.sik-isea.ch/person-\", ?sameAsID)) as ?sameAs) .
+            }
+
+  generate-sameas-statements:
+    desc: Generates SameAs statements between entities
+    cmds:
+      - task: fetch-sameas-statements
+      - mkdir -p /data/sameAsStatements/combined
+      - task: process-sameas-statements
+  
+  generate-labels:
+    desc: Generate labels for URIs
+    cmds:
+      - mkdir -p /pipeline/tmp/requests
+      - mkdir -p /pipeline/tmp/responses
+      - |
+        echo "SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE
+          {
+            GRAPH ?graph_name
+            {
+              ?subject ?predicates ?label .
+            }
+          }
+        GROUP BY ?graph_name" > /pipeline/tmp/requests/label_count_by_graph.rq
+      - $BLAZEGRAPH_RUNNER select --journal=$BLAZEGRAPH_JOURNAL --outformat=json /pipeline/tmp/requests/label_count_by_graph.rq  /pipeline/tmp/responses/label_count_by_graph.json
+      - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --blazegraph_journal "$BLAZEGRAPH_JOURNAL"
+
+  ingest-metadata:
+    desc: Ingest metadata
+    sources:
+      - /data/rds-metadata/_datasetsMetadata.ttl
+      - /data/rds-metadata/rds-ontologies-description.ttl
+      - /data/rds-metadata/type-mapping.ttl
+    cmds:
+      - task: _ingest-data-from-file
+        vars: 
+          NAME: Dataset Metadata
+          FILE: /data/rds-metadata/_datasetsMetadata.ttl
+          GRAPH: http://rds.swissartresarch.net/graph/datasetMetadata
+      - task: _ingest-data-from-file
+        vars:
+          NAME: RDS Ontologies
+          FILE: /data/rds-metadata/rds-ontologies-description.ttl
+          GRAPH: http://rds.swissartresarch.net/graph/rdsOntologies
+      - task: _ingest-data-from-file
+        vars:
+          NAME: Type Mappings
+          FILE: /data/rds-metadata/type-mapping.ttl
+          GRAPH: http://schema.swissartresarch.net/rds/type-mapping
+
+  ingest-sameas-statements:
+    desc: Ingest SameAs statements
+    sources:
+      - /data/sameAsStatements/combined/*.ttl
+    cmds:
+      - task: _ingest-data-from-file
+        vars:
+          NAME: Type Mappings
+          FILE: /data/sameAsStatements/combined/*.ttl
+          GRAPH: http://schema.swissartresarch.net/rds/exact-match-statements
+  
+  process-sameas-statements:
+    desc: Process SameAs statements
+    sources:
+      - /data/sameAsStatements/*.ttl
+    cmds:
+      - cd /pipeline/scripts/sameAsProcessing; npm run start
+
+  update-data-aat:
+    desc: Update data for Getty AAT
+    vars:
+      GRAPH: http://vocab.getty.edu/aat/graph
+      DATA_DIRECTORY: /data/aat-data
+      DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
+      GUNZIP: false
+      FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-geonames:
+    desc: Update data for GeoNames
+    vars:
+      GRAPH: http://sws.geonames.org/graph
+      DATA_DIRECTORY: /data/geonames-data
+      DATA_URL: http://download.geonames.org/all-geonames-rdf.zip
+      GUNZIP: false
+      FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - echo "Preparing Geonames Data"
+      - |
+        if [ ! -f "{{.DATA_DIRECTORY}}/geonames.nt" ]; then
+          cp /pipeline/scripts/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
+        else
+          echo "Geonames data already exists. Skipping conversion."
+        fi
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+  
+  update-data-gnd:
+    desc: Update data for GND
+    vars:
+      GRAPH: https://d-nb.info/gnd/authorities/graph
+      DATA_DIRECTORY: /data/gnd-authorities-data
+      DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+      GUNZIP: true
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-sikart:
+    desc: Update data for SIKART
+    vars:
+      GRAPH: http://recherche.sik-isea.ch/graph
+      DATA_DIRECTORY: /data/sikart-data
+      DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
+      DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadFromGitHubAndUnzip
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DATA_DIRECTORY: "{{.DATA_DIRECTORY}}"
+          DATA_GIT_REPOSITORY: "{{.DATA_GIT_REPOSITORY}}"
+          DATA_GIT_PATH: "{{.DATA_GIT_PATH}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+          FILE_NAME: "data"
+          GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
+          GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-thesarchesp:
+    desc: Update data for Thesaurus Architecture/Espace 
+    vars:
+      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+      DATA_DIRECTORY: /data/thes-arch-esp-data
+      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-thesobjmob:
+    desc: Update data for Thesaurus Object/Mobiliers
+    vars:
+      GRAPH: http://Fdata.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+      DATA_DIRECTORY: /data/thes-obj-mob-data
+      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  update-data-ulan:
+    desc: Update data for Getty ULAN
+    vars:
+      GRAPH: http://vocab.getty.edu/ulan/graph
+      DATA_DIRECTORY: /data/ulan-data
+      DATA_URL: http://ulandownloads.getty.edu/VocabData/full.zip
+      GUNZIP: false
+      FILE_FORMAT: nt
+    cmds:
+      - task: _downloadAndUnzip
+        vars:
+          URL: "{{.DATA_URL}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          GUNZIP: "{{.GUNZIP}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+      - task: _removeGraphFromTripleStore
+        vars:
+          GRAPH: "{{.GRAPH}}"
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
+  ##### INTERNAL TASKS #####
+    
+  _downloadAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data
+    requires:
+      vars: [URL, DIRECTORY, GUNZIP, FILE_FORMAT]
+    cmds:
+      - # If the directory already exists, ask the user if they want to delete it
+      - |
+        if [ -d "{{.DIRECTORY }}" ]; then
+          read -p "Do you want to remove previous data from the directory and download new ones? (y/n) " REPLY
+          echo
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}"
+          fi
+        fi
+      - # If the directory does not exist, download the data
+      - |
+        if [ ! -d "{{.DIRECTORY }}" ]; then
+          mkdir -p "{{.DIRECTORY}}"
+          cd "{{.DIRECTORY}}"
+          echo "Fetching datasources..."
+          if [ "{{.GUNZIP}}" == true ]; then
+            curl -k {{.URL}} -o data.{{.FILE_FORMAT}}.gz
+          else
+            curl -k {{.URL}} -o data.zip
+          fi
+          echo "Fetching completed."
+        fi
+      - |
+        if [ "{{.SKIP_UNZIPPING}}" != true ]; then
+            echo "Unzip datasources..."
+            cd "{{.DIRECTORY}}"
+            if [ "{{.USE_GUNZIP}}" == true ]; then
+              gunzip data.{{.FILE_FORMAT}}.gz
+            elif [ -f "data.zip" ]; then
+                unzip data.zip
+            fi
+            echo "Unzipping completed."
+        fi
+
+  _downloadFromGitHubAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data from GitHub
+    cmds:
+      - python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
+
+  _fetch-sameas-statements-local:
+    desc: Fetch SameAs Statements for different datasets
+    internal: True
+    status:
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+    vars:
+      QUERY_FILE: /pipeline/tmp/sameas{{.DATASET}}.rq
+    cmds:
+      - echo "Fetching SameAs Statements for {{.DATASET}}"
+      - echo "{{.QUERY}}" > "{{.QUERY_FILE}}"
+      - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+      - rm "{{.QUERY_FILE}}"
+
+  _fetch-sameas-statements-remote:
+    desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
+    internal: True
+    vars:
+      NUM_DOWNLOAD_ATTEMPTS: 5
+      CONNECTION_TIMEOUT: 10
+      MAX_TIME: 1200
+    status:
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+    cmds:
+      - rm -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+      - |
+        for ((i=1; i<={{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
+          if [[ ! -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}" ]]; then
+            echo "Fetching SameAs Statements for {{.DATASET}} (Attempt $i of {{.NUM_DOWNLOAD_ATTEMPTS}})"
+            curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+          fi
+        done
+
+  _fetch-sameas-statements-remote-chunked:
+    desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
+    internal: True
+    vars:
+      MAX_RESULTS_PER_REQUEST: 200000
+      NUM_DOWNLOAD_ATTEMPTS: 5
+      CONNECTION_TIMEOUT: 10
+      MAX_TIME: 1200
+    status:
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+    cmds:
+      - rm -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+      - |
+        for ((n=0; n<="{{.NUM_CHUNKS}}"; n++)) do
+          OFFSET=$((n * {{.MAX_RESULTS_PER_REQUEST}}))
+          if (( n==0 )); then
+            OFFSET_STR=""
+          else
+            OFFSET_STR="OFFSET $OFFSET"
+          fi
+          echo "Fetching SameAs Statements for {{.DATASET}} (Chunk $n of {{.NUM_CHUNKS}})"
+          OUTPUT_FILE_CHUNK="{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.$n.chunk"
+          for ((i=0; i<{{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
+            if [[ ! -f $OUTPUT_FILE_CHUNK ]]; then
+              LIMIT_STATEMENT="LIMIT {{.MAX_RESULTS_PER_REQUEST}} $OFFSET_STR"
+              curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > $OUTPUT_FILE_CHUNK
+            fi
+          done
+        done
+      - # Combine all the chunks into a single file
+      - cat {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
+      - rm {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk
+
+  _ingest-data-from-file:
+    desc: Ingest data from file
+    internal: True
+    requires:
+      vars: [NAME, FILE, GRAPH]
+    cmds:
+      - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
+
+  _loadDataFromDirectory:
+    desc: Load data from directory
+    internal: True
+    requires:
+      vars: [GRAPH, DIRECTORY, FILE_FORMAT]
+    cmds:
+      - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.DIRECTORY}}/*.{{.FILE_FORMAT}}
+
+  _removeGraphFromTripleStore:
+    desc: Remove graph from triple store
+    internal: True
+    requires:
+      vars: [GRAPH]
+    cmds:
+      - echo "DROP GRAPH <{{.GRAPH}}>" > tmp.rq
+      - echo $BLAZEGRAPH_JOURNAL
+      - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL tmp.rq
+      - rm tmp.rq

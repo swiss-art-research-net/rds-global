@@ -1,0 +1,158 @@
+@prefix : <http://www.metaphacts.com/resource/> .
+@prefix tgn_term: <http://vocab.getty.edu/tgn/term/> .
+@prefix Platform: <http://www.metaphacts.com/ontologies/platform#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix bio: <http://purl.org/vocab/bio/0.1/> .
+@prefix lexinfo: <http://www.lexinfo.net/ontology/2.0/lexinfo#> .
+@prefix ulan_event: <http://vocab.getty.edu/ulan/event/> .
+@prefix rshelp: <http://researchspace.org/help/> .
+@prefix thes: <http://collection.britishmuseum.org/id/thesauri/> .
+@prefix ulan_rel: <http://vocab.getty.edu/ulan/rel/> .
+@prefix ulan_scopeNote: <http://vocab.getty.edu/ulan/scopeNote/> .
+@prefix vdpp: <http://data.lirmm.fr/ontologies/vdpp#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ulan_rev: <http://vocab.getty.edu/ulan/rev/> .
+@prefix adms: <http://www.w3.org/ns/adms#> .
+@prefix crminf: <http://www.ics.forth.gr/isl/CRMinf/> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix geoliteral: <http://www.bigdata.com/rdf/geospatial/literals/v1#> .
+@prefix ulan: <http://vocab.getty.edu/ulan/> .
+@prefix rrx: <http://purl.org/r2rml-ext/> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix schema: <http://schema.org/> .
+@prefix rs: <http://www.researchspace.org/ontology/> .
+@prefix Help: <http://help.metaphacts.com/resource/> .
+@prefix freq: <http://purl.org/cld/freq/> .
+@prefix gvp_lang: <http://vocab.getty.edu/language/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rsp: <http://www.researchspace.org/resource/> .
+@prefix geo: <http://www.bigdata.com/rdf/geospatial#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix aat: <http://vocab.getty.edu/aat/> .
+@prefix tgn_scopeNote: <http://vocab.getty.edu/tgn/scopeNote/> .
+@prefix tgn: <http://vocab.getty.edu/tgn/> .
+@prefix ontolex: <http://www.w3.org/ns/lemon/ontolex#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix sp: <http://spinrdf.org/sp#> .
+@prefix cc: <http://creativecommons.org/ns#> .
+@prefix gvp: <http://vocab.getty.edu/ontology#> .
+@prefix fts: <http://www.bigdata.com/rdf/fts#> .
+@prefix skosxl: <http://www.w3.org/2008/05/skos-xl#> .
+@prefix ontogeo: <http://www.ontotext.com/owlim/geo#> .
+@prefix tgn_contrib: <http://vocab.getty.edu/tgn/contrib/> .
+@prefix aat_contrib: <http://vocab.getty.edu/aat/contrib/> .
+@prefix aat_rev: <http://vocab.getty.edu/aat/rev/> .
+@prefix aat_scopeNote: <http://vocab.getty.edu/aat/scopeNote/> .
+@prefix Default: <http://rds-pages.swissartresearch.net/> .
+@prefix ulan_term: <http://vocab.getty.edu/ulan/term/> .
+@prefix bds: <http://www.bigdata.com/rdf/search#> .
+@prefix ulan_contrib: <http://vocab.getty.edu/ulan/contrib/> .
+@prefix Repository: <http://www.metaphacts.com/ontologies/repository#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dctype: <http://purl.org/dc/dcmitype/> .
+@prefix aat_rel: <http://vocab.getty.edu/aat/rel/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix iso: <http://purl.org/iso25964/skos-thes#> .
+@prefix bmo: <http://collection.britishmuseum.org/id/ontology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix aat_term: <http://vocab.getty.edu/aat/term/> .
+@prefix ulan_bio: <http://vocab.getty.edu/ulan/bio/> .
+@prefix ulan_source: <http://vocab.getty.edu/ulan/source/> .
+@prefix thesIdentifier: <http://collection.britishmuseum.org/id/> .
+@prefix fmt: <http://www.w3.org/ns/formats/> .
+@prefix crmdig: <http://www.ics.forth.gr/isl/CRMdig/> .
+@prefix thesDimension: <http://collection.britishmuseum.org/id/thesauri/dimension/> .
+@prefix wgs84_pos: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix aat_source_rev: <http://vocab.getty.edu/aat/source/rev/> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix thesUnit: <http://collection.britishmuseum.org/id/thesauri/unit/> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix vaem: <http://www.linkedmodel.org/schema/vaem#> .
+@prefix voag: <http://voag.linkedmodel.org/voag#> .
+@prefix voaf: <http://purl.org/vocommons/voaf#> .
+@prefix aat_source: <http://vocab.getty.edu/aat/source/> .
+@prefix graph-aat: <http://aat-explicit> .
+@prefix sesame: <http://www.openrdf.org/schema/sesame#> .
+@prefix User: <http://www.metaphacts.com/resource/user/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ptop: <http://www.ontotext.com/proton/protontop#> .
+@prefix tgn_source_rev: <http://vocab.getty.edu/tgn/source/rev/> .
+@prefix Assets: <http://www.metaphacts.com/resource/assets/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix crm: <http://www.cidoc-crm.org/cidoc-crm/> .
+@prefix wv: <http://vocab.org/waiver/terms/> .
+@prefix tgn_rel: <http://vocab.getty.edu/tgn/rel/> .
+@prefix Admin: <http://www.metaphacts.com/resource/admin/> .
+@prefix ulan_source_rev: <http://vocab.getty.edu/ulan/source/rev/> .
+@prefix tgn_rev: <http://vocab.getty.edu/tgn/rev/> .
+@prefix tgn_source: <http://vocab.getty.edu/tgn/source/> .
+@prefix wdrs: <http://www.w3.org/2007/05/powder-s#> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix bibo: <http://purl.org/ontology/bibo/> .
+@prefix luc: <http://www.ontotext.com/owlim/lucene#> .
+
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix rds: <http://schema.swissartresearch.net/ontology/rds#> .
+@prefix gnd: <https://d-nb.info/standards/elementset/gnd#> .
+
+@prefix wdt: <http://www.wikidata.org/prop/direct/> .
+
+rds:OntologyExtensions a owl:Ontology ;
+    rdfs:label "RDS Ontology Extensions" .
+
+rds:GndPersonShape a sh:NodeShape ;
+  sh:targetClass gnd:Person ;
+  sh:property
+  [
+    sh:path gnd:dateOfBirth ;
+    Platform:projectionVariableName "dateOfBirth" ;
+    dash:propertyRole dash:DescriptionRole ;
+  ], [
+    sh:path gnd:dateOfDeath ;
+    Platform:projectionVariableName "dateOfDeath" ;
+    dash:propertyRole dash:DescriptionRole ;
+    #sh:datatype xsd:date ;
+  ], [
+    sh:path gnd:professionOrOccupation ;
+    Platform:projectionVariableName "occupation" ;
+    dash:propertyRole dash:DescriptionRole ;
+  ], [
+    sh:path gnd:biographicalOrHistoricalInformation ;
+    Platform:projectionVariableName "bio" ;
+    dash:propertyRole dash:DescriptionRole ;
+  ], [
+    sh:path gnd:geographicAreaCode ;
+    Platform:projectionVariableName "place" ;
+    dash:propertyRole dash:DescriptionRole ;
+  ]
+  .
+
+
+  rds:WikidataPersonShape a sh:NodeShape ;
+    sh:targetClass wdt:Q1233456 ;
+    sh:property
+    [
+      sh:path ulan:bornAt ;
+      Platform:projectionVariableName "dateOfBirth" ;
+      dash:propertyRole dash:DescriptionRole ;
+    ], [
+      sh:path ulan:diedAt ;
+      Platform:projectionVariableName "dateOfDeath" ;
+      dash:propertyRole dash:DescriptionRole ;
+      #sh:datatype xsd:date ;
+    ], [
+      sh:path gnd:professionOrOccupation ;
+      Platform:projectionVariableName "occupation" ;
+      dash:propertyRole dash:DescriptionRole ;
+    ], [
+      sh:path gnd:biographicalOrHistoricalInformation ;
+      Platform:projectionVariableName "bio" ;
+      dash:propertyRole dash:DescriptionRole ;
+    ], [
+      sh:path gnd:geographicAreaCode ;
+      Platform:projectionVariableName "place" ;
+      dash:propertyRole dash:DescriptionRole ;
+    ]
+    .
