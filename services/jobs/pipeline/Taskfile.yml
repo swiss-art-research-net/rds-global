@@ -547,7 +547,7 @@ tasks:
         if [ "{{.SKIP_UNZIPPING}}" != true ]; then
             echo "Unzip datasources..."
             cd "{{.DIRECTORY}}"
-            if [ "{{.USE_GUNZIP}}" == true ]; then
+            if [ "{{.GUNZIP}}" == true ]; then
               gunzip data.{{.FILE_FORMAT}}.gz
             elif [ -f "data.zip" ]; then
                 unzip data.zip
