@@ -43,6 +43,8 @@ tasks:
 
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
+    sources:
+      - /data/aat-data/*.nt
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
@@ -59,6 +61,8 @@ tasks:
   
   fetch-sameas-statements-gnd:
     desc: Fetch SameAs statements contained in GND
+    sources:
+      - /data/gnd-authorities-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
@@ -84,6 +88,8 @@ tasks:
   
   fetch-sameas-statements-sikart:
     desc: Fetch SameAs statements contained in SIKART
+    sources:
+      - /data/sikart-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
@@ -103,6 +109,8 @@ tasks:
 
   fetch-sameas-statements-thesarchesp:
     desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
+    sources:
+      - /data/thes-arch-esp-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars: 
@@ -120,6 +128,8 @@ tasks:
 
   fetch-sameas-statements-thesobjmob:
     desc: Fetch SameAs statements contained in Thesaurus Object/Mobiliers
+    sources:
+      - /data/thes-obj-mob-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
@@ -137,6 +147,8 @@ tasks:
 
   fetch-sameas-statements-ulan:
     desc: Fetch SameAs statements contained in ULAN
+    sources:
+      - /data/ulan-data/*.nt
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
@@ -253,7 +265,6 @@ tasks:
               }
               BIND (IRI(CONCAT(\"https://recherche.sik-isea.ch/person-\", ?sameAsID)) as ?sameAs) .
             }
-
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
