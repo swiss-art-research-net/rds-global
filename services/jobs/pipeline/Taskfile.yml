@@ -27,7 +27,7 @@ tasks:
       - task: generate-labels
       - task: generate-sameas-statements
       - task: ingest-metadata
-      #TODO - task: ingest-sameas-statements
+      - task: ingest-sameas-statements
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
@@ -302,8 +302,21 @@ tasks:
           FILE: /data/rds-metadata/type-mapping.ttl
           GRAPH: http://schema.swissartresarch.net/rds/type-mapping
 
+  ingest-sameas-statements:
+    desc: Ingest SameAs statements
+    sources:
+      - /data/sameAsStatements/combined/*.ttl
+    cmds:
+      - task: _ingest-data-from-file
+        vars:
+          NAME: Type Mappings
+          FILE: /data/sameAsStatements/combined/*.ttl
+          GRAPH: http://schema.swissartresarch.net/rds/exact-match-statements
+  
   process-sameas-statements:
     desc: Process SameAs statements
+    sources:
+      - /data/sameAsStatements/*.ttl
     cmds:
       - cd /pipeline/scripts/sameAsProcessing; npm run start
 
