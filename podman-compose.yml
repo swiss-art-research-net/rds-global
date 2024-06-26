@@ -32,6 +32,7 @@ services:
       JAVA_OPTS: ''
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
       LETSENCRYPT_HOST: ${HOST_NAME}
+      METAPHACTORY_OPTS: METAPHACTORY_OPTS=-Dconfig.storage.rds-global.type=nonVersionedFile -Dconfig.storage.rds-global.mutable=true -Dconfig.storage.rds-global.root=/rdsapps/rds-global
       PLATFORM_OPTS: ${METAPHACTORY_OPTS}
       VIRTUAL_HOST: ${HOST_NAME}
       VIRTUAL_PORT: 8080
@@ -50,6 +51,18 @@ services:
     volumes:
     - ${DIRECTORY_METAPHACTORY_RUNTIME}:/runtime-data:rw
 
+  jobs:
+    container_name: ${COMPOSE_PROJECT_NAME}-jobs
+    build: ./services/jobs
+    image: swissartresearx/rds-global-jobs
+    environment:
+      GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
+      GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
+    volumes:
+      - ./services/jobs/pipeline:/pipeline
+      - ./data:/data
+      - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
+      
 networks:
   internal:
   proxy:
