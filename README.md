@@ -55,7 +55,7 @@ docker compose exec jobs task --list
 ```
 
 This will output a list of tasks:
-```sh
+```
 task: Available tasks for this project:
 * default:                                   Run entire pipeline
 * fetch-all-sameas-statements:               Fetch data reuired for SameAs statements
