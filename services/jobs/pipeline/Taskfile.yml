@@ -16,6 +16,7 @@ tasks:
 
   default:
     desc: Run entire pipeline
+    interactive: True
     cmds:
       - task: update-data-aat
       - task: update-data-geonames
