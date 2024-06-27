@@ -529,11 +529,11 @@ tasks:
           echo
           if [[ $REPLY =~ ^[Yy]$ ]]; then
             rm -r -d "{{.DIRECTORY}}"
+          else
+            SKIP_ALL=true
           fi
         fi
-      - # If the directory does not exist, download the data
-      - |
-        if [ ! -d "{{.DIRECTORY }}" ]; then
+        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
           mkdir -p "{{.DIRECTORY}}"
           cd "{{.DIRECTORY}}"
           echo "Fetching datasources..."
@@ -544,8 +544,7 @@ tasks:
           fi
           echo "Fetching completed."
         fi
-      - |
-        if [ "{{.SKIP_UNZIPPING}}" != true ]; then
+        if [ "{{.SKIP_UNZIPPING}}" != true ] && [ $SKIP_ALL != true ]; then
             echo "Unzip datasources..."
             cd "{{.DIRECTORY}}"
             if [ "{{.GUNZIP}}" == true ]; then
