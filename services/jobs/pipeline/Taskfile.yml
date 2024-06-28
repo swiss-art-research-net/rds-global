@@ -450,11 +450,10 @@ tasks:
       GUNZIP: false
       FILE_FORMAT: ttl
     cmds:
-      - task: _downloadAndUnzip
+      - task: _downloadFile
         vars:
           URL: "{{.DATA_URL}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
       - task: _removeGraphFromTripleStore
         vars:
@@ -471,14 +470,12 @@ tasks:
       GRAPH: http://Fdata.culture.fr/thesaurus/resource/ark:/67717/T69/graph
       DATA_DIRECTORY: /data/thes-obj-mob-data
       DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
-      GUNZIP: false
       FILE_FORMAT: ttl
     cmds:
-      - task: _downloadAndUnzip
+      - task: _downloadFile
         vars:
           URL: "{{.DATA_URL}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
       - task: _removeGraphFromTripleStore
         vars:
@@ -515,6 +512,29 @@ tasks:
 
   ##### INTERNAL TASKS #####
     
+  _downloadFile:
+    internal: True
+    interactive: True
+    desc: Download data
+    requires:
+      vars: [URL, DIRECTORY, FILE_FORMAT]
+    cmds:
+      - if [ -d "{{.DIRECTORY }}" ]; then
+          read -p "Do you want to remove previous data from the directory and download new ones? (y/n) " REPLY;
+          echo;
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}";
+          fi;
+        fi
+        
+        if [ ! -d "{{.DIRECTORY }}" ]; then
+          mkdir -p "{{.DIRECTORY}}";
+          cd "{{.DIRECTORY}}";
+          echo "Fetching datasources...";
+          curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}};
+          echo "Fetching completed.";
+        fi
+
   _downloadAndUnzip:
     internal: True
     interactive: True
@@ -524,6 +544,7 @@ tasks:
     cmds:
       - # If the directory already exists, ask the user if they want to delete it
       - |
+        SKIP_ALL=false
         if [ -d "{{.DIRECTORY }}" ]; then
           read -p "Do you want to remove previous data from the directory and download new ones? (y/n) " REPLY
           echo
@@ -538,9 +559,9 @@ tasks:
           cd "{{.DIRECTORY}}"
           echo "Fetching datasources..."
           if [ "{{.GUNZIP}}" == true ]; then
-            curl -k {{.URL}} -o data.{{.FILE_FORMAT}}.gz
+            curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}}.gz
           else
-            curl -k {{.URL}} -o data.zip
+            curl -k "{{.URL}}" -o data.zip
           fi
           echo "Fetching completed."
         fi
