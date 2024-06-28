@@ -560,6 +560,7 @@ tasks:
     interactive: True
     desc: Download and unzip data from GitHub
     cmds:
+      - mkdir -p "{{.DATA_DIRECTORY}}"
       - python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
 
   _fetch-sameas-statements-local:
