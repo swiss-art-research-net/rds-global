@@ -270,7 +270,7 @@ tasks:
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
     cmds:
-      - task: fetch-sameas-statements
+      - task: fetch-all-sameas-statements
       - mkdir -p /data/sameAsStatements/combined
       - task: process-sameas-statements
   
