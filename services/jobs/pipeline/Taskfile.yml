@@ -562,6 +562,7 @@ tasks:
     cmds:
       - mkdir -p "{{.DATA_DIRECTORY}}"
       - python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
+      - unzip "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip" -d "{{.DATA_DIRECTORY}}"
 
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
