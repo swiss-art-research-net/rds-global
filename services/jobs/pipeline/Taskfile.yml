@@ -3,7 +3,7 @@
 version: '3'
 
 vars:
-  PREDICATES_FILE: /pipeline/config/predicates.txt
+  PREDICATES_FILE: /pipeline/config/predicates.json
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
 
 env:
