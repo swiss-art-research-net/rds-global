@@ -12,7 +12,9 @@
         "<https://d-nb.info/standards/elementset/gnd#definition>",
         "<https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork>"
     ],
-    "http://recherche.sik-isea.ch/graph": [],
+    "http://recherche.sik-isea.ch/graph": [
+        "<http://www.cidoc-crm.org/cidoc-crm/P1_is_identified_by>/<http://schema.swissartresearch.net/ontology/rds#label>"
+    ],
     "http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph": [],
     "http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph": [],
     "http://vocab.getty.edu/ulan/graph": []
