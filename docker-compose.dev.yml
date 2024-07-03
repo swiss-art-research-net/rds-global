@@ -32,7 +32,7 @@ services:
     ports:
       - ${PORT_RDS}:8080
     volumes:
-    - ${DIRECTORY_METAPHACTORY_RUNTIME}:/runtime-data:rw
+      - ${DIRECTORY_METAPHACTORY_RUNTIME}:/runtime-data:rw
 
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs

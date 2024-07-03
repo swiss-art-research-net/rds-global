@@ -16,6 +16,7 @@ data-preparation/update-scripts/ulan-data/*
 data-preparation/groupingFeatureAdjustment/data*
 data-preparation/groupingFeatureAdjustment/output*
 data-preparation/utils/blazegraph-runner/**/*
+docker-compose.override.yml
 node_modules
 services/jobs/pipeline/scripts/sameAsProcessing/processing_db
 services/jobs/pipeline/tmp
