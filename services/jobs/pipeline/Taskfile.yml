@@ -467,7 +467,7 @@ tasks:
   update-data-thesobjmob:
     desc: Update data for Thesaurus Object/Mobiliers
     vars:
-      GRAPH: http://Fdata.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
       DATA_DIRECTORY: /data/thes-obj-mob-data
       DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
       FILE_FORMAT: ttl
