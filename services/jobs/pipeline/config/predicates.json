@@ -1,0 +1,19 @@
+{
+    "http://vocab.getty.edu/aat/graph": [
+        "<http://vocab.getty.edu/ontology#prefLabelGVP>/<http://www.w3.org/2008/05/skos-xl#literalForm>",
+        "<http://vocab.getty.edu/ontology#term>"
+    ],
+    "http://sws.geonames.org/graph": [
+        "<http://www.geonames.org/ontology#name>"
+    ],
+    "https://d-nb.info/gnd/authorities/graph": [
+        "<https://d-nb.info/standards/elementset/gnd#preferredName>",
+        "<https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson>",
+        "<https://d-nb.info/standards/elementset/gnd#definition>",
+        "<https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork>"
+    ],
+    "http://recherche.sik-isea.ch/graph": [],
+    "http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph": [],
+    "http://Fdata.culture.fr/thesaurus/resource/ark:/67717/T69/graph": [],
+    "http://vocab.getty.edu/ulan/graph": []
+}
