@@ -9,6 +9,7 @@
     "https://d-nb.info/gnd/authorities/graph": [
         "<https://d-nb.info/standards/elementset/gnd#preferredName>",
         "<https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson>",
+        "<https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent>",
         "<https://d-nb.info/standards/elementset/gnd#definition>",
         "<https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork>"
     ],
