@@ -20,22 +20,27 @@ def main(predicate_file, blazegraph_journal, limit_graph=None):
     for graph, nb in graph2nb.items():
         if graph in predicates and len(predicates[graph]):
             counter = 0
-            predicatesPath = '|'.join(predicates[graph])
+            # check if predicates[graph] is a list or a string
+            if type(predicates[graph]) == list:
+                predicatesPath = ' | '.join(predicates[graph])
+                predicatesQuery = '?subject ' + predicatesPath + ' ?value .'
+            elif type(predicates[graph]) == str:
+                predicatesQuery = predicates[graph]
             while counter <= nb:
                 query = """
                 INSERT {{ GRAPH <http://schema.swissartresearch.net/rds/labels> {{
-                ?subject <http://schema.swissartresearch.net/ontology/rds#label> ?label . 
+                    ?subject <http://schema.swissartresearch.net/ontology/rds#label> ?value . 
                 }} 
                 }} WHERE {{
                     {{
                         SELECT * {{
                             GRAPH <{0}> {{
-                                ?subject {1} ?label .
-                                        }}
+                                        {1}
+                                    }}
                                 }} ORDER BY DESC(?subject) OFFSET {2} LIMIT 3000000
                     }}
                 }}
-                """.format(graph, predicatesPath, str(counter))            
+                """.format(graph, predicatesQuery, str(counter))            
                 counter = counter + 3000000
                 with open('/pipeline/tmp/requests/label_query.rq', 'w') as f:
                     f.write(query)

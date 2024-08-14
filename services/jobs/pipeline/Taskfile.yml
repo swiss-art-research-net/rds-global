@@ -289,6 +289,8 @@ tasks:
           }
         GROUP BY ?graph_name" > /pipeline/tmp/requests/label_count_by_graph.rq
       - $BLAZEGRAPH_RUNNER select --journal=$BLAZEGRAPH_JOURNAL --outformat=json /pipeline/tmp/requests/label_count_by_graph.rq  /pipeline/tmp/responses/label_count_by_graph.json
+      - echo "DROP GRAPH <http://schema.swissartresearch.net/rds/labels>" > /pipeline/tmp/requests/drop_labels_graph.rq
+      - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/drop_labels_graph.rq
       - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --blazegraph_journal "$BLAZEGRAPH_JOURNAL" {{.CLI_ARGS}}
 
   ingest-metadata:
