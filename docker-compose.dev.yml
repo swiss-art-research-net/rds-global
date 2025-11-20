@@ -1,25 +1,9 @@
 services:
 
-  blazegraph:
-    container_name: ${COMPOSE_PROJECT_NAME}-blazegraph
-    environment:
-      QUERY_TIMEOUT: '0'
-    image: ${BLAZEGRAPH_IMAGE}
-    logging:
-      driver: json-file
-      options:
-        max-file: '10'
-        max-size: 200k
-    ports:
-      - ${PORT_BLAZEGRAPH}:8080
-    volumes:
-      - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
-      - ${DIRECTORY_BLAZEGRAPH_EXCHANGE}:/blazegraph-exchange:rw
-
   metaphactory:
     container_name: ${COMPOSE_PROJECT_NAME}-metaphactory
     depends_on:
-      blazegraph:
+      qlever:
         condition: service_started
     environment:
       METAPHACTORY_OPTS: METAPHACTORY_OPTS=-Dconfig.storage.rds-global.type=nonVersionedFile -Dconfig.storage.rds-global.mutable=true -Dconfig.storage.rds-global.root=/rdsapps/rds-global
@@ -44,4 +28,20 @@ services:
     volumes:
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
-      - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
+
+  qlever:
+    container_name: ${COMPOSE_PROJECT_NAME}-qlever
+    build: ./services/qlever
+    logging:
+      driver: json-file
+      options:
+        max-file: '10'
+        max-size: 200k
+    restart: unless-stopped
+    entrypoint: ["tail", "-f", "/dev/null"]
+    working_dir: /index
+    # First start: create index using `qlever index`
+    volumes:
+      - ./binds/qlever-index:/index:rw
+      - ./data:/index/data
+      - ./services/qlever/rds/Qleverfile:/index/Qleverfile:ro
