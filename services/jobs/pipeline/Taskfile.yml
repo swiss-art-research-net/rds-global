@@ -8,6 +8,7 @@ vars:
 
 env:
   BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
+  QLEVER_ENDPOINT: http://qlever:7001/api
   BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
   BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
   WIKIDATA_ENDPOINT: https://query.wikidata.org/sparql
@@ -30,6 +31,21 @@ tasks:
       - task: ingest-metadata
       - task: ingest-sameas-statements
       - task: materialise-num-sameas-statements
+  
+  test:
+    vars:
+      GRAPH: https://d-nb.info/gnd/authorities/graph
+      DATA_DIRECTORY: /index/data/gnd-authorities-data
+      DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+      GUNZIP: true
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
@@ -692,7 +708,14 @@ tasks:
     requires:
       vars: [GRAPH, DIRECTORY, FILE_FORMAT]
     cmds:
-      - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.DIRECTORY}}/*.{{.FILE_FORMAT}}
+      # Make a sparql LOAD call to load all files in the directory into the specified graph in QLever
+      - |
+        for file in {{.DIRECTORY}}/*.; do
+          if [[ $file == *".{{.FILE_FORMAT}}" ]]; then
+            echo "Loading file $file into graph {{.GRAPH}}"
+            curl -X POST --data-urlencode "update=LOAD <file://$file> INTO GRAPH <{{.GRAPH}}>" "{{.QLEVER_ENDPOINT}}"
+          fi
+        done
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
