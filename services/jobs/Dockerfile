@@ -20,9 +20,9 @@ VOLUME /data
 ADD ./nginx/mime.types /etc/nginx/conf.d/mime.types
 ADD ./nginx/static.conf /etc/nginx/conf.d/static.conf
 RUN rm /etc/nginx/sites-enabled/default || true
-RUN printf 'server {\n    listen 80;\n    root /data;\n    autoindex on;\n    include /etc/nginx/conf.d/mime.types;\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}\n' > /etc/nginx/conf.d/static.conf
 EXPOSE 80
 
 # Run with nginx
+RUN mkdir -p /pipeline
 WORKDIR /pipeline
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
