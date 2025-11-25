@@ -2,7 +2,7 @@ FROM python:3.8
 
 RUN apt-get -qq update && \
     apt-get -q -y upgrade && \
-    apt-get install -y sudo curl wget locales nginx && \
+    apt-get install -y sudo curl wget locales && \
     rm -rf /var/lib/apt/lists/*
 RUN locale-gen en_US.UTF-8
 
@@ -16,13 +16,7 @@ RUN sh -c "$(curl -ssL https://taskfile.dev/install.sh)" -- -d
 RUN mkdir /data
 VOLUME /data
 
-# Nginx config (optional: disable default site)
-ADD ./nginx/mime.types /etc/nginx/conf.d/mime.types
-ADD ./nginx/static.conf /etc/nginx/conf.d/static.conf
-RUN rm /etc/nginx/sites-enabled/default || true
-EXPOSE 80
-
 # Run with nginx
 RUN mkdir -p /pipeline
 WORKDIR /pipeline
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]

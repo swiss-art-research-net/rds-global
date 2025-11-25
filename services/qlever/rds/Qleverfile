@@ -12,7 +12,7 @@ DESCRIPTION      = Reference Data Service
 TEXT_DESCRIPTION = All literals, search with FILTER KEYWORDS(?text, "...")
 
 [index]
-INPUT_FILES     = data/rds-metadata
+INPUT_FILES     = data
 CAT_INPUT_FILES = find ${INPUT_FILES} -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)" -exec sh -c 'ext=`echo "{}" | sed "s|.*\.||"`; if [ "ext" = "ttl" ]; then cat "{}"; else rapper -gq -o turtle "{}"; fi' \;
 SETTINGS_JSON   = { "num-triples-per-batch": 1000000, "parallel-parsing": false }
 TEXT_INDEX      = from_literals
@@ -21,6 +21,8 @@ TEXT_INDEX      = from_literals
 PORT               = 7001
 ACCESS_TOKEN       = ${data:NAME}_8736426534
 MEMORY_FOR_QUERIES = 10G
+TIMEOUT            = 86400s
+
 
 [runtime]
 SYSTEM = native
