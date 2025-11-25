@@ -9,5 +9,6 @@ USER qlever
 
 VOLUME ["/input", "/index"]
 WORKDIR /index/rds
+EXPOSE 7001
 # Run idling
 ENTRYPOINT [ "sh", "-c", "qlever start & tail -f /dev/null" ]

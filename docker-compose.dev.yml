@@ -25,6 +25,9 @@ services:
     environment:
       GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
       GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
+      QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
+    ports:
+      - "8088:80"
     volumes:
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
@@ -38,6 +41,8 @@ services:
         max-file: '10'
         max-size: 200k
     restart: unless-stopped
+    ports:
+      - "7001:7001"
     entrypoint: ["tail", "-f", "/dev/null"]
     working_dir: /index
     # First start: create index using `qlever index`
