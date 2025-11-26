@@ -1,23 +1,5 @@
 services:
 
-  metaphactory:
-    container_name: ${COMPOSE_PROJECT_NAME}-metaphactory
-    depends_on:
-      qlever:
-        condition: service_started
-    environment:
-      METAPHACTORY_OPTS: METAPHACTORY_OPTS=-Dconfig.storage.rds-global.type=nonVersionedFile -Dconfig.storage.rds-global.mutable=true -Dconfig.storage.rds-global.root=/rdsapps/rds-global
-    image: ${METAPHACTORY_IMAGE}
-    logging:
-      driver: json-file
-      options:
-        max-file: '10'
-        max-size: 200k
-    ports:
-      - ${PORT_RDS}:8080
-    volumes:
-      - ${DIRECTORY_METAPHACTORY_RUNTIME}:/runtime-data:rw
-
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
@@ -26,11 +8,24 @@ services:
       GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
       GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
       QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
-    ports:
-      - "8088:80"
     volumes:
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
+  platform:
+    container_name: ${COMPOSE_PROJECT_NAME}-platform
+    depends_on:
+      qlever:
+        condition: service_started
+    image: swissartresearx/researchspace:7fa27dd39c4a02d3cf39b02f50162faed3eab8dd
+    logging:
+      driver: json-file
+      options:
+        max-file: '10'
+        max-size: 200k
+    ports:
+      - ${PORT_RDS}:8080
+    volumes:
+      - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
 
   qlever:
     container_name: ${COMPOSE_PROJECT_NAME}-qlever
@@ -42,7 +37,7 @@ services:
         max-size: 200k
     restart: unless-stopped
     ports:
-      - "7001:7001"
+      - ${PORT_TRIPLESTORE}:7001
     entrypoint: ["tail", "-f", "/dev/null"]
     working_dir: /index
     # First start: create index using `qlever index`
