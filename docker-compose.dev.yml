@@ -11,11 +11,34 @@ services:
     volumes:
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
+
+  blazegraph:
+    container_name: ${COMPOSE_PROJECT_NAME}-blazegraph
+    environment:
+      JAVA_OPTS: -Xmx24g
+      QUERY_TIMEOUT: '0'
+    image: robcast/researchspace-blazegraph:2.2.0-jre17
+    logging:
+      driver: json-file
+      options:
+        max-file: '10'
+        max-size: 200k
+    restart: unless-stopped
+    volumes:
+      - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
+      - ${DIRECTORY_BLAZEGRAPH_EXCHANGE}:/blazegraph-exchange:rw
+
   platform:
     container_name: ${COMPOSE_PROJECT_NAME}-platform
     depends_on:
       qlever:
         condition: service_started
+    environment:
+      PLATFORM_OPTS: >-
+        -Dconfig.environment.sparqlEndpoint=http://blazegraph:8080/blazegraph/sparql
+        -Dlog4j.configurationFile=classpath:org/researchspace/logging/log4j2.xml
+        ${RESEARCHSPACE_OPTS}
+      JAVA_OPTS: -Xmx1g
     image: swissartresearx/researchspace:7fa27dd39c4a02d3cf39b02f50162faed3eab8dd
     logging:
       driver: json-file
@@ -25,7 +48,7 @@ services:
     ports:
       - ${PORT_RDS}:8080
     volumes:
-      - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
+     - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
 
   qlever:
     container_name: ${COMPOSE_PROJECT_NAME}-qlever
