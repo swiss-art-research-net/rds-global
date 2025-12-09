@@ -1,0 +1,53 @@
+<h2>Welcome to RDS</h2>
+
+
+<semantic-context repository="qlever"> 
+    <semantic-search
+        limit='100'
+        id='search-browse'
+    >
+        <semantic-search-query-keyword 
+            min-search-term-length='3' 
+            debounce='600'
+            tokenize-lucene-query='false'
+            query='PREFIX textSearch: <https://qlever.cs.uni-freiburg.de/textSearch/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX gvp: <http://vocab.getty.edu/ontology#>
+                    PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
+                    SELECT DISTINCT ?subject ?label ?dataset WHERE {
+                        {
+                            ?subject a gvp:Concept ;
+                                (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
+                            BIND("aat" as ?dataset)
+                        }
+                        SERVICE textSearch: {
+                            ?t textSearch:contains [
+                                textSearch:word ?__token__ ;
+                                textSearch:prefix-match ?prefix_match ;
+                                textSearch:score ?prefix_score
+                            ] .
+                            ?t textSearch:contains [
+                                textSearch:entity ?label ;
+                                textSearch:score ?entity_score
+                            ] .
+                        }
+                    } 
+                    LIMIT 100
+        '>
+        </semantic-search-query-keyword>
+        <semantic-search-result-holder>
+            <semantic-search-result>
+                <semantic-table 
+                    id='grid-result'
+                    query='SELECT DISTINCT ?subject ?label ?prefix_score ?entity_score WHERE {
+                    }'
+                    number-of-displayed-rows="50"
+                    options='{
+                        "showFilter": false
+                    }'
+                >    
+                </semantic-table>
+            </semantic-search-result>
+        </semantic-search-result-holder>
+    </semantic-search>  
