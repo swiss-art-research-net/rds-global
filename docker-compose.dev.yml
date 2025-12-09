@@ -49,6 +49,7 @@ services:
       - ${PORT_RDS}:8080
     volumes:
      - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
+     - ./services/platform/apps:/apps
 
   qlever:
     container_name: ${COMPOSE_PROJECT_NAME}-qlever
