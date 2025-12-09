@@ -9,7 +9,7 @@
         <semantic-search-query-keyword 
             min-search-term-length='3' 
             debounce='600'
-            tokenize-lucene-query='false'
+            tokenize-lucene-query='true'
             query='PREFIX textSearch: <https://qlever.cs.uni-freiburg.de/textSearch/>
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -20,6 +20,8 @@
                             ?subject a gvp:Concept ;
                                 (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
                             BIND("aat" as ?dataset)
+                        } UNION {
+                            
                         }
                         SERVICE textSearch: {
                             ?t textSearch:contains [
@@ -40,7 +42,7 @@
             <semantic-search-result>
                 <semantic-table 
                     id='grid-result'
-                    query='SELECT DISTINCT ?subject ?label ?prefix_score ?entity_score WHERE {
+                    query='SELECT DISTINCT ?subject ?label ?dataset ?prefix_score ?entity_score WHERE {
                     }'
                     number-of-displayed-rows="50"
                     options='{
