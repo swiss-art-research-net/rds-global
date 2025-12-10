@@ -79,3 +79,11 @@ task: Available tasks for this project:
 * update-data-thesobjmob:                    Update data for Thesaurus Object/Mobiliers
 * update-data-ulan:                          Update data for Getty ULAN
 ```
+
+### Troubleshooting
+
+If QLever index failes due to write permission issues, set the permission of the bind mount directory to user 999 and group 999:
+
+```bash
+sudo chown -R 999:999 binds/qlever-index
+```
