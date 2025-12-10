@@ -19,6 +19,7 @@ def getFileContentsFromGit(*, username, token, repo, path, localfile):
         requestedFile = [d for d in folderData if d['name'] == file][0]
     except:
         sys.stderr.write("could not find file %s in path %s\n" % (file, folderURL))
+        sys.stderr.write("make sure the file exists and the access token is valid\n")
         exit()
 
     # Check if file already exists locally and if size matches
