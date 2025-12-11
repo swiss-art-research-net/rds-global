@@ -559,18 +559,38 @@ tasks:
       DATA_DIRECTORY: /data/dummydata
     cmds:
       - |
-        find {{.DATA_DIRECTORY}} -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)" -exec sh -c '
-          echo "Verifying {},..."; 
-          file="{}"
-          out=$(rapper -g -c "$file" 2>&1)
-          status=$?
-          if [ "$status" -eq 0 ]; then
-            triples=$(printf "%s\n" "$out" | awk "/Parsing returned/{print \$3}")
+        DATA_DIR="{{.DATA_DIRECTORY}}"
+        FILES_VERIFIED=0
+        FILES_OK=0
+        FILES_ERROR=0
+
+        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)"); do
+          echo "Verifying $file,..."
+
+          if out=$(rapper -g -c "$file" 2>&1); then
+            triples=$(printf "%s\n" "$out" | awk '/Parsing returned/{print $3}')
             echo "$file: ${triples} triples OK"
+            FILES_OK=$((FILES_OK + 1))
           else
-            echo "$VERIFICATION FAILED"
-            printf "%s\n" "$out" | grep -i "Error"
-          fi' \;
+            echo "VERIFICATION FAILED"
+            printf "%s\n" "$out" | grep -i "Error" || true
+            FILES_ERROR=$((FILES_ERROR + 1))
+          fi
+        done
+
+        FILES_VERIFIED=$((FILES_OK + FILES_ERROR))
+
+        echo
+        echo "Verification completed."
+        echo "Files verified: $FILES_VERIFIED"
+        echo "Files OK: $FILES_OK"
+        echo "Files with errors: $FILES_ERROR"
+
+        # Make Task fail if any file failed (optional: remove if you want overall success)
+        if [ "$FILES_ERROR" -gt 0 ]; then
+          exit 1
+        fi
+
 
   ##### INTERNAL TASKS #####
     
