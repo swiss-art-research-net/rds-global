@@ -556,9 +556,21 @@ tasks:
   verify-data:
     desc: Verify the validity of the source data
     vars:
-      DATA_DIRECTORY: /data
+      DATA_DIRECTORY: /data/dummydata
     cmds:
-      - find {{.DATA_DIRECTORY}} -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)" -exec sh -c 'echo "Verifying {},..." | rapper -g -c "{}"' \;
+      - |
+        find {{.DATA_DIRECTORY}} -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)" -exec sh -c '
+          echo "Verifying {},..."; 
+          file="{}"
+          out=$(rapper -g -c "$file" 2>&1)
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            triples=$(printf "%s\n" "$out" | awk "/Parsing returned/{print \$3}")
+            echo "$file: ${triples} triples OK"
+          else
+            echo "$VERIFICATION FAILED"
+            printf "%s\n" "$out" | grep -i "Error"
+          fi' \;
 
   ##### INTERNAL TASKS #####
     
