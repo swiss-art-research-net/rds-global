@@ -87,3 +87,15 @@ If QLever index failes due to write permission issues, set the permission of the
 ```bash
 sudo chown -R 999:999 binds/qlever-index
 ```
+
+### Data Verification
+
+If the GND data fails to be verified, it can help to split it into separate files:
+```
+split -l 1000000 -d -a 3 data.nt data.temp.
+```
+
+And then rename the files to have the `.nt` extension:
+```
+for f in data.temp.*; do mv "$f" "$f.nt"; done
+```
