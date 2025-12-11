@@ -556,13 +556,14 @@ tasks:
   verify-data:
     desc: Verify the validity of the source data
     vars:
-      DATA_DIRECTORY: /data/dummydata
+      DATA_DIRECTORY: /data
     cmds:
       - |
         DATA_DIR="{{.DATA_DIRECTORY}}"
         FILES_VERIFIED=0
         FILES_OK=0
         FILES_ERROR=0
+        ERROR_REPORT=""
 
         for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)"); do
           echo "Verifying $file,..."
@@ -573,8 +574,11 @@ tasks:
             FILES_OK=$((FILES_OK + 1))
           else
             echo "VERIFICATION FAILED"
-            printf "%s\n" "$out" | grep -i "Error" || true
+            err_line=$(printf "%s\n" "$out" | grep -i "Error" || true)
+            printf "%s\n" "$err_line"
             FILES_ERROR=$((FILES_ERROR + 1))
+
+            ERROR_REPORT="${ERROR_REPORT}\n${file}: ${err_line}"
           fi
         done
 
@@ -586,7 +590,12 @@ tasks:
         echo "Files OK: $FILES_OK"
         echo "Files with errors: $FILES_ERROR"
 
-        # Make Task fail if any file failed (optional: remove if you want overall success)
+        if [ "$FILES_ERROR" -gt 0 ]; then
+          echo
+          echo "Error Report:"
+          printf "%b\n" "${ERROR_REPORT#\\n}"
+        fi
+
         if [ "$FILES_ERROR" -gt 0 ]; then
           exit 1
         fi
