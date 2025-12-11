@@ -438,6 +438,7 @@ tasks:
       DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
       GUNZIP: true
       FILE_FORMAT: ttl
+      FILE_FORMAT: nt
     cmds:
       - task: _downloadAndUnzip
         vars:
