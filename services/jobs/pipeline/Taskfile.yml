@@ -553,6 +553,13 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
+  verify-data:
+    desc: Verify the validity of the source data
+    vars:
+      DATA_DIRECTORY: /data
+    cmds:
+      - find {{.DATA_DIRECTORY}} -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)" -exec sh -c 'echo "Verifying {},..." | rapper -g -c "{}"' \;
+
   ##### INTERNAL TASKS #####
     
   _downloadFile:
