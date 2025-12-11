@@ -569,7 +569,7 @@ tasks:
           echo "Verifying $file,..."
 
           if out=$(rapper -g -c "$file" 2>&1); then
-            triples=$(printf "%s\n" "$out" | awk '/Parsing returned/{print $3}')
+            triples=$(printf "%s\n" "$out" | awk '/Parsing returned/ {print $4}')
             echo "$file: ${triples} triples OK"
             FILES_OK=$((FILES_OK + 1))
           else
