@@ -570,7 +570,7 @@ tasks:
 
           if out=$(rapper -g -c "$file" 2>&1); then
             triples=$(printf "%s\n" "$out" | awk '/Parsing returned/ {print $4}')
-            echo "$file: ${triples} triples OK"
+            echo "$OK! Returned ${triples}"
             FILES_OK=$((FILES_OK + 1))
           else
             echo "VERIFICATION FAILED"
