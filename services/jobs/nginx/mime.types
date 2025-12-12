@@ -1,0 +1,6 @@
+types {
+    text/turtle  ttl;
+    application/n-triples nt;
+    application/ld+json  jsonld;
+    text/n3       n3;
+}

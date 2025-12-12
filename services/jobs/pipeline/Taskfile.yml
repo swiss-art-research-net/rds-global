@@ -770,16 +770,16 @@ tasks:
       QLEVER_ACCESS_TOKEN:
         sh: echo $QLEVER_ACCESS_TOKEN
     cmds:
-      - echo "Loading data from /data/{{.DIRECTORY}} into graph {{.GRAPH}} is not yet implemented"
-      - #|
-        #for file in /data/{{.DIRECTORY}}/*.{{.FILE_FORMAT}}; do
-        #  if [[ $file == *".{{.FILE_FORMAT}}" ]]; then
-        #    echo "Loading file $file into graph {{.GRAPH}}"
-        #    # strip /data from the file path for the LOAD command
-        #    file=${file:5}
-        #    curl -X POST --data-urlencode "update=LOAD <http://jobs$file> INTO GRAPH <{{.GRAPH}}>" "{{.QLEVER_ENDPOINT}}" --data-urlencode "access-token={{.QLEVER_ACCESS_TOKEN}}"
-        #  fi
-        #done
+      - echo "Loading data from /data/{{.DIRECTORY}} into graph {{.GRAPH}}"
+      - |
+        for file in {{.DIRECTORY}}/*.{{.FILE_FORMAT}}; do
+          if [[ $file == *".{{.FILE_FORMAT}}" ]]; then
+            echo "Loading file $file into graph {{.GRAPH}}"
+            # strip /data from the file path for the LOAD command
+            file=${file:5}
+            curl -X POST --data-urlencode "update=LOAD <http://jobs$file> INTO GRAPH <{{.GRAPH}}>" "{{.QLEVER_ENDPOINT}}" --data-urlencode "access-token={{.QLEVER_ACCESS_TOKEN}}"
+           fi
+        done
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
@@ -787,8 +787,5 @@ tasks:
     requires:
       vars: [GRAPH]
     cmds:
-      - echo "Removing graph {{.GRAPH}} from triple store is not yet implemented"
-      - #echo "DROP GRAPH <{{.GRAPH}}>" > tmp.rq
-      - #echo $BLAZEGRAPH_JOURNAL
-      - #$BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL tmp.rq
-      - #rm tmp.rq
+      - echo "Removing graph {{.GRAPH}} from triple store"
+      - curl -X POST --data-urlencode "update=DROP GRAPH <{{.GRAPH}}>" "{{.QLEVER_ENDPOINT}}" --data-urlencode "access-token={{.QLEVER_ACCESS_TOKEN}}"
