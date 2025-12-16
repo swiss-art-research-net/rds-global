@@ -827,6 +827,9 @@ tasks:
           [ -f "$file" ] || continue
           echo "Loading file $file into graph {{.GRAPH}}"
           curl --fail-with-body --http1.1 \
+              --retry 5 \
+              --retry-delay 3 \
+              --retry-all-errors \
               -X POST \
               -H "Expect:" \
               -H "Content-Type: application/n-triples" \
