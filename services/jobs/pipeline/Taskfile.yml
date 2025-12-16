@@ -31,20 +31,6 @@ tasks:
       - task: ingest-metadata
       - task: ingest-sameas-statements
       - task: materialise-num-sameas-statements
-  
-  test:
-    vars:
-      GRAPH: https://d-nb.info/gnd/authorities/graph
-      DATA_DIRECTORY: gnd-authorities-data
-      DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
-      GUNZIP: true
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
@@ -761,14 +747,6 @@ tasks:
     cmds:
       - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
 
-  # TODO: 
-  # REVISE USING PUT
-  # see https://docs.qlever.dev/update/#updates-involving-large-files
-  #curl -X "PUT" \
-  #    -H "Content-Type: text/turtle" \
-  #    -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
-  #    --data-binary @graph.ttl \
-  #    "http://{{.QLEVER_ENDPOINT}}:7019?graph={{.GRAPH}}"
   _loadDataFromDirectory:
     desc: Load data from directory
     internal: True
@@ -777,31 +755,68 @@ tasks:
     vars:
       QLEVER_ACCESS_TOKEN:
         sh: echo $QLEVER_ACCESS_TOKEN
+      DIRECTORY_FOR_INGEST:
+        sh: echo "/pipeline/tmp/$(basename {{.DIRECTORY}})_ingest"
+      FILE_TYPE:
+        sh: |
+            case "{{.FILE_FORMAT}}" in
+              rdf|owl)    echo rdfxml ;;
+              nt)         echo ntriples ;;
+              ttl)        echo turtle ;;
+              trig)       echo trig ;;
+              nq)         echo nquads ;;
+              json|rj)    echo json ;;
+              html|xhtml) echo rdfa ;;
+              xml)        echo grddl ;;
+              rss)        echo rss-tag-soup ;;
+              *)          echo guess ;;
+            esac
+      LINE_LIMIT_FOR_SPLIT: 1000000
     cmds:
-      - echo "Loading data from /data/{{.DIRECTORY}} into graph {{.GRAPH}}"
+      - # Remove temporary directory if it exists
+      - rm -rf "{{.DIRECTORY_FOR_INGEST}}"
+      - # Create temporary directory
+      - mkdir -p "{{.DIRECTORY_FOR_INGEST}}"
+      - # use rapper to convert input files to nt format if necessary. If already in nt format, copy files to ingest directory
       - |
-        for file in {{.DIRECTORY}}/*.{{.FILE_FORMAT}}; do
+        if [ "{{.FILE_FORMAT}}" != "nt" ]; then
+          echo "Converting files in {{.DIRECTORY}} to N-Triples format for ingestion..."
+          for file in {{.DIRECTORY}}/*.{{.FILE_FORMAT}}; do
+            [ -f "$file" ] || continue
+            base_filename=$(basename "$file")
+            output_file="{{.DIRECTORY_FOR_INGEST}}/${base_filename%.*}.nt"
+            rapper -i "{{.FILE_TYPE}}" -o ntriples "$file" > "$output_file"
+          done
+        else
+          echo "Copying N-Triples files from {{.DIRECTORY}} to ingestion directory..."
+          cp {{.DIRECTORY}}/*.nt "{{.DIRECTORY_FOR_INGEST}}/"
+        fi
+      - # Split large files into smaller chunks of 100000 lines each
+      - |
+        echo "Splitting large files into smaller chunks for ingestion..."
+        for file in {{.DIRECTORY_FOR_INGEST}}/*.nt; do
           [ -f "$file" ] || continue
-
-          case "${file##*.}" in
-            ttl) CT="text/turtle" ;;
-            nt)  CT="application/n-triples" ;;
-            rdf) CT="application/rdf+xml" ;;
-            *)
-              echo "Unsupported RDF format: $file" >&2
-              exit 1
-              ;;
-          esac
-
-          echo "Loading file $file into graph {{.GRAPH}}"
-          curl -v --fail-with-body --http1.1 \
-              -X POST \
-              -H "Expect:" \
-              -H "Content-Type: $CT" \
-              -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
-              -T "$file" \
-              "{{.QLEVER_ENDPOINT}}/?graph={{.GRAPH}}"
+          line_count=$(wc -l < "$file")
+          if [ "$line_count" -gt {{.LINE_LIMIT_FOR_SPLIT}} ]; then
+            echo "Splitting $file (contains $line_count lines)..."
+            split -l {{.LINE_LIMIT_FOR_SPLIT}} -d --additional-suffix=.nt "$file" "${file%.*}_part_"
+            rm "$file"
+          fi
         done
+      - # Load data into the triple store
+      # - echo "Loading data from /data/{{.DIRECTORY_FOR_INGEST}} into graph {{.GRAPH}}"
+      # - |
+      #   for file in {{.DIRECTORY_FOR_INGEST}}/*.{{.FILE_FORMAT}}; do
+      #     [ -f "$file" ] || continue
+      #     echo "Loading file $file into graph {{.GRAPH}}"
+      #     curl --fail-with-body --http1.1 \
+      #         -X POST \
+      #         -H "Expect:" \
+      #         -H "Content-Type: application/n-triples" \
+      #         -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+      #         -T "$file" \
+      #         "{{.QLEVER_ENDPOINT}}/?graph={{.GRAPH}}"
+      #   done
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
