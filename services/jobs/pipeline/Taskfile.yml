@@ -640,7 +640,7 @@ tasks:
         SKIP_ALL=false
         if [ -d "{{.DIRECTORY}}" ]; then
           REPLY="y"
-          REPLY=$(timeout 10s sh -c 'read -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (Y/n) " r && echo "$r"' || echo "$REPLY")
+          REPLY=$(timeout 10s sh -c 'read -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (Y/n) (defaults to Y after 10s)" r && echo "$r"' || echo "$REPLY")
           echo
           if [[ $REPLY =~ ^[Yy]$ ]]; then
             rm -r -d "{{.DIRECTORY}}"
