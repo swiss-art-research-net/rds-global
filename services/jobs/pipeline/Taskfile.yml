@@ -8,7 +8,7 @@ vars:
 
 env:
   BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
-  QLEVER_ENDPOINT: http://qlever:7001/api
+  QLEVER_ENDPOINT: http://qlever:7001
   BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
   BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
   WIKIDATA_ENDPOINT: https://query.wikidata.org/sparql
@@ -761,6 +761,14 @@ tasks:
     cmds:
       - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
 
+  # TODO: 
+  # REVISE USING PUT
+  # see https://docs.qlever.dev/update/#updates-involving-large-files
+  #curl -X "PUT" \
+  #    -H "Content-Type: text/turtle" \
+  #    -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+  #    --data-binary @graph.ttl \
+  #    "http://{{.QLEVER_ENDPOINT}}:7019?graph={{.GRAPH}}"
   _loadDataFromDirectory:
     desc: Load data from directory
     internal: True
@@ -773,12 +781,26 @@ tasks:
       - echo "Loading data from /data/{{.DIRECTORY}} into graph {{.GRAPH}}"
       - |
         for file in {{.DIRECTORY}}/*.{{.FILE_FORMAT}}; do
-          if [[ $file == *".{{.FILE_FORMAT}}" ]]; then
-            echo "Loading file $file into graph {{.GRAPH}}"
-            # strip /data from the file path for the LOAD command
-            file=${file:5}
-            curl -X POST --data-urlencode "update=LOAD <http://jobs$file> INTO GRAPH <{{.GRAPH}}>" "{{.QLEVER_ENDPOINT}}" --data-urlencode "access-token={{.QLEVER_ACCESS_TOKEN}}"
-           fi
+          [ -f "$file" ] || continue
+
+          case "${file##*.}" in
+            ttl) CT="text/turtle" ;;
+            nt)  CT="application/n-triples" ;;
+            rdf) CT="application/rdf+xml" ;;
+            *)
+              echo "Unsupported RDF format: $file" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "Loading file $file into graph {{.GRAPH}}"
+          curl -v --fail-with-body --http1.1 \
+              -X PUT \
+              -H "Content-Type: $CT" \
+              -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+              -H "Expect:" \
+              -T "$file" \
+              "{{.QLEVER_ENDPOINT}}?graph={{.GRAPH}}"
         done
 
   _removeGraphFromTripleStore:
