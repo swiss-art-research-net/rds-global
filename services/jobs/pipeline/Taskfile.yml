@@ -795,12 +795,12 @@ tasks:
 
           echo "Loading file $file into graph {{.GRAPH}}"
           curl -v --fail-with-body --http1.1 \
-              -X PUT \
+              -X POST \
+              -H "Expect:" \
               -H "Content-Type: $CT" \
               -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
-              -H "Expect:" \
               -T "$file" \
-              "{{.QLEVER_ENDPOINT}}?graph={{.GRAPH}}"
+              "{{.QLEVER_ENDPOINT}}/?graph={{.GRAPH}}"
         done
 
   _removeGraphFromTripleStore:
