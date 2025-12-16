@@ -815,7 +815,7 @@ tasks:
           [ -f "$file" ] || continue
           line_count=$(wc -l < "$file")
           if [ "$line_count" -gt {{.LINE_LIMIT_FOR_SPLIT}} ]; then
-            echo "Splitting $file (contains $line_count lines)..."
+            echo "Splitting $file (contains $line_count triples)..."
             split -l {{.LINE_LIMIT_FOR_SPLIT}} -d --additional-suffix=.nt "$file" "${file%.*}_part_"
             rm "$file"
           fi
