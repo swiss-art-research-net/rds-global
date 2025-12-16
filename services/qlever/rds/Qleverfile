@@ -22,6 +22,7 @@ PORT               = 7001
 ACCESS_TOKEN       = ${data:NAME}_8736426534
 MEMORY_FOR_QUERIES = 10G
 TIMEOUT            = 86400s
+PERSIST_UPDATES    = true
 
 [runtime]
 SYSTEM = native
