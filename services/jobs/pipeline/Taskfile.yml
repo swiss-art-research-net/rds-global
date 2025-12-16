@@ -32,6 +32,22 @@ tasks:
       - task: ingest-sameas-statements
       - task: materialise-num-sameas-statements
 
+  test:
+    desc: Test the currently developed part of the pipeline
+    vars:
+      GRAPH: http://recherche.sik-isea.ch/graph
+      DATA_DIRECTORY: /data/sikart-data
+      DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
+      DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
+      GUNZIP: false
+      FILE_FORMAT: ttl
+    cmds:
+      - task: _loadDataFromDirectory
+        vars:
+          GRAPH: "{{.GRAPH}}"
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
     cmds: 
@@ -804,19 +820,21 @@ tasks:
           fi
         done
       - # Load data into the triple store
-      # - echo "Loading data from /data/{{.DIRECTORY_FOR_INGEST}} into graph {{.GRAPH}}"
-      # - |
-      #   for file in {{.DIRECTORY_FOR_INGEST}}/*.{{.FILE_FORMAT}}; do
-      #     [ -f "$file" ] || continue
-      #     echo "Loading file $file into graph {{.GRAPH}}"
-      #     curl --fail-with-body --http1.1 \
-      #         -X POST \
-      #         -H "Expect:" \
-      #         -H "Content-Type: application/n-triples" \
-      #         -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
-      #         -T "$file" \
-      #         "{{.QLEVER_ENDPOINT}}/?graph={{.GRAPH}}"
-      #   done
+      - echo "Loading data from /data/{{.DIRECTORY_FOR_INGEST}} into graph {{.GRAPH}}"
+      - |
+        for file in {{.DIRECTORY_FOR_INGEST}}/*.nt; do
+          [ -f "$file" ] || continue
+          echo "Loading file $file into graph {{.GRAPH}}"
+          curl --fail-with-body --http1.1 \
+              -X POST \
+              -H "Expect:" \
+              -H "Content-Type: application/n-triples" \
+              -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+              -T "$file" \
+              "{{.QLEVER_ENDPOINT}}/?graph={{.GRAPH}}"
+        done
+      - # Remove temporary ingestion directory
+      - rm -rf "{{.DIRECTORY_FOR_INGEST}}"
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
