@@ -378,7 +378,7 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -406,7 +406,7 @@ tasks:
         else
           echo "Geonames data already exists. Skipping conversion."
         fi
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -427,7 +427,7 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -454,7 +454,7 @@ tasks:
           FILE_NAME: "data"
           GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
           GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -474,7 +474,7 @@ tasks:
           URL: "{{.DATA_URL}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -493,7 +493,7 @@ tasks:
           URL: "{{.DATA_URL}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -514,7 +514,7 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIngest
+      - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
@@ -730,7 +730,7 @@ tasks:
     cmds:
       - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
 
-  _prepareForIngest:
+  _prepareForIndexing:
     desc: Prepare data for ingestion
     internal: True
     requires:
