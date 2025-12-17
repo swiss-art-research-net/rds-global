@@ -9,11 +9,12 @@
 [data]
 NAME             = rds
 DESCRIPTION      = Reference Data Service
+FORMAT           = nq
 TEXT_DESCRIPTION = All literals, search with FILTER KEYWORDS(?text, "...")
 
 [index]
 INPUT_FILES     = data
-CAT_INPUT_FILES = find ${INPUT_FILES} -type f -name "*.nt" -exec sh -c 'cat "{}"' \;
+CAT_INPUT_FILES = find ${INPUT_FILES} -type f -name "*.nq" -exec sh -c 'cat "{}"' \;
 SETTINGS_JSON   = { "num-triples-per-batch": 1000000, "parallel-parsing": true }
 TEXT_INDEX      = from_literals
 

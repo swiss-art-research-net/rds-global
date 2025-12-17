@@ -382,6 +382,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
 
   update-data-geonames:
     desc: Update data for GeoNames
@@ -409,6 +410,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
   
   update-data-gnd:
     desc: Update data for GND
@@ -429,6 +431,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
 
   update-data-sikart:
     desc: Update data for SIKART
@@ -455,6 +458,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
 
   update-data-thesarchesp:
     desc: Update data for Thesaurus Architecture/Espace 
@@ -474,6 +478,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
 
   update-data-thesobjmob:
     desc: Update data for Thesaurus Object/Mobiliers
@@ -492,6 +497,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
 
   update-data-ulan:
     desc: Update data for Getty ULAN
@@ -512,6 +518,7 @@ tasks:
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
 
   verify-data:
     desc: Verify the validity of the source data
@@ -727,7 +734,7 @@ tasks:
     desc: Prepare data for ingestion
     internal: True
     requires:
-      vars: [DIRECTORY, FILE_FORMAT]
+      vars: [DIRECTORY, FILE_FORMAT, GRAPH]
     vars:
       DIRECTORY_FOR_INGEST:
         sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename {{.DIRECTORY}})_ingest"
@@ -765,15 +772,25 @@ tasks:
           echo "Copying N-Triples files from {{.DIRECTORY}} to ingestion directory..."
           cp {{.DIRECTORY}}/*.nt "{{.DIRECTORY_FOR_INGEST}}/"
         fi
+      - # Add the named graph to each triple in the nt files
+      - |
+        echo "Adding named graph {{.GRAPH}} to each triple for ingestion..."
+        for file in {{.DIRECTORY_FOR_INGEST}}/*.nt; do
+          [ -f "$file" ] || continue
+          nquad_file="${file%.nt}.nq"
+          # Insert the graph name before the final dot at the end of each triple
+          awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$file" > "$nquad_file"     
+          rm "$file"
+        done
       - # Split large files into smaller chunks of 100000 lines each
       - |
         echo "Splitting large files into smaller chunks for ingestion..."
-        for file in {{.DIRECTORY_FOR_INGEST}}/*.nt; do
+        for file in {{.DIRECTORY_FOR_INGEST}}/*.nq; do
           [ -f "$file" ] || continue
           line_count=$(wc -l < "$file")
           if [ "$line_count" -gt {{.LINE_LIMIT_FOR_SPLIT}} ]; then
             echo "Splitting $file (contains $line_count triples)..."
-            split -l {{.LINE_LIMIT_FOR_SPLIT}} -d --additional-suffix=.nt "$file" "${file%.*}_part_"
+            split -l {{.LINE_LIMIT_FOR_SPLIT}} -d --additional-suffix=.nq "$file" "${file%.*}_part_"
             rm "$file"
           fi
         done
