@@ -3,6 +3,8 @@ binds/**/*
 data/**/*
 !data/rds-metadata/**
 !data/.gitkeep
+!data/ingest/.gitkeep
+!data/source/.gitkeep
 data-preparation/labelAdjustment/*/*
 data-preparation/update-scripts/aat-data/*
 data-preparation/update-scripts/geonames-data/*
