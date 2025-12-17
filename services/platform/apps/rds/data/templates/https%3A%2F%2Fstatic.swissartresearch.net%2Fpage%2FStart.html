@@ -18,9 +18,11 @@
                     PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
                     SELECT DISTINCT ?subject ?label ?dataset WHERE {
                         {
-                            ?subject a gvp:Concept ;
-                                (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
-                            BIND("aat" as ?dataset)
+                            GRAPH <http://vocab.getty.edu/aat/graph> {
+                                ?subject a gvp:Concept ;
+                                    (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
+                                BIND("aat" as ?dataset)
+                            }
                         } UNION {
                             ?subject a ?type ;
                                 ?predicate ?label .
@@ -121,6 +123,7 @@
                         }
                     } 
                     LIMIT 100
+                    TEXTLIMIT 1
         '>
         </semantic-search-query-keyword>
         <semantic-search-result-holder>
