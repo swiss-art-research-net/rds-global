@@ -4,6 +4,8 @@ version: '3'
 
 vars:
   PREDICATES_FILE: /pipeline/config/predicates.json
+  DIRECTORY_INGEST_DATA: /data/ingest
+  DIRECTORY_SOURCE_DATA: /data/source
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
 
 env:
@@ -31,22 +33,6 @@ tasks:
       - task: ingest-metadata
       - task: ingest-sameas-statements
       - task: materialise-num-sameas-statements
-
-  test:
-    desc: Test the currently developed part of the pipeline
-    vars:
-      GRAPH: http://recherche.sik-isea.ch/graph
-      DATA_DIRECTORY: /data/sikart-data
-      DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
-      DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
-      GUNZIP: false
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
@@ -381,7 +367,7 @@ tasks:
     desc: Update data for Getty AAT
     vars:
       GRAPH: http://vocab.getty.edu/aat/graph
-      DATA_DIRECTORY: /data/aat-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/aat-data"
       DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
       GUNZIP: false
       FILE_FORMAT: nt
@@ -392,12 +378,8 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
@@ -405,7 +387,7 @@ tasks:
     desc: Update data for GeoNames
     vars:
       GRAPH: http://sws.geonames.org/graph
-      DATA_DIRECTORY: /data/geonames-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/geonames-data"
       DATA_URL: http://download.geonames.org/all-geonames-rdf.zip
       GUNZIP: false
       FILE_FORMAT: nt
@@ -423,12 +405,8 @@ tasks:
         else
           echo "Geonames data already exists. Skipping conversion."
         fi
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
   
@@ -436,7 +414,7 @@ tasks:
     desc: Update data for GND
     vars:
       GRAPH: https://d-nb.info/gnd/authorities/graph
-      DATA_DIRECTORY: /data/gnd-authorities-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/gnd-authorities-data"
       DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
       GUNZIP: true
       FILE_FORMAT: nt
@@ -447,12 +425,8 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
@@ -460,7 +434,7 @@ tasks:
     desc: Update data for SIKART
     vars:
       GRAPH: http://recherche.sik-isea.ch/graph
-      DATA_DIRECTORY: /data/sikart-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/sikart-data"
       DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
       DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
       GUNZIP: false
@@ -477,12 +451,8 @@ tasks:
           FILE_NAME: "data"
           GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
           GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
@@ -490,7 +460,7 @@ tasks:
     desc: Update data for Thesaurus Architecture/Espace 
     vars:
       GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
-      DATA_DIRECTORY: /data/thes-arch-esp-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/thes-arch-esp-data"
       DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
       GUNZIP: false
       FILE_FORMAT: ttl
@@ -500,12 +470,8 @@ tasks:
           URL: "{{.DATA_URL}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
@@ -513,7 +479,7 @@ tasks:
     desc: Update data for Thesaurus Object/Mobiliers
     vars:
       GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
-      DATA_DIRECTORY: /data/thes-obj-mob-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/thes-obj-mob-data"
       DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
       FILE_FORMAT: ttl
     cmds:
@@ -522,12 +488,8 @@ tasks:
           URL: "{{.DATA_URL}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
@@ -535,7 +497,7 @@ tasks:
     desc: Update data for Getty ULAN
     vars:
       GRAPH: http://vocab.getty.edu/ulan/graph
-      DATA_DIRECTORY: /data/ulan-data
+      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/ulan-data"
       DATA_URL: http://ulandownloads.getty.edu/VocabData/full.zip
       GUNZIP: false
       FILE_FORMAT: nt
@@ -546,12 +508,8 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           GUNZIP: "{{.GUNZIP}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _removeGraphFromTripleStore
+      - task: _prepareForIngest
         vars:
-          GRAPH: "{{.GRAPH}}"
-      - task: _loadDataFromDirectory
-        vars:
-          GRAPH: "{{.GRAPH}}"
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
 
@@ -765,16 +723,14 @@ tasks:
     cmds:
       - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
 
-  _loadDataFromDirectory:
-    desc: Load data from directory
+  _prepareForIngest:
+    desc: Prepare data for ingestion
     internal: True
     requires:
-      vars: [GRAPH, DIRECTORY, FILE_FORMAT]
+      vars: [DIRECTORY, FILE_FORMAT]
     vars:
-      QLEVER_ACCESS_TOKEN:
-        sh: echo $QLEVER_ACCESS_TOKEN
       DIRECTORY_FOR_INGEST:
-        sh: echo "/pipeline/tmp/$(basename {{.DIRECTORY}})_ingest"
+        sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename {{.DIRECTORY}})_ingest"
       FILE_TYPE:
         sh: |
             case "{{.FILE_FORMAT}}" in
@@ -821,25 +777,6 @@ tasks:
             rm "$file"
           fi
         done
-      - # Load data into the triple store
-      - echo "Loading data from /data/{{.DIRECTORY_FOR_INGEST}} into graph {{.GRAPH}}"
-      - |
-        for file in {{.DIRECTORY_FOR_INGEST}}/*.nt; do
-          [ -f "$file" ] || continue
-          echo "Loading file $file into graph {{.GRAPH}}"
-          curl --fail-with-body --http1.1 \
-              --retry 5 \
-              --retry-delay 3 \
-              --retry-all-errors \
-              -X POST \
-              -H "Expect:" \
-              -H "Content-Type: application/n-triples" \
-              -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
-              -T "$file" \
-              "{{.QLEVER_ENDPOINT}}/?graph={{.GRAPH}}"
-        done
-      - # Remove temporary ingestion directory
-      - rm -rf "{{.DIRECTORY_FOR_INGEST}}"
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
