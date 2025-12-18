@@ -14,7 +14,7 @@
   rep:repositoryImpl [
       rep:repositoryType "researchspace:QLeverRepository";
       sparql:query-endpoint <http://qlever:7001/api>;
-      mph:quadMode false;
+      mph:quadMode true;
       mph:writable false;
       mph:silentMode false
     ] .
