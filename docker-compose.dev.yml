@@ -62,7 +62,6 @@ services:
     restart: unless-stopped
     ports:
       - ${PORT_TRIPLESTORE}:7001
-    entrypoint: ["tail", "-f", "/dev/null"]
     working_dir: /index
     # First start: create index using `qlever index`
     # Then: start qlever using 'qlever start request-body-limit=100G'
