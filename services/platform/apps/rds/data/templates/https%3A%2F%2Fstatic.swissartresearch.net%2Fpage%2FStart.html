@@ -16,7 +16,7 @@
                     PREFIX gndo: <https://d-nb.info/standards/elementset/gnd#>
                     PREFIX gvp: <http://vocab.getty.edu/ontology#>
                     PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
-                    SELECT DISTINCT ?subject ?label ?dataset WHERE {
+                    SELECT DISTINCT ?subject WHERE {
                         {
                             [[> query-aat]]
                         } UNION {
@@ -24,6 +24,7 @@
                         } UNION {
                             [[> query-sikart]]
                         }
+                        BIND((STRLEN(STR(?label)) - STRLEN("geneva")) AS ?lenDiff)
                         SERVICE textSearch: {
                             ?t textSearch:contains [
                                 textSearch:word ?__token__ ;
@@ -43,8 +44,8 @@
             <semantic-search-result>
                 <semantic-table 
                     id='grid-result'
-                    query='SELECT DISTINCT ?subject (GROUP_CONCAT(?label) as ?labels) ?dataset ?prefix_score ?entity_score WHERE {
-                    } GROUP BY ?subject ?dataset ?prefix_score ?entity_score'
+                    query='SELECT DISTINCT ?subject (GROUP_CONCAT(?label) as ?labels) ?dataset ?lenDiff WHERE {
+                    } GROUP BY ?subject ?dataset ?lenDiff ORDER BY ?lenDiff'
                     number-of-displayed-rows="50"
                     options='{
                         "showFilter": false
