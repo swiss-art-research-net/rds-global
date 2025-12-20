@@ -24,7 +24,7 @@
                         } UNION {
                             [[> query-sikart]]
                         }
-                        BIND((STRLEN(STR(?label)) - STRLEN("geneva")) AS ?lenDiff)
+                        BIND((STRLEN(STR(?label)) - STRLEN(?__token__)) AS ?lenDiff)
                         SERVICE textSearch: {
                             ?t textSearch:contains [
                                 textSearch:word ?__token__ ;
