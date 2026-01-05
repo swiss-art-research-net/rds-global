@@ -302,6 +302,12 @@ tasks:
       - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/drop_labels_graph.rq
       - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --blazegraph_journal "$BLAZEGRAPH_JOURNAL" {{.CLI_ARGS}}
 
+  index-data-aat:
+    desc: Index data for Getty AAT
+    vars:
+    cmds:
+      - IndexBuilderMain -i aat -f data/aat-data_ingest/*.nq -F nq -g http://vocab.getty.edu/aat/graph -p true -K aat --vocabulary-type on-disk-compressed
+
   ingest-metadata:
     desc: Ingest metadata
     sources:
