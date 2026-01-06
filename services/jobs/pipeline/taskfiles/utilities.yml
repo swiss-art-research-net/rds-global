@@ -11,7 +11,7 @@ tasks:
     cmds:
       - echo "Building QLever index for {{.NAME}} from data in {{.INPUT_DIR}} with graph {{.GRAPH}}"
       - mkdir -p /index/{{.NAME}}
-      - cd /index/{{.NAME}} && IndexBuilderMain -i {{.NAME}} -f /data/ingest/{{.INPUT_DIR}}/*.nq -F nq -g {{.GRAPH}} -p true -K {{.NAME}} --vocabulary-type on-disk-uncompressed
+      - cd /index/{{.NAME}} && IndexBuilderMain --index-basename {{.NAME}} -f /data/ingest/{{.INPUT_DIR}}/*.nq -F nq -g {{.GRAPH}} -p true --kg-index-name {{.NAME}} --vocabulary-type on-disk-uncompressed --text-words-from-literals --set-scoring-metric bm25
     
   _downloadFile:
     internal: True
