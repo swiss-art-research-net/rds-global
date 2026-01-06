@@ -22,7 +22,7 @@ services:
     ports:
       - ${PORT_ENDPOINTS}:80
     volumes:
-      - ./services/qlever/scripts/services.csv:/etc/nginx/services.csv:ro
+      - ./services.csv:/etc/nginx/services.csv:ro
     depends_on:
       - qlever
 
@@ -75,3 +75,4 @@ services:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
       - ./services/qlever/scripts:/scripts
+      - ./services.csv:/scripts/services.csv:ro
