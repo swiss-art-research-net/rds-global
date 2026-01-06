@@ -10,7 +10,8 @@ tasks:
       vars: [NAME, INPUT_DIR, GRAPH]
     cmds:
       - echo "Building QLever index for {{.NAME}} from data in {{.INPUT_DIR}} with graph {{.GRAPH}}"
-      - cd /index && IndexBuilderMain -i {{.NAME}} -f /data/ingest/{{.INPUT_DIR}}/*.nq -F nq -g {{.GRAPH}} -p true -K {{.NAME}} --vocabulary-type on-disk-compressed
+      - mkdir -p /index/{{.NAME}}
+      - cd /index/{{.NAME}} && IndexBuilderMain -i {{.NAME}} -f /data/ingest/{{.INPUT_DIR}}/*.nq -F nq -g {{.GRAPH}} -p true -K {{.NAME}} --vocabulary-type on-disk-uncompressed
     
   _downloadFile:
     internal: True
