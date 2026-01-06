@@ -66,4 +66,3 @@ services:
     volumes:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
-      - ./services/qlever/rds/Qleverfile:/index/Qleverfile:ro
