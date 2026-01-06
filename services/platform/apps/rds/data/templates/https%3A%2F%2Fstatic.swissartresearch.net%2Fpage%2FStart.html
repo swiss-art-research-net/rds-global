@@ -16,6 +16,7 @@
                     PREFIX gndo: <https://d-nb.info/standards/elementset/gnd#>
                     PREFIX gvp: <http://vocab.getty.edu/ontology#>
                     PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
+                    PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>
                     SELECT DISTINCT ?subject WHERE {
                         {
                             [[> query-aat]]
@@ -25,17 +26,7 @@
                             [[> query-sikart]]
                         }
                         BIND((STRLEN(STR(?label)) - STRLEN(?__token__)) AS ?lenDiff)
-                        SERVICE textSearch: {
-                            ?t textSearch:contains [
-                                textSearch:word ?__token__ ;
-                                textSearch:prefix-match ?prefix_match ;
-                                textSearch:score ?prefix_score
-                            ] .
-                            ?t textSearch:contains [
-                                textSearch:entity ?label ;
-                                textSearch:score ?entity_score
-                            ] .
-                        }
+                        [ ql:contains-word ?__token__ ; ql:contains-entity ?label ] .
                     } 
                     LIMIT 20
         '>
@@ -44,7 +35,7 @@
             <semantic-search-result>
                 <semantic-table 
                     id='grid-result'
-                    query='SELECT DISTINCT ?subject (GROUP_CONCAT(?label) as ?labels) ?dataset ?lenDiff WHERE {
+                    query='SELECT DISTINCT ?subject (GROUP_CONCAT(DISTINCT ?label;SEPARATOR=" / ") as ?labels) ?dataset ?lenDiff WHERE {
                     } GROUP BY ?subject ?dataset ?lenDiff ORDER BY ?lenDiff'
                     number-of-displayed-rows="50"
                     options='{
