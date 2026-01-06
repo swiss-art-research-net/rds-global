@@ -17,7 +17,7 @@ mkdir -p "$OUT_DIR"
 
     cat <<EOF
 
-location = /${name} { return 301 /${name}/; }
+location = /${name} { return 301 /${name}/?\$args; }
 
 location ^~ /${name}/ {
   proxy_set_header Host \$host;
