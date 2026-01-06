@@ -16,6 +16,16 @@ services:
       - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
       - ${DIRECTORY_BLAZEGRAPH_EXCHANGE}:/blazegraph-exchange:rw
 
+  endpoints:
+    container_name: ${COMPOSE_PROJECT_NAME}-endpoints
+    build: ./services/endpoints
+    ports:
+      - ${PORT_ENDPOINTS}:80
+    volumes:
+      - ./services/qlever/scripts/services.csv:/etc/nginx/services.csv:ro
+    depends_on:
+      - qlever
+
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
@@ -60,9 +70,8 @@ services:
         max-file: '10'
         max-size: 200k
     restart: unless-stopped
-    ports:
-      - ${PORT_TRIPLESTORE}:7001
     working_dir: /index
     volumes:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
+      - ./services/qlever/scripts:/scripts

@@ -7,8 +7,9 @@ RUN apt install -y python3 python3-pip librdf-dev raptor2-utils
 RUN mkdir /input
 RUN mkdir -p /index/rds
 
-COPY runServer.sh /usr/local/bin/runServer.sh
-RUN chmod +x /usr/local/bin/runServer.sh
+RUN mkdir /scripts
+COPY scripts/runServer.sh /scripts/runServer.sh
+RUN chmod +x /scripts/runServer.sh
 
 USER qlever
 
