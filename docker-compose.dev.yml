@@ -24,6 +24,7 @@ services:
       GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
       QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
     volumes:
+      - ./binds/qlever-index:/index:rw
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
 
@@ -62,8 +63,6 @@ services:
     ports:
       - ${PORT_TRIPLESTORE}:7001
     working_dir: /index
-    # First start: create index using `qlever index`
-    # Then: start qlever using 'qlever start request-body-limit=100G'
     volumes:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data

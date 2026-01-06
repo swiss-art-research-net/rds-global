@@ -306,7 +306,11 @@ tasks:
     desc: Index data for Getty AAT
     vars:
     cmds:
-      - IndexBuilderMain -i aat -f data/aat-data_ingest/*.nq -F nq -g http://vocab.getty.edu/aat/graph -p true -K aat --vocabulary-type on-disk-compressed
+      - task: _build_qlever_index
+        vars:
+          NAME: aat
+          INPUT_DIR: aat-data_ingest
+          GRAPH: http://vocab.getty.edu/aat/graph
 
   ingest-metadata:
     desc: Ingest metadata
