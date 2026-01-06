@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CSV_PATH="${CSV_PATH:-/etc/nginx/services.csv}"
+CSV_PATH="${CSV_PATH:-/etc/nginx/endpoints.csv}"
 OUT_DIR="/etc/nginx/includes"
 OUT_CONF="${OUT_DIR}/services.conf"
 

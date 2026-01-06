@@ -7,7 +7,7 @@ COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY entrypoint.sh /entrypoint.sh
 
-RUN echo "name,port" > /etc/nginx/services.csv
+RUN echo "name,port" > /etc/nginx/endpoints.csv
 
 RUN chmod +x /entrypoint.sh
 
