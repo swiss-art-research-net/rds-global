@@ -12,4 +12,4 @@ VOLUME ["/input", "/index"]
 WORKDIR /index/rds
 EXPOSE 7001
 # Run idling
-ENTRYPOINT [ "tail -f /dev/null" ]
+ENTRYPOINT [ "tail", "-f", "/dev/null" ]
