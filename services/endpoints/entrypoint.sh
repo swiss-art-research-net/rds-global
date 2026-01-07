@@ -18,23 +18,29 @@ mkdir -p "$OUT_DIR"
     cat <<EOF
 
 location = /${name} {
-  if (\$request_method = 'OPTIONS') {
-    return 204;
-  }
+  if (\$request_method = 'OPTIONS') { return 204; }
   return 301 /${name}/?\$args;
 }
 
 location ^~ /${name}/ {
-  if (\$request_method = 'OPTIONS') {
-    return 204;
-  }
+  if (\$request_method = 'OPTIONS') { return 204; }
+
+  # WebSocket Support
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection "upgrade";
 
   proxy_set_header Host \$host;
   proxy_set_header X-Real-IP \$remote_addr;
   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   proxy_set_header X-Forwarded-Proto \$scheme;
 
-  rewrite ^/${name}/?(.*)$ /api/\$1 break;
+  # Improved Rewrite: 
+  # This ensures /aat/path -> /api/path 
+  # and /aat/ -> /api
+  rewrite ^/${name}/$ /api break;
+  rewrite ^/${name}/(.*)$ /api/\$1 break;
+  
   proxy_pass http://qlever:${port};
 }
 EOF
