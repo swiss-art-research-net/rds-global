@@ -44,8 +44,12 @@ location ^~ /${name}/ {
   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   proxy_set_header X-Forwarded-Proto \$scheme;
 
-  proxy_set_header Content-Type \$passed_content_type;
+  proxy_pass_request_body on;
   proxy_pass_request_headers on;
+  
+  client_max_body_size 100M;
+  proxy_request_buffering off;
+
   proxy_pass http://qlever:${port}/;
   
   proxy_buffering off;
