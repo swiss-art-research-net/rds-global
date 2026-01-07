@@ -35,11 +35,8 @@ location ^~ /${name}/ {
   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   proxy_set_header X-Forwarded-Proto \$scheme;
 
-  # Improved Rewrite: 
-  # This ensures /aat/path -> /api/path 
-  # and /aat/ -> /api
-  rewrite ^/${name}/$ /api break;
-  rewrite ^/${name}/(.*)$ /api/\$1 break;
+  rewrite ^/${name}/$ / break;
+  rewrite ^/${name}/(.*)$ /$1 break;
   
   proxy_pass http://qlever:${port};
 }
