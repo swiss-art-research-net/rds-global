@@ -24,30 +24,16 @@ location = /${name} {
     add_header Access-Control-Allow-Headers "*" always;
     return 204;
   }
-  return 301 /${name}/;
+  proxy_pass http://qlever:${port};
 }
 
 location ^~ /${name}/ {
-    if (\$request_method = 'OPTIONS') {
-        add_header Access-Control-Allow-Origin "*" always;
-        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "*" always;
-        return 204;
+    set \$final_content_type \$http_content_type;
+    if (\$final_content_type = "") {
+        set \$final_content_type "application/x-www-form-urlencoded";
     }
-
-    proxy_http_version 1.1;
-    
-    proxy_set_body \$args;
-    
-    proxy_set_header Content-Type "application/x-www-form-urlencoded";
-
-    proxy_set_header Host \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
-
-    proxy_pass http://qlever:${port}/?;
-
-    proxy_buffering off;
-    proxy_read_timeout 300s;
+    proxy_set_header Content-Type \$final_content_type;
+    proxy_pass http://qlever:${port}/;
 }
 EOF
   done
