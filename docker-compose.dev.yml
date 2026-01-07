@@ -71,6 +71,8 @@ services:
         max-size: 200k
     restart: unless-stopped
     working_dir: /index
+    ports:
+      - 7001:7001
     volumes:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
