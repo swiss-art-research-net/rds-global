@@ -3,6 +3,15 @@
 version: '3'
 
 tasks:
+
+  _build_qlever_index:
+    desc: Build QLever index for given data
+    requires:
+      vars: [NAME, INPUT_DIR, GRAPH]
+    cmds:
+      - echo "Building QLever index for {{.NAME}} from data in {{.INPUT_DIR}} with graph {{.GRAPH}}"
+      - mkdir -p /index/{{.NAME}}
+      - cd /index/{{.NAME}} && find /data/ingest/{{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | IndexBuilderMain --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals | tee {{.NAME}}.index-log.txt
     
   _downloadFile:
     internal: True

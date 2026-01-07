@@ -6,10 +6,15 @@ RUN apt install -y python3 python3-pip librdf-dev raptor2-utils
 
 RUN mkdir /input
 RUN mkdir -p /index/rds
+
+RUN mkdir /scripts
+COPY scripts/runServer.sh /scripts/runServer.sh
+RUN chmod +x /scripts/runServer.sh
+
 USER qlever
 
 VOLUME ["/input", "/index"]
-WORKDIR /index/rds
+WORKDIR /index
 EXPOSE 7001
 # Run idling
-ENTRYPOINT [ "sh", "-c", "qlever start & tail -f /dev/null" ]
+ENTRYPOINT [ "tail", "-f", "/dev/null" ]

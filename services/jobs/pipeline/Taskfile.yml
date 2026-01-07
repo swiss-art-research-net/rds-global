@@ -302,6 +302,46 @@ tasks:
       - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/drop_labels_graph.rq
       - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --blazegraph_journal "$BLAZEGRAPH_JOURNAL" {{.CLI_ARGS}}
 
+  index-data-aat:
+    desc: Index data for Getty AAT
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: aat
+          INPUT_DIR: aat-data_ingest
+          GRAPH: http://vocab.getty.edu/aat/graph
+
+  index-data-geonames:
+    desc: Index data for GeoNames
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: geonames
+          INPUT_DIR: geonames-data_ingest
+          GRAPH: http://sws.geonames.org/graph
+
+  index-data-gnd:
+    desc: Index data for GND
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: gnd
+          INPUT_DIR: gnd-authorities-data_ingest
+          GRAPH: https://d-nb.info/gnd/authorities/graph
+
+  index-data-sikart:
+    desc: Index data for SIKART
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: sikart
+          INPUT_DIR: sikart-data_ingest
+          GRAPH: http://recherche.sik-isea.ch/graph
+
   ingest-metadata:
     desc: Ingest metadata
     sources:

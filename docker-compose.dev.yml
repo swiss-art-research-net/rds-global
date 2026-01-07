@@ -1,17 +1,5 @@
 services:
 
-  jobs:
-    container_name: ${COMPOSE_PROJECT_NAME}-jobs
-    build: ./services/jobs
-    image: swissartresearx/rds-global-jobs
-    environment:
-      GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
-      GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
-      QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
-    volumes:
-      - ./services/jobs/pipeline:/pipeline
-      - ./data:/data
-
   blazegraph:
     container_name: ${COMPOSE_PROJECT_NAME}-blazegraph
     environment:
@@ -27,6 +15,28 @@ services:
     volumes:
       - ${DIRECTORY_BLAZEGRAPH_DATA}:/blazegraph-data:rw
       - ${DIRECTORY_BLAZEGRAPH_EXCHANGE}:/blazegraph-exchange:rw
+
+  endpoints:
+    container_name: ${COMPOSE_PROJECT_NAME}-endpoints
+    build: ./services/endpoints
+    ports:
+      - ${PORT_ENDPOINTS}:80
+    volumes:
+      - ./endpoints.csv:/etc/nginx/endpoints.csv:ro
+    depends_on:
+      - qlever
+
+  jobs:
+    container_name: ${COMPOSE_PROJECT_NAME}-jobs
+    build: ./services/jobs
+    environment:
+      GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
+      GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
+      QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
+    volumes:
+      - ./binds/qlever-index:/index:rw
+      - ./services/jobs/pipeline:/pipeline
+      - ./data:/data
 
   platform:
     container_name: ${COMPOSE_PROJECT_NAME}-platform
@@ -60,12 +70,11 @@ services:
         max-file: '10'
         max-size: 200k
     restart: unless-stopped
-    ports:
-      - ${PORT_TRIPLESTORE}:7001
     working_dir: /index
-    # First start: create index using `qlever index`
-    # Then: start qlever using 'qlever start request-body-limit=100G'
+    ports:
+      - 7001:7001
     volumes:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
-      - ./services/qlever/rds/Qleverfile:/index/Qleverfile:ro
+      - ./services/qlever/scripts:/scripts
+      - ./endpoints.csv:/scripts/endpoints.csv:ro
