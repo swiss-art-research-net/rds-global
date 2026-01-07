@@ -18,12 +18,22 @@ mkdir -p "$OUT_DIR"
     cat <<EOF
 
 location = /${name} {
-  if (\$request_method = 'OPTIONS') { return 204; }
-  return 301 /${name}/?\$args;
+  if (\$request_method = 'OPTIONS') {
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "*" always;
+    return 204;
+  }
+  return 301 /${name}/;
 }
 
 location ^~ /${name}/ {
-  if (\$request_method = 'OPTIONS') { return 204; }
+  if (\$request_method = 'OPTIONS') {
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "*" always;
+    return 204;
+  }
 
   proxy_http_version 1.1;
   proxy_set_header Upgrade \$http_upgrade;
@@ -34,12 +44,13 @@ location ^~ /${name}/ {
   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   proxy_set_header X-Forwarded-Proto \$scheme;
 
-  rewrite ^/${name}/(.*) /\$1 break;
+  proxy_set_header Content-Type \$http_content_type;
+  proxy_pass_request_headers on;
 
-  proxy_pass http://qlever:${port};
+  proxy_pass http://qlever:${port}/;
   
   proxy_buffering off;
-  proxy_read_timeout 300s; 
+  proxy_read_timeout 300s;
 }
 EOF
   done
