@@ -1,0 +1,160 @@
+<h2>Welcome to RDS</h2>
+
+<semantic-search
+    limit='20'
+    id='search-browse'
+>
+    <semantic-search-query-keyword 
+        min-search-term-length='3' 
+        debounce='600'
+        tokenize-lucene-query='true'
+        query='PREFIX textSearch: <https://qlever.cs.uni-freiburg.de/textSearch/>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX gndo: <https://d-nb.info/standards/elementset/gnd#>
+                PREFIX gvp: <http://vocab.getty.edu/ontology#>
+                PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
+                PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>
+                SELECT DISTINCT ?subject WHERE {
+                    {
+                        [[> query-aat]]
+                    }
+                    BIND((STRLEN(STR(?label)) - STRLEN(?__token__)) AS ?lenDiff)
+                } 
+                LIMIT 20
+    '>
+    </semantic-search-query-keyword>
+    <semantic-search-result-holder>
+        <semantic-search-result>
+            <semantic-table 
+                id='grid-result'
+                query='SELECT DISTINCT ?subject (GROUP_CONCAT(DISTINCT ?label;SEPARATOR=" / ") as ?labels) ?dataset ?lenDiff WHERE {
+                } GROUP BY ?subject ?dataset ?lenDiff ORDER BY ?lenDiff'
+                number-of-displayed-rows="50"
+                options='{
+                    "showFilter": false
+                }'
+    no-result-template="Nothing found"
+            >    
+            </semantic-table>
+        </semantic-search-result>
+    </semantic-search-result-holder>
+</semantic-search>  
+
+[[#*inline "endpoint"]]http://localhost:8085/[[/inline]]
+
+[[#*inline "query-aat"]]
+    SERVICE <[[> endpoint]]aat> {
+        ?subject a gvp:Concept ;
+            (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
+        BIND("aat" as ?dataset)
+        [ ql:contains-word ?__token__ ; ql:contains-entity ?label ] .
+    }
+[[/inline]]
+
+[[#*inline "query-gnd"]]
+    GRAPH <https://d-nb.info/gnd/authorities/graph> {
+        ?subject a ?type ;
+            ?predicate ?label .
+        VALUES (?type) {
+            ( <https://d-nb.info/standards/elementset/gnd#AdministrativeUnit> )
+            ( <https://d-nb.info/standards/elementset/gnd#BuildingOrMemorial> )
+            ( <https://d-nb.info/standards/elementset/gnd#CharactersOrMorphemes> )
+            ( <https://d-nb.info/standards/elementset/gnd#Collection> )
+            ( <https://d-nb.info/standards/elementset/gnd#CollectivePseudonym> )
+            ( <https://d-nb.info/standards/elementset/gnd#Company> )
+            ( <https://d-nb.info/standards/elementset/gnd#ConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#CorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#Country> )
+            ( <https://d-nb.info/standards/elementset/gnd#DifferentiatedPerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#EarlierNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#EthnographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#Expression> )
+            ( <https://d-nb.info/standards/elementset/gnd#ExtraterrestrialTerritory> )
+            ( <https://d-nb.info/standards/elementset/gnd#Family> )
+            ( <https://d-nb.info/standards/elementset/gnd#FictiveCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#FictivePlace> )
+            ( <https://d-nb.info/standards/elementset/gnd#FullerFormOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#Gods> )
+            ( <https://d-nb.info/standards/elementset/gnd#GroupOfPersons> )
+            ( <https://d-nb.info/standards/elementset/gnd#HistoricSingleEventOrEra> )
+            ( <https://d-nb.info/standards/elementset/gnd#Language> )
+            ( <https://d-nb.info/standards/elementset/gnd#LaterNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#LiteraryOrLegendaryCharacter> )
+            ( <https://d-nb.info/standards/elementset/gnd#Manuscript> )
+            ( <https://d-nb.info/standards/elementset/gnd#MeansOfTransportWithIndividualName> )
+            ( <https://d-nb.info/standards/elementset/gnd#MemberState> )
+            ( <https://d-nb.info/standards/elementset/gnd#MusicalCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#MusicalWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit> )
+            ( <https://d-nb.info/standards/elementset/gnd#NaturalGeographicUnit> )
+            ( <https://d-nb.info/standards/elementset/gnd#NomenclatureInBiologyOrChemistry> )
+            ( <https://d-nb.info/standards/elementset/gnd#OrganOfCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#PlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#ProductNameOrBrandName> )
+            ( <https://d-nb.info/standards/elementset/gnd#ProjectOrProgram> )
+            ( <https://d-nb.info/standards/elementset/gnd#ProvenanceCharacteristic> )
+            ( <https://d-nb.info/standards/elementset/gnd#PseudonymNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#RealNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#Relationship> )
+            ( <https://d-nb.info/standards/elementset/gnd#ReligiousAdministrativeUnit> )
+            ( <https://d-nb.info/standards/elementset/gnd#ReligiousCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#ReligiousTerritory> )
+            ( <https://d-nb.info/standards/elementset/gnd#RoyalOrMemberOfARoyalHouse> )
+            ( <https://d-nb.info/standards/elementset/gnd#SeriesOfConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#SoftwareProduct> )
+            ( <https://d-nb.info/standards/elementset/gnd#Spirits> )
+            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeadingSensoStricto> )
+            ( <https://d-nb.info/standards/elementset/gnd#TerritorialCorporateBodyOrAdministrativeUnit> )
+            ( <https://d-nb.info/standards/elementset/gnd#VersionOfAMusicalWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#WayBorderOrLine> )
+            ( <https://d-nb.info/standards/elementset/gnd#Work> )
+        }
+        VALUES (?predicate) {
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#definition> )
+            ( <https://d-nb.info/standards/elementset/gnd#forename> )
+            ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
+            ( <https://d-nb.info/standards/elementset/gnd#nameAddition> )
+            ( <https://d-nb.info/standards/elementset/gnd#originalScriptNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#personalName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#surname> )
+            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeadingSensoStricto>)
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
+        }
+        BIND("gnd" as ?dataset)
+    }
+[[/inline]]
+
+[[#*inline "query-sikart"]]
+    GRAPH <http://recherche.sik-isea.ch/graph> {
+        ?subject a ?type ;
+            crm:P1_is_identified_by/rdfs:label ?label .
+        BIND("sikart" as ?dataset)
+    }
+    VALUES (?type) {
+        ( <http://www.cidoc-crm.org/cidoc-crm/E21_Person> )
+        ( <http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object> )
+        ( <http://www.cidoc-crm.org/cidoc-crm/E53_Place> )
+        ( <http://www.cidoc-crm.org/cidoc-crm/E55_Type> )
+        ( <http://www.cidoc-crm.org/cidoc-crm/E74_Group> )
+        ( <http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition> )
+    }
+[[/inline]]
