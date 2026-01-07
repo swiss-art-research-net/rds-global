@@ -28,11 +28,6 @@ location = /${name} {
 }
 
 location ^~ /${name}/ {
-    set \$final_content_type \$http_content_type;
-    if (\$final_content_type = "") {
-        set \$final_content_type "application/x-www-form-urlencoded";
-    }
-    proxy_set_header Content-Type \$final_content_type;
     proxy_pass http://qlever:${port}/;
 }
 EOF
