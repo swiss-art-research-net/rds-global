@@ -24,11 +24,11 @@ location = /${name} {
     add_header Access-Control-Allow-Headers "*" always;
     return 204;
   }
-  proxy_pass http://qlever:${port};
+  proxy_pass http://qlever-datasets:${port};
 }
 
 location ^~ /${name}/ {
-    proxy_pass http://qlever:${port}/;
+    proxy_pass http://qlever-datasets:${port}/;
 }
 EOF
   done

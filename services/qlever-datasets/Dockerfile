@@ -14,7 +14,7 @@ RUN chmod +x /scripts/runServer.sh
 USER qlever
 
 VOLUME ["/input", "/index"]
-WORKDIR /index
-EXPOSE 7001
+WORKDIR /scripts
+EXPOSE 7000
 # Run idling
 ENTRYPOINT [ "tail", "-f", "/dev/null" ]

@@ -23,9 +23,6 @@ services:
       - ${PORT_ENDPOINTS}:80
     volumes:
       - ./endpoints.csv:/etc/nginx/endpoints.csv:ro
-    depends_on:
-      - qlever
-
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
@@ -40,9 +37,6 @@ services:
 
   platform:
     container_name: ${COMPOSE_PROJECT_NAME}-platform
-    depends_on:
-      qlever:
-        condition: service_started
     environment:
       PLATFORM_OPTS: >-
         -Dconfig.environment.sparqlEndpoint=http://blazegraph:8080/blazegraph/sparql
@@ -61,9 +55,9 @@ services:
      - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
      - ./services/platform/apps:/apps
 
-  qlever:
-    container_name: ${COMPOSE_PROJECT_NAME}-qlever
-    build: ./services/qlever
+  qlever-datasets:
+    container_name: ${COMPOSE_PROJECT_NAME}-qlever-datasets
+    build: ./services/qlever-datasets
     logging:
       driver: json-file
       options:
@@ -74,5 +68,15 @@ services:
     volumes:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
-      - ./services/qlever/scripts:/scripts
+      - ./services/qlever-datasets/scripts:/scripts
       - ./endpoints.csv:/scripts/endpoints.csv:ro
+
+  qlever-rds:
+    container_name: ${COMPOSE_PROJECT_NAME}-qlever-rds
+    build: ./services/qlever-rds
+    ports:
+      - ${PORT_QLEVER_RDS}:7001
+    volumes:
+      - ./binds/qlever-rds:/index:rw
+      - ./data/source/rds-metadata:/index/data
+      - ./services/qlever-rds/Qleverfile:/index/Qleverfile:ro
