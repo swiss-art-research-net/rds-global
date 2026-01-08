@@ -13,7 +13,7 @@ mkdir -p "$OUT_DIR"
     name="$(echo "$name" | xargs)"
     port="$(echo "$port" | xargs)"
     [ -z "$name" ] && continue
-    [ -z "$port" ] && port="7001"
+    [ -z "$port" ] && continue
 
     cat <<EOF
 
