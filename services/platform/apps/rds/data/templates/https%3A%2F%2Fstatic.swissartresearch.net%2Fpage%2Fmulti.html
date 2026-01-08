@@ -23,7 +23,6 @@
                     } UNION {
                         [[> query-sikart]]
                     }
-                    BIND((STRLEN(STR(?label)) - STRLEN(?__token__)) AS ?lenDiff)
                 }
     '>
     </semantic-search-query-keyword>
@@ -45,6 +44,14 @@
 </semantic-search>  
 
 [[#*inline "endpoint"]]http://endpoints/[[/inline]]
+[[#*inline "commonQuery"]]
+    [ ql:contains-word ?__token__ ; ql:contains-entity ?label ] .
+    BIND((STRLEN(STR(?label)) - STRLEN(?__token__)) AS ?lenDiff)
+[[/inline]]
+[[#*inline "commonQueryEnd"]]
+    ORDER BY ?lenDiff
+    LIMIT 10
+[[/inline]]
 
 [[#*inline "query-aat"]]
     {
@@ -52,10 +59,10 @@
             SERVICE <[[> endpoint]]aat> {
                 ?subject a gvp:Concept ;
                     (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
-                BIND("aat" as ?dataset)
-                [ ql:contains-word ?__token__ ; ql:contains-entity ?label ] .
-            }
-        } LIMIT 20
+                    [[> commonQuery]]
+                }
+            BIND("aat" as ?dataset)
+        } [[> commonQueryEnd]]
     }
 [[/inline]]
 
@@ -148,10 +155,10 @@
                     ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
                     ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
                 }
-                BIND("gnd" as ?dataset)
-                [ ql:contains-word ?__token__ ; ql:contains-entity ?label ] .
+                [[> commonQuery]]
             }
-        } LIMIT 20
+            BIND("gnd" as ?dataset)
+        } [[> commonQueryEnd]]
     }
 [[/inline]]
 
@@ -161,17 +168,17 @@
             SERVICE <[[> endpoint]]sikart> {
                 ?subject a ?type ;
                     crm:P1_is_identified_by/rdfs:label ?label .
-                BIND("sikart" as ?dataset)
-                [ ql:contains-word ?__token__ ; ql:contains-entity ?label ] .
-                VALUES (?type) {
-                    ( <http://www.cidoc-crm.org/cidoc-crm/E21_Person> )
-                    ( <http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object> )
-                    ( <http://www.cidoc-crm.org/cidoc-crm/E53_Place> )
-                    ( <http://www.cidoc-crm.org/cidoc-crm/E55_Type> )
-                    ( <http://www.cidoc-crm.org/cidoc-crm/E74_Group> )
-                    ( <http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition> )
+                    VALUES (?type) {
+                        ( <http://www.cidoc-crm.org/cidoc-crm/E21_Person> )
+                        ( <http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object> )
+                        ( <http://www.cidoc-crm.org/cidoc-crm/E53_Place> )
+                        ( <http://www.cidoc-crm.org/cidoc-crm/E55_Type> )
+                        ( <http://www.cidoc-crm.org/cidoc-crm/E74_Group> )
+                        ( <http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition> )
+                    }
+                    [[> commonQuery]]
                 }
-            }
-        } LIMIT 20
+            BIND("sikart" as ?dataset)
+        } [[> commonQueryEnd]]
     }  
 [[/inline]]
