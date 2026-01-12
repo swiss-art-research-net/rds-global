@@ -8,6 +8,6 @@ RUN mkdir /index
 WORKDIR /index
 VOLUME ["/index"]
 
-EXPOSE 7000
+EXPOSE 7001
 # Run idling
 ENTRYPOINT [ "tail", "-f", "/dev/null" ]
