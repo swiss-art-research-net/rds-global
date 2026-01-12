@@ -23,6 +23,8 @@
                         [[> query-gnd]]
                     } UNION {
                         [[> query-sikart]]
+                    } UNION {
+                        [[> query-geonames]]
                     }
                 }
     '>
@@ -63,6 +65,19 @@
                     [[> commonQuery]]
                 }
             BIND("aat" as ?dataset)
+        } [[> commonQueryEnd]]
+    }
+[[/inline]]
+
+[[#*inline "query-geonames"]]
+    {
+        SELECT * WHERE {
+            SERVICE <[[> endpoint]]geonames> {
+                ?subject a <http://www.geonames.org/ontology#Feature> ;
+                    <http://www.geonames.org/ontology#name> ?label .
+                    [[> commonQuery]]
+                }
+            BIND("geonames" as ?dataset)
         } [[> commonQueryEnd]]
     }
 [[/inline]]
