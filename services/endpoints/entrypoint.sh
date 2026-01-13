@@ -9,7 +9,7 @@ mkdir -p "$OUT_DIR"
 
 {
   echo "# generated from ${CSV_PATH}"
-  tail -n +2 "$CSV_PATH" | while IFS=, read -r name port; do
+  tail -n +2 "$CSV_PATH" | while IFS=, read -r name port || [ -n "$name$port" ]; do
     name="$(echo "$name" | xargs)"
     port="$(echo "$port" | xargs)"
     [ -z "$name" ] && continue
