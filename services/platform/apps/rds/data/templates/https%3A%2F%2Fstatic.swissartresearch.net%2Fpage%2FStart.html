@@ -88,6 +88,7 @@
             SERVICE <[[> endpoint]]gnd> {
                 ?subject a ?type ;
                     ?predicate ?label .
+                FILTER (isIri(?subject))
                 VALUES (?type) {
                     ( <https://d-nb.info/standards/elementset/gnd#AdministrativeUnit> )
                     ( <https://d-nb.info/standards/elementset/gnd#BuildingOrMemorial> )
