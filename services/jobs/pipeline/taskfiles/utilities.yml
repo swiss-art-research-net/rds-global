@@ -105,13 +105,16 @@ tasks:
     internal: True
     status:
       - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-    vars:
-      QUERY_FILE: /pipeline/tmp/sameas{{.DATASET}}.rq
     cmds:
-      - echo "Fetching SameAs Statements for {{.DATASET}}"
-      - echo "{{.QUERY}}" > "{{.QUERY_FILE}}"
-      - $BLAZEGRAPH_RUNNER construct --journal=$BLAZEGRAPH_JOURNAL --outformat=turtle "{{.QUERY_FILE}}" "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-      - rm "{{.QUERY_FILE}}"
+      - echo "Fetching SameAs Statements for {{.DATASET_ID}}"
+      - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
+      - >
+        curl -X POST
+        -H "Content-Type: application/sparql-query"
+        -H "Accept: text/turtle"
+        --data-binary "{{.QUERY}}"
+        "http://endpoints/{{.DATASET_ID}}"
+        -o "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
 
   _fetch-sameas-statements-remote:
     desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint

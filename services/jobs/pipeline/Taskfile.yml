@@ -54,11 +54,11 @@ tasks:
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
     sources:
-      - /data/aat-data/*.nt
+      - /data/source/aat-data/*.nt
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
-          DATASET: AAT
+          DATASET_ID: aat
           OUTPUT_FILE: aatSameAs.ttl
           QUERY: |
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
