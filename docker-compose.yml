@@ -11,7 +11,7 @@ services:
     ports:
       - ${PORT_ENDPOINTS}:80
     volumes:
-      - ./endpoints.csv:/etc/nginx/endpoints.csv:ro
+      - ./config:/config:ro
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
@@ -62,7 +62,7 @@ services:
       - ./binds/qlever-index:/index:rw
       - ./data/ingest:/index/data
       - ./services/qlever-datasets/scripts:/scripts
-      - ./endpoints.csv:/scripts/endpoints.csv:ro
+      - ./config:/config:ro
 
   qlever-rds:
     container_name: ${COMPOSE_PROJECT_NAME}-qlever-rds
