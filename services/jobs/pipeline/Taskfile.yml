@@ -342,6 +342,16 @@ tasks:
           INPUT_DIR: sikart-data_ingest
           GRAPH: http://recherche.sik-isea.ch/graph
 
+  index-data-ulan:
+    desc: Index data for Getty ULAN
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: ulan
+          INPUT_DIR: ulan-data_ingest
+          GRAPH: http://vocab.getty.edu/ulan/graph
+
   ingest-metadata:
     desc: Ingest metadata
     sources:
