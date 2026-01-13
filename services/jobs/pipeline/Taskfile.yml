@@ -13,7 +13,7 @@ env:
   QLEVER_ENDPOINT: http://qlever:7001
   BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
   BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
-  WIKIDATA_ENDPOINT: https://query.wikidata.org/sparql
+  WIKIDATA_ENDPOINT: https://qlever.dev/api/wikidata
 
 
 includes:
@@ -72,11 +72,11 @@ tasks:
   fetch-sameas-statements-gnd:
     desc: Fetch SameAs statements contained in GND
     sources:
-      - /data/gnd-authorities-data/*.ttl
+      - /data/source/gnd-authorities-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
-          DATASET: GND
+          DATASET_ID: gnd
           OUTPUT_FILE: gndSameAs.ttl
           QUERY: |
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -99,11 +99,11 @@ tasks:
   fetch-sameas-statements-sikart:
     desc: Fetch SameAs statements contained in SIKART
     sources:
-      - /data/sikart-data/*.ttl
+      - /data/source/sikart-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
-          DATASET: SIKART
+          DATASET_ID: sikart
           OUTPUT_FILE: sikartSameAs.ttl
           QUERY: |
             PREFIX schema: <http://schema.org/>
@@ -120,11 +120,11 @@ tasks:
   fetch-sameas-statements-thesarchesp:
     desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
     sources:
-      - /data/thes-arch-esp-data/*.ttl
+      - /data/source/thes-arch-esp-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars: 
-          DATASET: Thesaurus Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
+          DATASET_ID: thesarchesp
           OUTPUT_FILE: thesarchespSameAs.ttl
           QUERY: |
             PREFIX schema: <http://schema.org/>
@@ -139,11 +139,11 @@ tasks:
   fetch-sameas-statements-thesobjmob:
     desc: Fetch SameAs statements contained in Thesaurus Object/Mobiliers
     sources:
-      - /data/thes-obj-mob-data/*.ttl
+      - /data/source/thes-obj-mob-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
-          DATASET: Thesaurus Objects Mobiliers
+          DATASET_ID: thesobjmob
           OUTPUT_FILE: thesobjmobSameAs.ttl
           QUERY: |
             PREFIX schema: <http://schema.org/>
@@ -158,11 +158,11 @@ tasks:
   fetch-sameas-statements-ulan:
     desc: Fetch SameAs statements contained in ULAN
     sources:
-      - /data/ulan-data/*.nt
+      - /data/source/ulan-data/*.nt
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
-          DATASET: ULAN
+          DATASET_ID: ulan
           OUTPUT_FILE: ulanSameAs.ttl
           QUERY: |
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
