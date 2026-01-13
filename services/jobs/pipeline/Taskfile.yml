@@ -416,6 +416,7 @@ tasks:
     sources:
       - /data/sameAsStatements/*.ttl
     cmds:
+      - mkdir -p /data/sameAsStatements/combined
       - cd /pipeline/scripts/sameAsProcessing; npm run start
 
   update-data-aat:
