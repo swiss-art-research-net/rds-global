@@ -25,6 +25,8 @@
                         [[> query-sikart]]
                     } UNION {
                         [[> query-geonames]]
+                    } UNION {
+                        [[> query-ulan]]
                     }
                 }
     '>
@@ -198,4 +200,17 @@
             BIND("sikart" as ?dataset)
         } [[> commonQueryEnd]]
     }  
+[[/inline]]
+
+[[#*inline "query-ulan"]]
+    {
+        SELECT * WHERE {
+            SERVICE <[[> endpoint]]ulan> {
+                ?subject a gvp:PersonConcept ;
+                    (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
+                    [[> commonQuery]]
+                }
+            BIND("ulan" as ?dataset)
+        } [[> commonQueryEnd]]
+    }
 [[/inline]]
