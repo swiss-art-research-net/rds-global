@@ -33,6 +33,13 @@ tasks:
       - task: update-data-thesarchesp
       - task: update-data-thesobjmob
       - task: update-data-ulan
+      - task: index-data-aat
+      - task: index-data-geonames
+      - task: index-data-gnd
+      - task: index-data-sikart
+      - task: index-data-thesarchesp
+      - task: index-data-thesobjmob
+      - task: index-data-ulan      
       - task: generate-labels
       - task: generate-sameas-statements
       - task: ingest-metadata
@@ -351,6 +358,26 @@ tasks:
           NAME: ulan
           INPUT_DIR: ulan-data_ingest
           GRAPH: http://vocab.getty.edu/ulan/graph
+
+  index-data-thesarchesp:
+    desc: Index data for Thesaurus Architecture/Espace
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: thesarchesp
+          INPUT_DIR: thes-arch-esp-data_ingest
+          GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+
+  index-data-thesobjmob:
+    desc: Index data for Thesaurus Object/Mobiliers
+    vars:
+    cmds:
+      - task: _build_qlever_index
+        vars:
+          NAME: thesobjmob
+          INPUT_DIR: thes-obj-mob-data_ingest
+          GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
 
   ingest-metadata:
     desc: Ingest metadata

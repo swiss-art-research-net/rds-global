@@ -27,6 +27,10 @@
                         [[> query-geonames]]
                     } UNION {
                         [[> query-ulan]]
+                    } UNION {
+                        [[> query-thesarchesp]]
+                    } UNION {
+                        [[> query-thesobjmob]]
                     }
                 }
     '>
@@ -211,6 +215,32 @@
                     [[> commonQuery]]
                 }
             BIND("ulan" as ?dataset)
+        } [[> commonQueryEnd]]
+    }
+[[/inline]]
+
+[[#*inline "query-thesarchesp"]]
+    {
+        SELECT * WHERE {
+            SERVICE <[[> endpoint]]thesarchesp> {
+                ?subject a skos:Concept ;
+                    skos:prefLabel ?label .
+                    [[> commonQuery]]
+                }
+            BIND("thesarchesp" as ?dataset)
+        } [[> commonQueryEnd]]
+    }
+[[/inline]]
+
+[[#*inline "query-thesobjmob"]]
+    {
+        SELECT * WHERE {
+            SERVICE <[[> endpoint]]thesobjmob> {
+                ?subject a skos:Concept ;
+                    skos:prefLabel ?label .
+                    [[> commonQuery]]
+                }
+            BIND("thesobjmob" as ?dataset)
         } [[> commonQueryEnd]]
     }
 [[/inline]]
