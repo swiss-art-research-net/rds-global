@@ -14,14 +14,14 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
     sparql.setReturnFormat(JSON)
     sparql.setMethod(POST)
 
-    count_query = """
-        SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE { 
+    graph_query = """
+        SELECT DISTINCT ?graph_name WHERE { 
             GRAPH ?graph_name { ?s ?p ?o . } 
-        } GROUP BY ?graph_name
+        }
     """
-    sparql.setQuery(count_query)
+    sparql.setQuery(graph_query)
     count_json = sparql.query().convert()
-    namedGraphsAndNumBindings = {count_json['results']['bindings'][i]['graph_name']['value'] : int(count_json['results']['bindings'][i]['count']['value']) for i in range(len(count_json['results']['bindings']))}
+    named_graphs = [count_json['results']['bindings'][i]['graph_name']['value'] for i in range(len(count_json['results']['bindings']))]
 
     with open(predicate_file, 'r') as f:
         predicates = json.load(f)
@@ -34,7 +34,7 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
         
     file_num = 0
 
-    for graph, nb in namedGraphsAndNumBindings.items():
+    for graph in named_graphs:
         if graph in predicates and len(predicates[graph]):
             counter = 0
             # check if predicates[graph] is a list or a string
@@ -43,7 +43,8 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
                 predicates_query = '?subject ' + predicates_path + ' ?value .'
             elif type(predicates[graph]) == str:
                 predicates_query = predicates[graph]
-            while counter <= nb:
+            hasResults = True
+            while hasResults:
                 query = """
                 SELECT ?subject ?value WHERE {{
                     GRAPH <{0}> {{
@@ -57,6 +58,7 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
                 results = sparql.query().convert()
                 # if no results, continue to next graph
                 if len(results["results"]["bindings"]) == 0:
+                    hasResults = False
                     continue
                 nquad_lines = []
                 for result in results["results"]["bindings"]:
