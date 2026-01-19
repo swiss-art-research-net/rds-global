@@ -102,7 +102,6 @@ tasks:
         vars:
           INPUT_DIR: data/ingest/ulan-data_ingest
 
-
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
     cmds: 
@@ -349,22 +348,15 @@ tasks:
   
   generate-labels:
     desc: Generate labels for URIs
+    vars:
+      ENDPOINT: http://endpoints/aat
     cmds:
-      - mkdir -p /pipeline/tmp/requests
       - mkdir -p /pipeline/tmp/responses
       - |
-        echo "SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE
-          {
-            GRAPH ?graph_name
-            {
-              ?subject ?predicates ?label .
-            }
-          }
-        GROUP BY ?graph_name" > /pipeline/tmp/requests/label_count_by_graph.rq
-      - $BLAZEGRAPH_RUNNER select --journal=$BLAZEGRAPH_JOURNAL --outformat=json /pipeline/tmp/requests/label_count_by_graph.rq  /pipeline/tmp/responses/label_count_by_graph.json
-      - echo "DROP GRAPH <http://schema.swissartresearch.net/rds/labels>" > /pipeline/tmp/requests/drop_labels_graph.rq
-      - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/drop_labels_graph.rq
-      - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --blazegraph_journal "$BLAZEGRAPH_JOURNAL" {{.CLI_ARGS}}
+        curl -X POST -H "Accept: application/sparql-results+json" --data-urlencode "query=SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE { GRAPH ?graph_name { ?subject ?predicates ?label . } } GROUP BY ?graph_name" {{.ENDPOINT}} > /pipeline/tmp/responses/label_count_by_graph.json
+      - #echo "DROP GRAPH <http://schema.swissartresearch.net/rds/labels>" > /pipeline/tmp/requests/drop_labels_graph.rq
+      - #$BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/drop_labels_graph.rq
+      - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.ENDPOINT}}" {{.CLI_ARGS}}
 
   index-data-aat:
     desc: Index data for Getty AAT

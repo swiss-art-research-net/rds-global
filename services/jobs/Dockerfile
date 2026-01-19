@@ -11,7 +11,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir rdflib requests opensearch-py tqdm
+RUN pip install --no-cache-dir rdflib requests opensearch-py tqdm SPARQLWrapper
 
 # Install task runner
 WORKDIR /
