@@ -16,7 +16,7 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
 
     count_query = """
         SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE { 
-            GRAPH ?graph_name { ?subject ?predicates ?label . } 
+            GRAPH ?graph_name { ?s ?p ?o . } 
         } GROUP BY ?graph_name
     """
     sparql.setQuery(count_query)
@@ -55,6 +55,9 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
 
                 sparql.setQuery(query)
                 results = sparql.query().convert()
+                # if no results, continue to next graph
+                if len(results["results"]["bindings"]) == 0:
+                    continue
                 nquad_lines = []
                 for result in results["results"]["bindings"]:
                     subject = result["subject"]["value"]
