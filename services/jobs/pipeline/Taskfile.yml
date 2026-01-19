@@ -46,6 +46,63 @@ tasks:
       - task: ingest-sameas-statements
       - task: materialise-num-sameas-statements
 
+  add-all-data-to-search-index:
+    desc: Add all data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest
+
+  add-to-search-index-aat:
+    desc: Add Getty AAT data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest/aat-data_ingest
+
+  add-to-search-index-geonames:
+    desc: Add GeoNames data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest/geonames-data_ingest
+
+  add-to-search-index-gnd:
+    desc: Add GND data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest/gnd-authorities-data_ingest
+  
+  add-to-search-index-sikart:
+    desc: Add SIKART data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest/sikart-data_ingest
+
+  add-to-search-index-thesarchesp:
+    desc: Add Thesaurus Architecture/Espace data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest/thes-arch-esp-data_ingest
+    
+  add-to-search-index-thesobjmob:
+    desc: Add Thesaurus Object/Mobiliers data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index
+        vars:
+          INPUT_DIR: data/ingest/thes-obj-mob-data_ingest
+
+  add-to-search-index-ulan:
+    desc: Add Getty ULAN data to OpenSearch index
+    cmds:
+      - task: _add_folder_to_opensearch_index 
+        vars:
+          INPUT_DIR: data/ingest/ulan-data_ingest
+
+
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
     cmds: 

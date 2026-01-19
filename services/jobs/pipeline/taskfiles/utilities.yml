@@ -4,6 +4,21 @@ version: '3'
 
 tasks:
 
+  _add_folder_to_opensearch_index:
+    desc: Add folder to OpenSearch index
+    requires:
+      vars: [INPUT_DIR]
+    cmds:
+      - echo "Adding data from {{.INPUT_DIR}}"
+      - |
+        find /{{.INPUT_DIR}} -type f \( -name "*.nq" -o -name "*.nq.gz" \) -print0 |
+        xargs -0 -I {} sh -c '
+          echo "Indexing {}"
+          python scripts/indexOpenSearch.py \
+            --nq "{}" \
+            --host opensearch-node
+        '
+
   _build_qlever_index:
     desc: Build QLever index for given data
     requires:
