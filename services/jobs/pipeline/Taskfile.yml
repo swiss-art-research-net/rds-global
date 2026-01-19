@@ -351,11 +351,7 @@ tasks:
     vars:
       ENDPOINT: http://endpoints/aat
     cmds:
-      - mkdir -p /pipeline/tmp/responses
-      - |
-        curl -X POST -H "Accept: application/sparql-results+json" --data-urlencode "query=SELECT ?graph_name ( COUNT ( * ) AS ?count ) WHERE { GRAPH ?graph_name { ?subject ?predicates ?label . } } GROUP BY ?graph_name" {{.ENDPOINT}} > /pipeline/tmp/responses/label_count_by_graph.json
-      - #echo "DROP GRAPH <http://schema.swissartresearch.net/rds/labels>" > /pipeline/tmp/requests/drop_labels_graph.rq
-      - #$BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/drop_labels_graph.rq
+      - mkdir -p /data/labels
       - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.ENDPOINT}}" {{.CLI_ARGS}}
 
   index-data-aat:
