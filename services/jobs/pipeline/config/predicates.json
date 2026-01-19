@@ -15,7 +15,14 @@
         "<https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork>"
     ],
     "http://recherche.sik-isea.ch/graph": "{ $subject <http://www.cidoc-crm.org/cidoc-crm/P1_is_identified_by> ?identifier . ?identifier a <http://www.cidoc-crm.org/cidoc-crm/E41_Appellation> ; <http://www.w3.org/2000/01/rdf-schema#label> $value }",
-    "http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph": [],
-    "http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph": [],
-    "http://vocab.getty.edu/ulan/graph": []
+    "http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph": [
+        "<http://www.w3.org/2004/02/skos/core#prefLabel>"
+    ],
+    "http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph": [
+        "<http://www.w3.org/2004/02/skos/core#prefLabel>"
+    ],
+    "http://vocab.getty.edu/ulan/graph": [
+        "<http://vocab.getty.edu/ontology#prefLabelGVP>/<http://www.w3.org/2008/05/skos-xl#literalForm>",
+        "<http://vocab.getty.edu/ontology#term>"
+    ]
 }
