@@ -349,10 +349,14 @@ tasks:
   generate-labels:
     desc: Generate labels for URIs
     vars:
-      ENDPOINT: http://endpoints/aat
+      DATASETS: aat,geonames,gnd,sikart,thesarchesp,thesobjmob,ulan
     cmds:
       - mkdir -p /data/labels
-      - python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.ENDPOINT}}" {{.CLI_ARGS}}
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "http://endpoints/{{.DATASET}}" {{.CLI_ARGS}}
 
   index-data-aat:
     desc: Index data for Getty AAT
