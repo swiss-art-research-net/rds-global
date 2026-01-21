@@ -309,7 +309,8 @@ tasks:
     cmds:
       - task: _build_qlever_index
         vars:
-          INPUT_DIR: /index/data
+          INPUT_DIR: /data/ingest
+          NAME: rds
 
   ingest-metadata:
     desc: Ingest metadata

@@ -12,7 +12,7 @@ services:
         max-file: '10'
         max-size: 200k
     volumes:
-      - ./binds/qlever-index:/index:rw
+      - ./binds/qlever:/index:rw
       - ./services/jobs/pipeline:/pipeline
       - ./data:/data
 
@@ -36,7 +36,7 @@ services:
      - ./services/platform/apps:/apps
 
   qlever:
-    container_name: ${COMPOSE_PROJECT_NAME}-qlever-
+    container_name: ${COMPOSE_PROJECT_NAME}-qlever
     build: ./services/qlever
     entrypoint: ["sh", "-c", "qlever start & tail -f /dev/null"]
     logging:
@@ -48,5 +48,5 @@ services:
       - ${PORT_QLEVER_RDS}:7001
     volumes:
       - ./binds/qlever:/index:rw
-      - ./data/ingest:/index/data
-      #- ./services/qlever-rds/Qleverfile:/index/Qleverfile:ro
+      - ./data:/data
+      - ./services/qlever/Qleverfile:/index/Qleverfile:ro
