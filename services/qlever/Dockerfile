@@ -2,7 +2,8 @@ FROM adfreiburg/qlever:commit-9410312
 #commit-84156ed
 USER root
 
-COPY ./Qleverfile ./Qleverfile
+COPY ./scripts/runServer.sh /usr/local/bin/runServer.sh
+RUN chmod +x /usr/local/bin/runServer.sh
 
 RUN mkdir /index
 WORKDIR /index
