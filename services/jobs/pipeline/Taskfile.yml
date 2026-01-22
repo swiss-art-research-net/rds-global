@@ -30,11 +30,13 @@ tasks:
       - task: update-data-thesobjmob
       - task: update-data-ulan
       - task: index-data
-      - task: generate-labels
       - task: generate-sameas-statements
-      - task: ingest-metadata
-      - task: ingest-sameas-statements
-      - task: materialise-num-sameas-statements
+      #- task: index-data # Re-index after SameAs generation
+      - #task: create-search-index
+      - #task: generate-labels
+      - #task: ingest-metadata
+      - #task: ingest-sameas-statements
+      - #task: materialise-num-sameas-statements
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
@@ -53,7 +55,7 @@ tasks:
       - task: fetch-sameas-statements-thesobjmob
       - task: fetch-sameas-statements-thesarchesp
       - task: fetch-sameas-statements-sikart
-      - task: fetch-sameas-statements-wikidata
+      - #task: fetch-sameas-statements-wikidata
 
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
@@ -282,10 +284,19 @@ tasks:
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
+    vars:
+      DATA_DIRECTORY: /data/sameAsStatements/combinedSameAs
+      FILE_FORMAT: ttl
+      GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
     cmds:
       - task: fetch-all-sameas-statements
-      - mkdir -p /data/sameAsStatements/combined
+      - mkdir -p {{.DATA_DIRECTORY}}
       - task: process-sameas-statements
+      - task: _prepareForIndexing
+        vars:
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
   
   generate-labels:
     desc: Generate labels for URIs
