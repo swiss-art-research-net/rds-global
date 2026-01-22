@@ -24,51 +24,50 @@ datasets:
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
     types:
-      gnd:
-        actor:
-          - gnd:Person
-          - gnd:UndifferentiatedPerson
-          - gnd:DifferentiatedPerson
-        builtWork:
-          - gnd:BuildingOrMemorial
-        bibliographicItem:
-          - gnd:Work
-        concept:
-          - gnd:SubjectHeading
-          - gnd:SubjectHeadingSensoStricto
-          - gnd:CharactersOrMorphemes
-          - gnd:Language
-          - gnd:NomenclatureInBiologyOrChemistry
-          - gnd:EthnographicName
-          - gnd:Relationship
-          - gnd:ProvenanceCharacteristic
-          - gnd:ProductNameOrBrandName
-          - gnd:SoftwareProduct
-        group:
-          - gnd:Company
-          - gnd:CorporateBody
-          - gnd:ReligiousCorporateBody
-          - gnd:MusicalCorporateBody
-          - gnd:FictiveCorporateBody
-          - gnd:OrganOfCorporateBody
-          - gnd:TerritorialCorporateBodyOrAdministrativeUnit
-          - gnd:AdministrativeUnit
-          - gnd:ReligiousAdministrativeUnit
-        place:
-          - gnd:Country
-          - gnd:PlaceOrGeographicName
-          - gnd:MemberState
-          - gnd:NaturalGeographicUnit
-          - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
-          - gnd:WayBorderOrLine
-          - gnd:ReligiousTerritory
-          - gnd:ExtraterrestrialTerritory
-          - gnd:FictivePlace
-        event:
-          - gnd:ConferenceOrEvent
-          - gnd:SeriesOfConferenceOrEvent
-          - gnd:HistoricSingleEventOrEra
-          - gnd:ProjectOrProgram
+      actor:
+        - gnd:Person
+        - gnd:UndifferentiatedPerson
+        - gnd:DifferentiatedPerson
+      builtWork:
+        - gnd:BuildingOrMemorial
+      bibliographicItem:
+        - gnd:Work
+      concept:
+        - gnd:SubjectHeading
+        - gnd:SubjectHeadingSensoStricto
+        - gnd:CharactersOrMorphemes
+        - gnd:Language
+        - gnd:NomenclatureInBiologyOrChemistry
+        - gnd:EthnographicName
+        - gnd:Relationship
+        - gnd:ProvenanceCharacteristic
+        - gnd:ProductNameOrBrandName
+        - gnd:SoftwareProduct
+      group:
+        - gnd:Company
+        - gnd:CorporateBody
+        - gnd:ReligiousCorporateBody
+        - gnd:MusicalCorporateBody
+        - gnd:FictiveCorporateBody
+        - gnd:OrganOfCorporateBody
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+        - gnd:AdministrativeUnit
+        - gnd:ReligiousAdministrativeUnit
+      place:
+        - gnd:Country
+        - gnd:PlaceOrGeographicName
+        - gnd:MemberState
+        - gnd:NaturalGeographicUnit
+        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
+        - gnd:WayBorderOrLine
+        - gnd:ReligiousTerritory
+        - gnd:ExtraterrestrialTerritory
+        - gnd:FictivePlace
+      event:
+        - gnd:ConferenceOrEvent
+        - gnd:SeriesOfConferenceOrEvent
+        - gnd:HistoricSingleEventOrEra
+        - gnd:ProjectOrProgram
     queries:
       description: |
         ?subject ?predicateDescription ?description .
