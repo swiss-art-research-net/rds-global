@@ -15,7 +15,6 @@ env:
   BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
   WIKIDATA_ENDPOINT: https://qlever.dev/api/wikidata
 
-
 includes:
   utilities:
     taskfile: ./taskfiles/utilities.yml
