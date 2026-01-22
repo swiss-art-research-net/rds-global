@@ -119,7 +119,8 @@ datasets:
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
-      sik: https://recherche.sik-isea.ch/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      sik: https://recherche.sik-isea.ch
     types:
       actor:
         - sik:SIK-ACTOR
@@ -138,6 +139,13 @@ datasets:
         - sik:SIK-PARENT_DOCUMENT
       concept:
         - sik:SIK-TYPE
+    queries:
+      description: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?description .
+      prefLabel: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?prefLabel .
+      labels: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?label .
 
   thesarchesp:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
