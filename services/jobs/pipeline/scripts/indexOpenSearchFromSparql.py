@@ -187,26 +187,52 @@ def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
 class SparqlClient:
     endpoint: str
     timeout_s: int = 60
-    user_agent: str = "sparql-to-opensearch/1.2 (+requests)"
+    user_agent: str = "sparql-to-opensearch/1.3 (+requests)"
+    max_retries: int = 3
+    retry_sleep_s: float = 2.0
 
     def query(self, sparql: str) -> Dict[str, Any]:
         headers = {
             "Accept": "application/sparql-results+json",
             "User-Agent": self.user_agent,
         }
-        resp = requests.post(
-            self.endpoint,
-            data={"query": sparql},
-            headers=headers,
-            timeout=self.timeout_s,
-        )
-        if resp.status_code != 200:
-            raise RuntimeError(
-                f"SPARQL endpoint error {resp.status_code}\n"
-                f"Response (first 2000 chars):\n{resp.text[:2000]}\n\n"
-                f"Query (first 4000 chars):\n{sparql[:4000]}"
-            )
-        return resp.json()
+
+        last_error: Optional[Exception] = None
+
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                resp = requests.post(
+                    self.endpoint,
+                    data={"query": sparql},
+                    headers=headers,
+                    timeout=self.timeout_s,
+                )
+
+                if resp.status_code == 200:
+                    return resp.json()
+
+                # Non-200 response → retryable error
+                raise RuntimeError(
+                    f"SPARQL endpoint returned HTTP {resp.status_code}\n"
+                    f"Response (first 1000 chars):\n{resp.text[:1000]}"
+                )
+
+            except Exception as e:
+                last_error = e
+                if attempt < self.max_retries:
+                    sleep_time = self.retry_sleep_s * attempt  # simple linear backoff
+                    print(
+                        f"[SPARQL] attempt {attempt}/{self.max_retries} failed, retrying in {sleep_time:.1f}s…",
+                        file=sys.stderr,
+                    )
+                    time.sleep(sleep_time)
+                else:
+                    break
+
+        # All retries exhausted
+        raise RuntimeError(
+            f"SPARQL query failed after {self.max_retries} attempts"
+        ) from last_error
 
 
 def _get_binding_value(binding: Dict[str, Any], var: str) -> Optional[str]:
@@ -428,6 +454,8 @@ def main() -> int:
     ap.add_argument("--max-pages", type=int, default=None, help="Stop after N pages (debug/testing)")
     ap.add_argument("--sleep", type=float, default=0.0, help="Sleep between pages (seconds)")
     ap.add_argument("--sparql-timeout", type=int, default=60, help="SPARQL HTTP timeout seconds")
+    ap.add_argument("--sparql-retries", type=int, default=3, help="SPARQL retry attempts")
+    ap.add_argument("--sparql-retry-sleep", type=float, default=2.0, help="Base sleep time between SPARQL retries (seconds)")
 
     ap.add_argument("--os-host", default="localhost", help="OpenSearch host")
     ap.add_argument("--os-port", type=int, default=9200, help="OpenSearch port")
@@ -450,7 +478,12 @@ def main() -> int:
 
     dataset_cfg = datasets[args.dataset]
 
-    sparql_client = SparqlClient(endpoint=args.endpoint, timeout_s=args.sparql_timeout)
+    sparql_client = SparqlClient(
+        endpoint=args.endpoint,
+        timeout_s=args.sparql_timeout,
+        max_retries=args.sparql_retries,
+        retry_sleep_s=args.sparql_retry_sleep,
+    )
 
     os_client = make_os_client(
         host=args.os_host,
