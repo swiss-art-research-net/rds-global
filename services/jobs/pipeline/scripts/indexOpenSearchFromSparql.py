@@ -42,34 +42,49 @@ FIXED_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
   ?subject
-  ?prefLabel
-  (GROUP_CONCAT(DISTINCT STR(?type);SEPARATOR="||") as ?types)
-  (GROUP_CONCAT(DISTINCT ?typeClass;SEPARATOR="||") as ?typeClasses)
-  (GROUP_CONCAT(?label;SEPARATOR="||") as ?labels)
+  (GROUP_CONCAT(DISTINCT ?prefLabel; SEPARATOR="||") AS ?prefLabels)
+  (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
+  (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
+  (GROUP_CONCAT(DISTINCT ?label; SEPARATOR="||") AS ?labels)
   ?description
-  (COUNT(?match) as ?numMatches)
+  (COUNT(DISTINCT ?match) AS ?numMatches)
+WHERE {{
+  {{
+    SELECT ?subject ?type ?typeClass WHERE {{
+      GRAPH <{graph}> {{
+        {type_constraint_block}
+      }}
+    }}
+    ORDER BY ?subject
+    LIMIT {limit}
+    OFFSET {offset}
+  }}
+
+  GRAPH <{graph}> {{
+    {pref_label_block}
+    {description_block}
+  }} 
+  
+  OPTIONAL {{
+    GRAPH <{graph}> {{
+        {labels_block}
+    }}
+  }}
+{matches_optional_block}
+}}
+GROUP BY ?subject ?description
+ORDER BY ?subject
+"""
+
+COUNT_QUERY_TEMPLATE = """\
+{prefixes}
+SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
   GRAPH <{graph}> {{
 {type_constraint_block}
 {pref_label_block}
 {labels_block}
 {description_block}
-  }}
-{matches_optional_block}
-}}
-GROUP BY ?subject ?prefLabel ?description
-ORDER BY ?subject
-LIMIT {limit}
-OFFSET {offset}
-"""
-
-COUNT_QUERY_TEMPLATE = """\
-{prefixes}
-SELECT (COUNT(?subject) as ?total)
-WHERE {{
-  GRAPH <{graph}> {{
-{type_constraint_block}
-{pref_label_block}
   }}
 }}
 """
@@ -294,7 +309,7 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     for b in bindings:
         subject = _get_binding_value(b, "subject")
-        pref_label = _get_binding_value(b, "prefLabel")
+        pref_labels_concat = _get_binding_value(b, "prefLabels")
         types_concat = _get_binding_value(b, "types") or ""
         type_classes_concat = _get_binding_value(b, "typeClasses") or ""
         labels_concat = _get_binding_value(b, "labels") or ""
@@ -304,6 +319,7 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         types = [t for t in types_concat.split("||") if t] if types_concat else []
         type_classes = [tc for tc in type_classes_concat.split("||") if tc] if type_classes_concat else []
         labels = [l for l in labels_concat.split("||") if l] if labels_concat else []
+        pref_labels = [pl for pl in pref_labels_concat.split("||") if pl] if pref_labels_concat else []
 
         try:
             relevance = int(num_matches_str)
@@ -316,10 +332,10 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         rows.append(
             {
                 "uri": subject,
-                "prefLabel": pref_label,
+                "prefLabels": pref_labels,
                 "labels": labels,
                 "types": types,
-                "typeClasses": type_classes,  # <--- actor/artwork/place/etc from YAML
+                "typeClasses": type_classes,
                 "description": description,
                 "relevance": relevance,
             }
@@ -368,7 +384,7 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
         "mappings": {
             "properties": {
                 "uri": {"type": "keyword"},
-                "prefLabel": {
+                "prefLabels": {
                     "type": "text",
                     "fields": {"raw": {"type": "keyword", "ignore_above": 256}},
                 },
@@ -467,16 +483,16 @@ def index_dataset_to_opensearch(
     ensure_index(os_client, index_name)
 
     count_query = build_count_query(dataset_cfg)
-    t0 = time.time()
     total_expected = parse_count(sparql_client.query(count_query))
-    count_s = time.time() - t0
+
     print(
         f"Indexing entities for the dataset {dataset_name}...",
         file=sys.stderr,
     )
 
     buffer: List[Dict[str, Any]] = []
-    total_indexed = 0
+    unique_done = 0
+    seen_uris: set[str] = set()
     start_time = time.time()
 
     for row in iter_dataset_rows(
@@ -486,17 +502,25 @@ def index_dataset_to_opensearch(
         max_pages=max_pages,
         sleep_s=sleep_s,
     ):
+        uri = row.get("uri")
+        if not uri:
+            continue
+
+        if uri in seen_uris:
+            continue
+        seen_uris.add(uri)
+        unique_done += 1
+
         row["dataset"] = dataset_name
         buffer.append(row)
 
         if len(buffer) >= bulk_chunk_size:
-            indexed_now = bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
-            total_indexed += indexed_now
+            bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
             buffer.clear()
 
             elapsed = time.time() - start_time
-            rate = (total_indexed / elapsed) if elapsed > 0 else 0.0
-            pct = (total_indexed / total_expected * 100.0) if total_expected > 0 else 0.0
+            rate = (unique_done / elapsed) if elapsed > 0 else 0.0
+            pct = (unique_done / total_expected * 100.0) if total_expected > 0 else 0.0
 
             print(
                 f"{pct:.1f}% "
@@ -505,17 +529,17 @@ def index_dataset_to_opensearch(
             )
 
     if buffer:
-        indexed_now = bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
-        total_indexed += indexed_now
+        bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
         buffer.clear()
 
         elapsed = time.time() - start_time
-        rate = (total_indexed / elapsed) if elapsed > 0 else 0.0
-        pct = (total_indexed / total_expected * 100.0) if total_expected > 0 else 0.0
+        rate = (unique_done / elapsed) if elapsed > 0 else 0.0
+        pct = (unique_done / total_expected * 100.0) if total_expected > 0 else 0.0
+        print(f"{pct:.1f}% ({rate:.1f} entities/s)", file=sys.stderr)
 
     os_client.indices.refresh(index=index_name)
     print(f"Done!", file=sys.stderr)
-    return total_indexed
+    return unique_done
 
 
 def main() -> int:
