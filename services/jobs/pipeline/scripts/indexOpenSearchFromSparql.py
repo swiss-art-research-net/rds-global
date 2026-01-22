@@ -27,7 +27,7 @@ import json
 import sys
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import requests
 import yaml
@@ -44,6 +44,7 @@ SELECT
   ?subject
   ?prefLabel
   (GROUP_CONCAT(DISTINCT STR(?type);SEPARATOR="||") as ?types)
+  (GROUP_CONCAT(DISTINCT ?typeClass;SEPARATOR="||") as ?typeClasses)
   (GROUP_CONCAT(?label;SEPARATOR="||") as ?labels)
   ?description
   (COUNT(?match) as ?numMatches)
@@ -81,57 +82,70 @@ def _indent_block(block: str, spaces: int = 4) -> str:
     return "\n".join(pad + ln if ln else "" for ln in lines) + "\n"
 
 
-def _collect_required_classes(dataset_cfg: Dict[str, Any]) -> List[str]:
+def _collect_required_class_pairs(dataset_cfg: Dict[str, Any]) -> List[Tuple[str, str]]:
     """
-    Collect ALL classes across ALL groups under dataset.types.
+    Build pairs of (requiredClassQName, typeClassLabel) from dataset.types.
 
-    Example YAML:
+    Example:
       types:
-        actor: [gnd:DifferentiatedPerson, ...]
-        artwork: [gnd:Work, ...]
-        ...
+        actor: [gnd:DifferentiatedPerson, gnd:Gods]
+        artwork: [gnd:Work]
 
-    Result: a de-duplicated list of all those IRIs/QNames.
+    Produces:
+      [("gnd:DifferentiatedPerson","actor"), ("gnd:Gods","actor"), ("gnd:Work","artwork"), ...]
     """
     types_cfg = dataset_cfg.get("types", {})
     if not isinstance(types_cfg, dict) or not types_cfg:
         raise ValueError("Dataset is missing 'types' or it is not a dict of groups -> class lists.")
 
-    required: List[str] = []
+    pairs: List[Tuple[str, str]] = []
     for group_name, class_list in types_cfg.items():
+        if not isinstance(group_name, str) or not group_name.strip():
+            raise ValueError(f"Invalid types group name: {group_name!r}")
         if not isinstance(class_list, list) or not class_list:
             raise ValueError(f"types.{group_name} must be a non-empty list.")
+
         for c in class_list:
             if not isinstance(c, str) or not c.strip():
                 raise ValueError(f"Invalid class value in types.{group_name}: {c!r}")
-            required.append(c.strip())
+            pairs.append((c.strip(), group_name.strip()))
 
-    # De-dup while preserving order
+    # De-dup pairs while preserving order
     seen = set()
-    deduped = []
-    for c in required:
-        if c not in seen:
-            seen.add(c)
-            deduped.append(c)
+    deduped: List[Tuple[str, str]] = []
+    for p in pairs:
+        if p not in seen:
+            seen.add(p)
+            deduped.append(p)
 
     return deduped
 
 
-def _build_type_constraint_block(required_classes: List[str]) -> str:
+def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
     """
-    Constrain subjects to ANY of the required classes, while still collecting all ?type:
-      VALUES ?requiredClass { c1 c2 ... }
-      ?subject a ?requiredClass, ?type .
+    Constrain subjects to ANY allowed requiredClass, and bind the corresponding typeClass label.
 
-    This keeps your existing semantics:
-      - subject must be in the allowed class set (one or more)
-      - we still bind ?type for concatenation of all rdf:types
+    VALUES (?requiredClass ?typeClass) {
+      (gnd:DifferentiatedPerson "actor")
+      (gnd:Work "artwork")
+      ...
+    }
+    ?subject a ?requiredClass, ?type .
     """
-    # Chunk VALUES lists a bit if you have huge sets; most endpoints are fine,
-    # but chunking is safer for very large type sets.
-    values = " ".join(required_classes)
+    if not class_pairs:
+        raise ValueError("No (requiredClass, typeClass) pairs found in dataset.types.")
+
+    # Escape double quotes in group names just in case
+    rows = []
+    for required_class, type_class in class_pairs:
+        safe_label = type_class.replace('"', '\\"')
+        rows.append(f'({required_class} "{safe_label}")')
+
+    values_rows = "\n      ".join(rows)
     block = f"""\
-    VALUES ?requiredClass {{ {values} }}
+    VALUES (?requiredClass ?typeClass) {{
+      {values_rows}
+    }}
     ?subject a ?requiredClass, ?type ."""
     return _indent_block(block, 4).rstrip("\n")
 
@@ -140,8 +154,8 @@ def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
     prefixes = _prefix_lines(dataset_cfg.get("prefixes", {}))
     graph = dataset_cfg["graph"]
 
-    required_classes = _collect_required_classes(dataset_cfg)
-    type_constraint_block = _build_type_constraint_block(required_classes)
+    class_pairs = _collect_required_class_pairs(dataset_cfg)
+    type_constraint_block = _build_type_constraint_block(class_pairs)
 
     queries = dataset_cfg.get("queries", {})
     pref_label_block = queries.get("prefLabel", "")
@@ -151,17 +165,7 @@ def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
-    print(FIXED_QUERY_TEMPLATE.format(
-            prefixes=prefixes,
-            graph=graph,
-            type_constraint_block=type_constraint_block,
-            pref_label_block=_indent_block(pref_label_block, 4).rstrip("\n"),
-            labels_block=_indent_block(labels_block, 4).rstrip("\n"),
-            description_block=_indent_block(description_block, 4).rstrip("\n"),
-            matches_optional_block=FIXED_MATCHES_OPTIONAL_BLOCK,
-            limit=limit,
-            offset=offset,
-        ))
+
     return FIXED_QUERY_TEMPLATE.format(
         prefixes=prefixes,
         graph=graph,
@@ -183,7 +187,7 @@ def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
 class SparqlClient:
     endpoint: str
     timeout_s: int = 60
-    user_agent: str = "sparql-to-opensearch/1.0 (+requests)"
+    user_agent: str = "sparql-to-opensearch/1.2 (+requests)"
 
     def query(self, sparql: str) -> Dict[str, Any]:
         headers = {
@@ -220,11 +224,13 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         subject = _get_binding_value(b, "subject")
         pref_label = _get_binding_value(b, "prefLabel")
         types_concat = _get_binding_value(b, "types") or ""
+        type_classes_concat = _get_binding_value(b, "typeClasses") or ""
         labels_concat = _get_binding_value(b, "labels") or ""
         description = _get_binding_value(b, "description")
         num_matches_str = _get_binding_value(b, "numMatches") or "0"
 
         types = [t for t in types_concat.split("||") if t] if types_concat else []
+        type_classes = [tc for tc in type_classes_concat.split("||") if tc] if type_classes_concat else []
         labels = [l for l in labels_concat.split("||") if l] if labels_concat else []
 
         try:
@@ -241,6 +247,7 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "prefLabel": pref_label,
                 "labels": labels,
                 "types": types,
+                "typeClasses": type_classes,  # <--- actor/artwork/place/etc from YAML
                 "description": description,
                 "relevance": relevance,
             }
@@ -295,6 +302,7 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
                 },
                 "labels": {"type": "text"},
                 "types": {"type": "keyword"},
+                "typeClasses": {"type": "keyword"},  # <--- YAML group labels
                 "description": {"type": "text"},
                 "relevance": {"type": "integer"},
             }
@@ -309,9 +317,9 @@ def iter_bulk_actions(index_name: str, rows: Iterable[Dict[str, Any]]) -> Iterab
         if not uri:
             continue
         yield {
-            "_op_type": "index",   # overwrite if exists
+            "_op_type": "index",
             "_index": index_name,
-            "_id": uri,            # stable doc id = subject URI
+            "_id": uri,
             "_source": r,
         }
 
