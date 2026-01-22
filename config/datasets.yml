@@ -24,68 +24,51 @@ datasets:
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
     types:
-      actor:
-        - gnd:DifferentiatedPerson
-        - gnd:RoyalOrMemberOfARoyalHouse
-        - gnd:Gods
-        - gnd:Spirits
-        - gnd:LiteraryOrLegendaryCharacter
-        - gnd:GroupOfPersons
-        - gnd:Family
-        - gnd:PseudonymNameOfThePerson
-        - gnd:RealNameOfThePerson
-        - gnd:EarlierNameOfThePerson
-        - gnd:LaterNameOfThePerson
-        - gnd:FullerFormOfThePerson
-        - gnd:CollectivePseudonym
-      artwork:
-        - gnd:Work
-        - gnd:Expression
-        - gnd:MusicalWork
-        - gnd:VersionOfAMusicalWork
-        - gnd:Manuscript
-      bibliographicItem:
-        - gnd:Collection
-        - gnd:SeriesOfConferenceOrEvent
-      builtWork:
-        - gnd:BuildingOrMemorial
-        - gnd:MeansOfTransportWithIndividualName
-      concept:
-        - gnd:SubjectHeading
-        - gnd:SubjectHeadingSensoStricto
-        - gnd:CharactersOrMorphemes
-        - gnd:Language
-        - gnd:NomenclatureInBiologyOrChemistry
-        - gnd:EthnographicName
-        - gnd:Relationship
-        - gnd:ProvenanceCharacteristic
-        - gnd:ProductNameOrBrandName
-        - gnd:SoftwareProduct
-      event:
-        - gnd:ConferenceOrEvent
-        - gnd:SeriesOfConferenceOrEvent
-        - gnd:HistoricSingleEventOrEra
-        - gnd:ProjectOrProgram
-      group:
-        - gnd:Company
-        - gnd:CorporateBody
-        - gnd:ReligiousCorporateBody
-        - gnd:MusicalCorporateBody
-        - gnd:FictiveCorporateBody
-        - gnd:OrganOfCorporateBody
-        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
-        - gnd:AdministrativeUnit
-        - gnd:ReligiousAdministrativeUnit
-      place:
-        - gnd:PlaceOrGeographicName
-        - gnd:Country
-        - gnd:MemberState
-        - gnd:NaturalGeographicUnit
-        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
-        - gnd:WayBorderOrLine
-        - gnd:ReligiousTerritory
-        - gnd:ExtraterrestrialTerritory
-        - gnd:FictivePlace
+      gnd:
+        actor:
+          - gnd:Person
+          - gnd:UndifferentiatedPerson
+          - gnd:DifferentiatedPerson
+        builtWork:
+          - gnd:BuildingOrMemorial
+        bibliographicItem:
+          - gnd:Work
+        concept:
+          - gnd:SubjectHeading
+          - gnd:SubjectHeadingSensoStricto
+          - gnd:CharactersOrMorphemes
+          - gnd:Language
+          - gnd:NomenclatureInBiologyOrChemistry
+          - gnd:EthnographicName
+          - gnd:Relationship
+          - gnd:ProvenanceCharacteristic
+          - gnd:ProductNameOrBrandName
+          - gnd:SoftwareProduct
+        group:
+          - gnd:Company
+          - gnd:CorporateBody
+          - gnd:ReligiousCorporateBody
+          - gnd:MusicalCorporateBody
+          - gnd:FictiveCorporateBody
+          - gnd:OrganOfCorporateBody
+          - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+          - gnd:AdministrativeUnit
+          - gnd:ReligiousAdministrativeUnit
+        place:
+          - gnd:Country
+          - gnd:PlaceOrGeographicName
+          - gnd:MemberState
+          - gnd:NaturalGeographicUnit
+          - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
+          - gnd:WayBorderOrLine
+          - gnd:ReligiousTerritory
+          - gnd:ExtraterrestrialTerritory
+          - gnd:FictivePlace
+        event:
+          - gnd:ConferenceOrEvent
+          - gnd:SeriesOfConferenceOrEvent
+          - gnd:HistoricSingleEventOrEra
+          - gnd:ProjectOrProgram
     queries:
       description: |
         ?subject ?predicateDescription ?description .
@@ -140,6 +123,27 @@ datasets:
 
   sikart:
     graph: http://recherche.sik-isea.ch/graph
+    prefixes:
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      sik: https://recherche.sik-isea.ch/
+    types:
+      actor:
+        - sik:SIK-ACTOR
+      place: 
+        - crm:E53_Place
+      event:
+        - sik:SIK-EXHIBITION
+        - sik:SIK-AWARD_CEREMONY
+      artwork:
+        - sik:SIK-WORK
+        - sik:SIK-WORK_GROUP
+        - sik:SIK-PARENT_WORK
+      bibliographicItem:
+        - sik:SIK-DOCUMENT
+        - sik:SIK-PUBLICATION
+        - sik:SIK-PARENT_DOCUMENT
+      concept:
+        - sik:SIK-TYPE
 
   thesarchesp:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
@@ -149,6 +153,13 @@ datasets:
 
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology#
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      actor:
+        - gvp:PersonConcept
+        - gvp:UnknownPersonConcept
 
 ### EXAMPLE SPARQL QUERY FOR AAT DATASET
 #  PREFIX gvp: <http://vocab.getty.edu/ontology#>
