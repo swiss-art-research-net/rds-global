@@ -92,11 +92,6 @@ datasets:
       labels: |
         ?subject ?predicateLabel ?label .
         VALUES (?predicateLabel) {
-            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheWork> )
-            ( <https://d-nb.info/standards/elementset/gnd#definition> )
             ( <https://d-nb.info/standards/elementset/gnd#forename> )
             ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
             ( <https://d-nb.info/standards/elementset/gnd#nameAddition> )
