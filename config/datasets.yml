@@ -188,7 +188,7 @@ datasets:
         ?subject skos:prefLabel ?prefLabel .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?label .
-        
+
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
     prefixes:
@@ -198,3 +198,10 @@ datasets:
       actor:
         - gvp:PersonConcept
         - gvp:UnknownPersonConcept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?description .
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?prefLabel .
+      labels: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?label .
