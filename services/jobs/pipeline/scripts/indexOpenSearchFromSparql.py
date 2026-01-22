@@ -63,6 +63,17 @@ LIMIT {limit}
 OFFSET {offset}
 """
 
+COUNT_QUERY_TEMPLATE = """\
+{prefixes}
+SELECT (COUNT(DISTINCT ?subject) as ?total)
+WHERE {{
+  GRAPH <{graph}> {{
+{type_constraint_block}
+{pref_label_block}
+  }}
+}}
+"""
+
 FIXED_MATCHES_OPTIONAL_BLOCK = """\
   OPTIONAL {
     GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
@@ -149,6 +160,30 @@ def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
     ?subject a ?requiredClass, ?type ."""
     return _indent_block(block, 4).rstrip("\n")
 
+def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
+    prefixes = _prefix_lines(dataset_cfg.get("prefixes", {}))
+    graph = dataset_cfg["graph"]
+
+    class_pairs = _collect_required_class_pairs(dataset_cfg)
+    type_constraint_block = _build_type_constraint_block(class_pairs)
+
+    queries = dataset_cfg.get("queries", {})
+    pref_label_block = queries.get("prefLabel", "")
+    labels_block = queries.get("labels", "")
+    description_block = queries.get("description", "")
+
+    missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
+    if missing:
+        raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
+
+    return COUNT_QUERY_TEMPLATE.format(
+        prefixes=prefixes,
+        graph=graph,
+        type_constraint_block=type_constraint_block,
+        pref_label_block=_indent_block(pref_label_block, 4).rstrip("\n"),
+        labels_block=_indent_block(labels_block, 4).rstrip("\n"),
+        description_block=_indent_block(description_block, 4).rstrip("\n"),
+    )
 
 def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
     prefixes = _prefix_lines(dataset_cfg.get("prefixes", {}))
@@ -241,6 +276,17 @@ def _get_binding_value(binding: Dict[str, Any], var: str) -> Optional[str]:
         return None
     return v.get("value")
 
+def parse_count(results_json: Dict[str, Any]) -> int:
+    bindings = results_json.get("results", {}).get("bindings", [])
+    if not bindings:
+        raise RuntimeError("COUNT query returned no bindings")
+    val = bindings[0].get("total", {}).get("value")
+    if val is None:
+        raise RuntimeError("COUNT query missing ?total binding")
+    try:
+        return int(val)
+    except ValueError as e:
+        raise RuntimeError(f"COUNT query returned non-integer: {val!r}") from e
 
 def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
@@ -420,8 +466,18 @@ def index_dataset_to_opensearch(
 ) -> int:
     ensure_index(os_client, index_name)
 
+    count_query = build_count_query(dataset_cfg)
+    t0 = time.time()
+    total_expected = parse_count(sparql_client.query(count_query))
+    count_s = time.time() - t0
+    print(
+        f"Indexing {total_expected} entities for the dataset {dataset_name}...",
+        file=sys.stderr,
+    )
+
     buffer: List[Dict[str, Any]] = []
     total_indexed = 0
+    start_time = time.time()
 
     for row in iter_dataset_rows(
         sparql_client=sparql_client,
@@ -434,13 +490,37 @@ def index_dataset_to_opensearch(
         buffer.append(row)
 
         if len(buffer) >= bulk_chunk_size:
-            total_indexed += bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+            indexed_now = bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+            total_indexed += indexed_now
             buffer.clear()
 
+            elapsed = time.time() - start_time
+            rate = (total_indexed / elapsed) if elapsed > 0 else 0.0
+            pct = (total_indexed / total_expected * 100.0) if total_expected > 0 else 0.0
+
+            print(
+                f"Indexed {total_indexed}/{total_expected} ({pct:.1f}%) "
+                f"{rate:.1f} entities/s",
+                file=sys.stderr,
+            )
+
     if buffer:
-        total_indexed += bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+        indexed_now = bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+        total_indexed += indexed_now
+        buffer.clear()
+
+        elapsed = time.time() - start_time
+        rate = (total_indexed / elapsed) if elapsed > 0 else 0.0
+        pct = (total_indexed / total_expected * 100.0) if total_expected > 0 else 0.0
+
+        print(
+            f"Indexed {total_indexed}/{total_expected} ({pct:.1f}%) "
+            f"{rate:.1f} entities/s",
+            file=sys.stderr,
+        )
 
     os_client.indices.refresh(index=index_name)
+    print(f"Done!", file=sys.stderr)
     return total_indexed
 
 
