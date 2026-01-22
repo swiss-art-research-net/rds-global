@@ -302,7 +302,8 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
                 },
                 "labels": {"type": "text"},
                 "types": {"type": "keyword"},
-                "typeClasses": {"type": "keyword"},  # <--- YAML group labels
+                "typeClasses": {"type": "keyword"},
+                "dataset": {"type": "keyword"},
                 "description": {"type": "text"},
                 "relevance": {"type": "integer"},
             }
@@ -379,11 +380,13 @@ def load_config(path: str) -> Dict[str, Any]:
         return yaml.safe_load(f)
 
 
+
 def index_dataset_to_opensearch(
     sparql_client: SparqlClient,
     os_client: OpenSearch,
     dataset_cfg: Dict[str, Any],
     index_name: str,
+    dataset_name: str,
     page_size: int,
     max_pages: Optional[int],
     sleep_s: float,
@@ -401,6 +404,7 @@ def index_dataset_to_opensearch(
         max_pages=max_pages,
         sleep_s=sleep_s,
     ):
+        row["dataset"] = dataset_name
         buffer.append(row)
 
         if len(buffer) >= bulk_chunk_size:
@@ -463,6 +467,7 @@ def main() -> int:
         os_client=os_client,
         dataset_cfg=dataset_cfg,
         index_name=args.os_index,
+        dataset_name=args.dataset,
         page_size=args.page_size,
         max_pages=args.max_pages,
         sleep_s=args.sleep,
