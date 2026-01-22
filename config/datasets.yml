@@ -21,6 +21,122 @@ datasets:
 
   gnd:
     graph: https://d-nb.info/gnd/authorities/graph
+    prefixes:
+      gnd: https://d-nb.info/standards/elementset/gnd#
+    types:
+      actor:
+        - gnd:DifferentiatedPerson
+        - gnd:RoyalOrMemberOfARoyalHouse
+        - gnd:Gods
+        - gnd:Spirits
+        - gnd:LiteraryOrLegendaryCharacter
+        - gnd:GroupOfPersons
+        - gnd:Family
+        - gnd:PseudonymNameOfThePerson
+        - gnd:RealNameOfThePerson
+        - gnd:EarlierNameOfThePerson
+        - gnd:LaterNameOfThePerson
+        - gnd:FullerFormOfThePerson
+        - gnd:CollectivePseudonym
+      artwork:
+        - gnd:Work
+        - gnd:Expression
+        - gnd:MusicalWork
+        - gnd:VersionOfAMusicalWork
+        - gnd:Manuscript
+      bibliographicItem:
+        - gnd:Collection
+        - gnd:SeriesOfConferenceOrEvent
+      builtWork:
+        - gnd:BuildingOrMemorial
+        - gnd:MeansOfTransportWithIndividualName
+      concept:
+        - gnd:SubjectHeading
+        - gnd:SubjectHeadingSensoStricto
+        - gnd:CharactersOrMorphemes
+        - gnd:Language
+        - gnd:NomenclatureInBiologyOrChemistry
+        - gnd:EthnographicName
+        - gnd:Relationship
+        - gnd:ProvenanceCharacteristic
+        - gnd:ProductNameOrBrandName
+        - gnd:SoftwareProduct
+      event:
+        - gnd:ConferenceOrEvent
+        - gnd:SeriesOfConferenceOrEvent
+        - gnd:HistoricSingleEventOrEra
+        - gnd:ProjectOrProgram
+      group:
+        - gnd:Company
+        - gnd:CorporateBody
+        - gnd:ReligiousCorporateBody
+        - gnd:MusicalCorporateBody
+        - gnd:FictiveCorporateBody
+        - gnd:OrganOfCorporateBody
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+        - gnd:AdministrativeUnit
+        - gnd:ReligiousAdministrativeUnit
+      place:
+        - gnd:PlaceOrGeographicName
+        - gnd:Country
+        - gnd:MemberState
+        - gnd:NaturalGeographicUnit
+        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
+        - gnd:WayBorderOrLine
+        - gnd:ReligiousTerritory
+        - gnd:ExtraterrestrialTerritory
+        - gnd:FictivePlace
+    queries:
+      description: |
+        ?subject ?predicateDescription ?description .
+        VALUES (?predicateDescription) {
+            ( <https://d-nb.info/standards/elementset/gnd#definition> )
+            ( <https://d-nb.info/standards/elementset/gnd#note> )
+            ( <https://d-nb.info/standards/elementset/gnd#historyOfTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#biographicalOrHistoricalInformation> )
+            ( <https://d-nb.info/standards/elementset/gnd#professionOrOccupationAsLiteral> )
+        }
+      prefLabel: |
+        ?subject ?predicatePrefLabel ?prefLabel .
+        VALUES (?predicatePrefLabel) {
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
+        }
+      labels: |
+        ?subject ?predicateLabel ?label .
+        VALUES (?predicateLabel) {
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#abbreviatedNameForTheWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#definition> )
+            ( <https://d-nb.info/standards/elementset/gnd#forename> )
+            ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
+            ( <https://d-nb.info/standards/elementset/gnd#nameAddition> )
+            ( <https://d-nb.info/standards/elementset/gnd#originalScriptNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#personalName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#surname> )
+            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeadingSensoStricto>)
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
+        }
 
   sikart:
     graph: http://recherche.sik-isea.ch/graph
