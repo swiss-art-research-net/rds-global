@@ -16,7 +16,7 @@ Example:
     --dataset aat \
     --os-host localhost \
     --os-port 9200 \
-    --os-index aat_entities \
+    --os-index rds-entities \
     --page-size 1000
 """
 
@@ -49,7 +49,7 @@ SELECT
   (COUNT(?match) as ?numMatches)
 WHERE {{
   GRAPH <{graph}> {{
-    ?subject a {required_class}, ?type .
+{type_constraint_block}
 {pref_label_block}
 {labels_block}
 {description_block}
@@ -81,31 +81,67 @@ def _indent_block(block: str, spaces: int = 4) -> str:
     return "\n".join(pad + ln if ln else "" for ln in lines) + "\n"
 
 
-def _get_required_class(dataset_cfg: Dict[str, Any]) -> str:
+def _collect_required_classes(dataset_cfg: Dict[str, Any]) -> List[str]:
     """
-    This function expects exactly one required class per dataset (first entry under first types-group).
+    Collect ALL classes across ALL groups under dataset.types.
+
+    Example YAML:
+      types:
+        actor: [gnd:DifferentiatedPerson, ...]
+        artwork: [gnd:Work, ...]
+        ...
+
+    Result: a de-duplicated list of all those IRIs/QNames.
     """
     types_cfg = dataset_cfg.get("types", {})
-    if not types_cfg:
-        raise ValueError("Dataset is missing 'types' (e.g. types: {concept: [gvp:Concept]}).")
+    if not isinstance(types_cfg, dict) or not types_cfg:
+        raise ValueError("Dataset is missing 'types' or it is not a dict of groups -> class lists.")
 
-    first_group = next(iter(types_cfg.keys()))
-    required_classes = types_cfg[first_group]
-    if not isinstance(required_classes, list) or not required_classes:
-        raise ValueError("Dataset 'types' must contain a non-empty list of required classes.")
+    required: List[str] = []
+    for group_name, class_list in types_cfg.items():
+        if not isinstance(class_list, list) or not class_list:
+            raise ValueError(f"types.{group_name} must be a non-empty list.")
+        for c in class_list:
+            if not isinstance(c, str) or not c.strip():
+                raise ValueError(f"Invalid class value in types.{group_name}: {c!r}")
+            required.append(c.strip())
 
-    if len(required_classes) != 1:
-        raise ValueError(
-            "This script currently expects exactly one required class per dataset. "
-            "If you need multiple required classes, we can switch to VALUES/UNION."
-        )
-    return required_classes[0]
+    # De-dup while preserving order
+    seen = set()
+    deduped = []
+    for c in required:
+        if c not in seen:
+            seen.add(c)
+            deduped.append(c)
+
+    return deduped
+
+
+def _build_type_constraint_block(required_classes: List[str]) -> str:
+    """
+    Constrain subjects to ANY of the required classes, while still collecting all ?type:
+      VALUES ?requiredClass { c1 c2 ... }
+      ?subject a ?requiredClass, ?type .
+
+    This keeps your existing semantics:
+      - subject must be in the allowed class set (one or more)
+      - we still bind ?type for concatenation of all rdf:types
+    """
+    # Chunk VALUES lists a bit if you have huge sets; most endpoints are fine,
+    # but chunking is safer for very large type sets.
+    values = " ".join(required_classes)
+    block = f"""\
+    VALUES ?requiredClass {{ {values} }}
+    ?subject a ?requiredClass, ?type ."""
+    return _indent_block(block, 4).rstrip("\n")
 
 
 def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
     prefixes = _prefix_lines(dataset_cfg.get("prefixes", {}))
     graph = dataset_cfg["graph"]
-    required_class = _get_required_class(dataset_cfg)
+
+    required_classes = _collect_required_classes(dataset_cfg)
+    type_constraint_block = _build_type_constraint_block(required_classes)
 
     queries = dataset_cfg.get("queries", {})
     pref_label_block = queries.get("prefLabel", "")
@@ -115,11 +151,21 @@ def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
-
+    print(FIXED_QUERY_TEMPLATE.format(
+            prefixes=prefixes,
+            graph=graph,
+            type_constraint_block=type_constraint_block,
+            pref_label_block=_indent_block(pref_label_block, 4).rstrip("\n"),
+            labels_block=_indent_block(labels_block, 4).rstrip("\n"),
+            description_block=_indent_block(description_block, 4).rstrip("\n"),
+            matches_optional_block=FIXED_MATCHES_OPTIONAL_BLOCK,
+            limit=limit,
+            offset=offset,
+        ))
     return FIXED_QUERY_TEMPLATE.format(
         prefixes=prefixes,
         graph=graph,
-        required_class=required_class,
+        type_constraint_block=type_constraint_block,
         pref_label_block=_indent_block(pref_label_block, 4).rstrip("\n"),
         labels_block=_indent_block(labels_block, 4).rstrip("\n"),
         description_block=_indent_block(description_block, 4).rstrip("\n"),
@@ -364,7 +410,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, help="Path to YAML configuration")
     ap.add_argument("--endpoint", required=True, help="Common SPARQL endpoint URL")
-    ap.add_argument("--dataset", required=True, help="Dataset key in YAML under datasets: (e.g. aat)")
+    ap.add_argument("--dataset", required=True, help="Dataset key in YAML under datasets: (e.g. aat, gnd)")
 
     ap.add_argument("--page-size", type=int, default=1000, help="SPARQL LIMIT per page")
     ap.add_argument("--max-pages", type=int, default=None, help="Stop after N pages (debug/testing)")
