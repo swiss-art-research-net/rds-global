@@ -161,10 +161,34 @@ datasets:
 
   thesarchesp:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      concept:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?description .
+      prefLabel: |
+        ?subject skos:prefLabel ?prefLabel .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?label .
 
   thesobjmob:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
-
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      concept:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?description .
+      prefLabel: |
+        ?subject skos:prefLabel ?prefLabel .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?label .
+        
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
     prefixes:
