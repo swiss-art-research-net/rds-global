@@ -25,7 +25,7 @@ datasets:
         - gn:Feature
     queries:
       description: |
-        ?subject gn:name ?description .
+        BIND("" AS ?description) .
       prefLabel: |
         ?subject gn:name ?prefLabel .
       labels: |
@@ -153,7 +153,7 @@ datasets:
         - sik:SIK-TYPE
     queries:
       description: |
-        ?subject crm:P1_is_identified_by/rdfs:label ?description .
+        BIND("" AS ?description) .
       prefLabel: |
         ?subject crm:P1_is_identified_by/rdfs:label ?prefLabel .
       labels: |
