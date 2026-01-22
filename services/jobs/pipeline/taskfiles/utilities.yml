@@ -127,7 +127,7 @@ tasks:
         -H "Content-Type: application/sparql-query"
         -H "Accept: text/turtle"
         --data-binary "{{.QUERY}}"
-        "http://endpoints/{{.DATASET_ID}}"
+        "{{.QLEVER_ENDPOINT}}"
         -o "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
 
   _fetch-sameas-statements-remote:
