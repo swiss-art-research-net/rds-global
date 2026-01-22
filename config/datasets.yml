@@ -3,7 +3,7 @@ datasets:
   aat:
     graph: http://vocab.getty.edu/aat/graph
     prefixes:
-      gvp: http://vocab.getty.edu/ontology# 
+      gvp: http://vocab.getty.edu/ontology#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
       concept:
@@ -11,7 +11,9 @@ datasets:
     queries:
       description: |
         ?subject gvp:parentStringAbbrev ?description .
-      label: |
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?prefLabel .
+      labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?label .
 
   geonames:
@@ -31,3 +33,25 @@ datasets:
 
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
+
+### EXAMPLE SPARQL QUERY FOR AAT DATASET
+# PREFIX gvp: <http://vocab.getty.edu/ontology#>
+# PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
+# SELECT ?subject ?prefLabel (GROUP_CONCAT(?label;SEPARATOR="||") as ?labels) ?description (COUNT(?match) as ?numMatches) WHERE {
+#   GRAPH <http://vocab.getty.edu/aat/graph> {
+#     ?subject a gvp:Concept .
+# 	?subject gvp:prefLabelGVP/xl:literalForm ?prefLabel .
+#     ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?label .
+#     {
+#       ?subject gvp:parentStringAbbrev ?description .
+#     }
+#   }
+#   OPTIONAL {
+#     GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+# 	?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match .
+# 	}
+#   }
+# }
+# GROUP BY ?subject ?prefLabel ?description 
+# ORDER BY ?subject 
+# LIMIT 100
