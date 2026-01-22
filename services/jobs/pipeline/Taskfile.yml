@@ -9,10 +9,7 @@ vars:
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
 
 env:
-  BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
   QLEVER_ENDPOINT: http://qlever:7001
-  BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
-  BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
   WIKIDATA_ENDPOINT: https://qlever.dev/api/wikidata
 
 includes:
