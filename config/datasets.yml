@@ -1,0 +1,33 @@
+datasets:
+
+  aat:
+    graph: http://vocab.getty.edu/aat/graph
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology# 
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      concept:
+        - gvp:Concept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?description .
+      label: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?label .
+
+  geonames:
+    graph: http://sws.geonames.org/graph
+
+  gnd:
+    graph: https://d-nb.info/gnd/authorities/graph
+
+  sikart:
+    graph: http://recherche.sik-isea.ch/graph
+
+  thesarchesp:
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+
+  thesobjmob:
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+
+  ulan:
+    graph: http://vocab.getty.edu/ulan/graph
