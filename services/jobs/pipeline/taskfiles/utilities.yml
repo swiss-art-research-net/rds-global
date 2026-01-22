@@ -31,7 +31,8 @@ tasks:
           --config /config/datasets.yml \
           --endpoint "{{.QLEVER_ENDPOINT}}" \
           --os-host opensearch-node \
-          --os-index rds-entities 
+          --os-index rds-entities \
+          --page-size 100
 
   _build_qlever_index:
     desc: Build QLever index from data
