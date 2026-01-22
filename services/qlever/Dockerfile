@@ -11,4 +11,4 @@ VOLUME ["/index"]
 
 EXPOSE 7001
 # Run idling
-ENTRYPOINT [ "tail", "-f", "/dev/null" ]
+ENTRYPOINT [ "sh", "-c", "/usr/local/bin/runServer.sh & tail -f /dev/null" ]
