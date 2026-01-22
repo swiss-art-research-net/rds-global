@@ -38,7 +38,6 @@ services:
   qlever:
     container_name: ${COMPOSE_PROJECT_NAME}-qlever
     build: ./services/qlever
-    entrypoint: ["sh", "-c", "qlever start & tail -f /dev/null"]
     logging:
       driver: json-file
       options:
@@ -49,4 +48,3 @@ services:
     volumes:
       - ./binds/qlever:/index:rw
       - ./data:/data
-      - ./services/qlever/Qleverfile:/index/Qleverfile:ro
