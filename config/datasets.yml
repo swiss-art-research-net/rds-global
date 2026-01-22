@@ -18,6 +18,18 @@ datasets:
 
   geonames:
     graph: http://sws.geonames.org/graph
+    prefixes:
+      gn: http://www.geonames.org/ontology#
+    types:
+      place:
+        - gn:Feature
+    queries:
+      description: |
+        ?subject gn:name ?description .
+      prefLabel: |
+        ?subject gn:name ?prefLabel .
+      labels: |
+        ?subject gn:alternateName ?label .
 
   gnd:
     graph: https://d-nb.info/gnd/authorities/graph
