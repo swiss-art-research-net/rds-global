@@ -40,10 +40,23 @@ tasks:
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
+    vars:
+      DATASETS: aat,geonames,gnd,sikart,thesarchesp,thesobjmob,ulan
     cmds:
-      - task: _add_folder_to_opensearch_index
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: _add_to_search_index
         vars:
-          INPUT_DIR: data/ingest
+          DATASET: "{{.DATASET}}"
+  
+  add-to-search-index-aat:
+    desc: Add Getty AAT data to OpenSearch index
+    cmds:
+      - task: _add_to_search_index
+        vars:
+          DATASET: aat
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements

@@ -19,6 +19,20 @@ tasks:
             --host opensearch-node
         '
 
+  _add_to_search_index:
+    desc: Add dataset to OpenSearch index
+    requires:
+      vars: [DATASET]
+    cmds:
+      - echo "Adding dataset {{.DATASET}} to OpenSearch index"
+      - |
+        python scripts/indexOpenSearchFromSparql.py \
+          --dataset "{{.DATASET}}" \
+          --config /config/datasets.yml \
+          --endpoint "{{.QLEVER_ENDPOINT}}" \
+          --os-host opensearch-node \
+          --os-index rds-entities 
+
   _build_qlever_index:
     desc: Build QLever index from data
     requires:
