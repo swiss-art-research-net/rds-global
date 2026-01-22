@@ -65,7 +65,7 @@ OFFSET {offset}
 
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
-SELECT (COUNT(DISTINCT ?subject) as ?total)
+SELECT (COUNT(?subject) as ?total)
 WHERE {{
   GRAPH <{graph}> {{
 {type_constraint_block}
@@ -471,7 +471,7 @@ def index_dataset_to_opensearch(
     total_expected = parse_count(sparql_client.query(count_query))
     count_s = time.time() - t0
     print(
-        f"Indexing {total_expected} entities for the dataset {dataset_name}...",
+        f"Indexing entities for the dataset {dataset_name}...",
         file=sys.stderr,
     )
 
@@ -499,8 +499,8 @@ def index_dataset_to_opensearch(
             pct = (total_indexed / total_expected * 100.0) if total_expected > 0 else 0.0
 
             print(
-                f"Indexed {total_indexed}/{total_expected} ({pct:.1f}%) "
-                f"{rate:.1f} entities/s",
+                f"{pct:.1f}% "
+                f"({rate:.1f} entities/s)",
                 file=sys.stderr,
             )
 
@@ -512,12 +512,6 @@ def index_dataset_to_opensearch(
         elapsed = time.time() - start_time
         rate = (total_indexed / elapsed) if elapsed > 0 else 0.0
         pct = (total_indexed / total_expected * 100.0) if total_expected > 0 else 0.0
-
-        print(
-            f"Indexed {total_indexed}/{total_expected} ({pct:.1f}%) "
-            f"{rate:.1f} entities/s",
-            file=sys.stderr,
-        )
 
     os_client.indices.refresh(index=index_name)
     print(f"Done!", file=sys.stderr)
