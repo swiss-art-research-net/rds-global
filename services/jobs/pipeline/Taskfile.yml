@@ -9,12 +9,8 @@ vars:
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
 
 env:
-  BLAZEGRAPH_ENDPOINT: http://blazegraph:8080/blazegraph/sparql
   QLEVER_ENDPOINT: http://qlever:7001
-  BLAZEGRAPH_JOURNAL: /blazegraph-data/blazegraph.jnl
-  BLAZEGRAPH_RUNNER: /utils/blazegraph-runner/bin/blazegraph-runner
   WIKIDATA_ENDPOINT: https://qlever.dev/api/wikidata
-
 
 includes:
   utilities:
@@ -33,74 +29,27 @@ tasks:
       - task: update-data-thesarchesp
       - task: update-data-thesobjmob
       - task: update-data-ulan
-      - task: index-data-aat
-      - task: index-data-geonames
-      - task: index-data-gnd
-      - task: index-data-sikart
-      - task: index-data-thesarchesp
-      - task: index-data-thesobjmob
-      - task: index-data-ulan      
-      - task: generate-labels
+      - task: index-data
       - task: generate-sameas-statements
-      - task: ingest-metadata
-      - task: ingest-sameas-statements
-      - task: materialise-num-sameas-statements
+      #- task: index-data # Re-index after SameAs generation
+      - #task: create-search-index
+      - #task: generate-labels
+      - #task: ingest-metadata
+      - #task: ingest-sameas-statements
+      - #task: materialise-num-sameas-statements
 
-  add-all-data-to-search-index:
+  add-data-to-search-index:
     desc: Add all data to OpenSearch index
+    vars:
+      DATASETS: aat,geonames,gnd,sikart,thesarchesp,thesobjmob,ulan
     cmds:
-      - task: _add_folder_to_opensearch_index
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: _add_to_search_index
         vars:
-          INPUT_DIR: data/ingest
-
-  add-to-search-index-aat:
-    desc: Add Getty AAT data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index
-        vars:
-          INPUT_DIR: data/ingest/aat-data_ingest
-
-  add-to-search-index-geonames:
-    desc: Add GeoNames data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index
-        vars:
-          INPUT_DIR: data/ingest/geonames-data_ingest
-
-  add-to-search-index-gnd:
-    desc: Add GND data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index
-        vars:
-          INPUT_DIR: data/ingest/gnd-authorities-data_ingest
-  
-  add-to-search-index-sikart:
-    desc: Add SIKART data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index
-        vars:
-          INPUT_DIR: data/ingest/sikart-data_ingest
-
-  add-to-search-index-thesarchesp:
-    desc: Add Thesaurus Architecture/Espace data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index
-        vars:
-          INPUT_DIR: data/ingest/thes-arch-esp-data_ingest
-    
-  add-to-search-index-thesobjmob:
-    desc: Add Thesaurus Object/Mobiliers data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index
-        vars:
-          INPUT_DIR: data/ingest/thes-obj-mob-data_ingest
-
-  add-to-search-index-ulan:
-    desc: Add Getty ULAN data to OpenSearch index
-    cmds:
-      - task: _add_folder_to_opensearch_index 
-        vars:
-          INPUT_DIR: data/ingest/ulan-data_ingest
+          DATASET: "{{.DATASET}}"
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
@@ -112,7 +61,7 @@ tasks:
       - task: fetch-sameas-statements-thesobjmob
       - task: fetch-sameas-statements-thesarchesp
       - task: fetch-sameas-statements-sikart
-      - task: fetch-sameas-statements-wikidata
+      - #task: fetch-sameas-statements-wikidata
 
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
@@ -341,10 +290,19 @@ tasks:
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
+    vars:
+      DATA_DIRECTORY: /data/sameAsStatements/combinedSameAs
+      FILE_FORMAT: ttl
+      GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
     cmds:
       - task: fetch-all-sameas-statements
-      - mkdir -p /data/sameAsStatements/combined
+      - mkdir -p {{.DATA_DIRECTORY}}
       - task: process-sameas-statements
+      - task: _prepareForIndexing
+        vars:
+          DIRECTORY: "{{.DATA_DIRECTORY}}"
+          FILE_FORMAT: "{{.FILE_FORMAT}}"
+          GRAPH: "{{.GRAPH}}"
   
   generate-labels:
     desc: Generate labels for URIs
@@ -358,75 +316,14 @@ tasks:
           as: DATASET
         cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "http://endpoints/{{.DATASET}}" {{.CLI_ARGS}}
 
-  index-data-aat:
-    desc: Index data for Getty AAT
+  index-data:
+    desc: Index all data in QLever
     vars:
     cmds:
       - task: _build_qlever_index
         vars:
-          NAME: aat
-          INPUT_DIR: aat-data_ingest
-          GRAPH: http://vocab.getty.edu/aat/graph
-
-  index-data-geonames:
-    desc: Index data for GeoNames
-    vars:
-    cmds:
-      - task: _build_qlever_index
-        vars:
-          NAME: geonames
-          INPUT_DIR: geonames-data_ingest
-          GRAPH: http://sws.geonames.org/graph
-
-  index-data-gnd:
-    desc: Index data for GND
-    vars:
-    cmds:
-      - task: _build_qlever_index
-        vars:
-          NAME: gnd
-          INPUT_DIR: gnd-authorities-data_ingest
-          GRAPH: https://d-nb.info/gnd/authorities/graph
-
-  index-data-sikart:
-    desc: Index data for SIKART
-    vars:
-    cmds:
-      - task: _build_qlever_index
-        vars:
-          NAME: sikart
-          INPUT_DIR: sikart-data_ingest
-          GRAPH: http://recherche.sik-isea.ch/graph
-
-  index-data-ulan:
-    desc: Index data for Getty ULAN
-    vars:
-    cmds:
-      - task: _build_qlever_index
-        vars:
-          NAME: ulan
-          INPUT_DIR: ulan-data_ingest
-          GRAPH: http://vocab.getty.edu/ulan/graph
-
-  index-data-thesarchesp:
-    desc: Index data for Thesaurus Architecture/Espace
-    vars:
-    cmds:
-      - task: _build_qlever_index
-        vars:
-          NAME: thesarchesp
-          INPUT_DIR: thes-arch-esp-data_ingest
-          GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
-
-  index-data-thesobjmob:
-    desc: Index data for Thesaurus Object/Mobiliers
-    vars:
-    cmds:
-      - task: _build_qlever_index
-        vars:
-          NAME: thesobjmob
-          INPUT_DIR: thes-obj-mob-data_ingest
-          GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+          INPUT_DIR: /data/ingest
+          NAME: rds
 
   ingest-metadata:
     desc: Ingest metadata

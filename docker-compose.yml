@@ -1,17 +1,4 @@
 services:
-
-  endpoints:
-    container_name: ${COMPOSE_PROJECT_NAME}-endpoints
-    build: ./services/endpoints
-    logging:
-      driver: json-file
-      options:
-        max-file: '10'
-        max-size: 200k
-    ports:
-      - ${PORT_ENDPOINTS}:80
-    volumes:
-      - ./config:/config:ro
   jobs:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
@@ -25,8 +12,9 @@ services:
         max-file: '10'
         max-size: 200k
     volumes:
-      - ./binds/qlever-index:/index:rw
+      - ./binds/qlever:/index:rw
       - ./services/jobs/pipeline:/pipeline
+      - ./config:/config
       - ./data:/data
 
   platform:
@@ -48,26 +36,9 @@ services:
      - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
      - ./services/platform/apps:/apps
 
-  qlever-datasets:
-    container_name: ${COMPOSE_PROJECT_NAME}-qlever-datasets
-    build: ./services/qlever-datasets
-    entrypoint: ["sh", "-c", "./startServices.sh & tail -f /dev/null"]
-    logging:
-      driver: json-file
-      options:
-        max-file: '10'
-        max-size: 200k
-    working_dir: /scripts
-    volumes:
-      - ./binds/qlever-index:/index:rw
-      - ./data/ingest:/index/data
-      - ./services/qlever-datasets/scripts:/scripts
-      - ./config:/config:ro
-
-  qlever-rds:
-    container_name: ${COMPOSE_PROJECT_NAME}-qlever-rds
-    build: ./services/qlever-rds
-    entrypoint: ["sh", "-c", "qlever start & tail -f /dev/null"]
+  qlever:
+    container_name: ${COMPOSE_PROJECT_NAME}-qlever
+    build: ./services/qlever
     logging:
       driver: json-file
       options:
@@ -76,6 +47,5 @@ services:
     ports:
       - ${PORT_QLEVER_RDS}:7001
     volumes:
-      - ./binds/qlever-rds:/index:rw
-      - ./data/source/rds-metadata:/index/data
-      - ./services/qlever-rds/Qleverfile:/index/Qleverfile:ro
+      - ./binds/qlever:/index:rw
+      - ./data:/data

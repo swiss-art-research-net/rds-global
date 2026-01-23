@@ -65,11 +65,11 @@
 [[#*inline "query-aat"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]aat> {
+            GRAPH <http://vocab.getty.edu/aat/graph> {
                 ?subject a gvp:Concept ;
                     (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
-                    [[> commonQuery]]
-                }
+            }
+            [[> commonQuery]]
             BIND("aat" as ?dataset)
         } [[> commonQueryEnd]]
     }
@@ -78,11 +78,11 @@
 [[#*inline "query-geonames"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]geonames> {
+            GRAPH <http://sws.geonames.org/graph> {
                 ?subject a <http://www.geonames.org/ontology#Feature> ;
                     <http://www.geonames.org/ontology#name> ?label .
-                    [[> commonQuery]]
-                }
+            }
+            [[> commonQuery]]
             BIND("geonames" as ?dataset)
         } [[> commonQueryEnd]]
     }
@@ -91,7 +91,7 @@
 [[#*inline "query-gnd"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]gnd> {
+            GRAPH <https://d-nb.info/gnd/authorities/graph> {
                 ?subject a ?type ;
                     ?predicate ?label .
                 FILTER (isIri(?subject))
@@ -178,8 +178,8 @@
                     ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
                     ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
                 }
-                [[> commonQuery]]
             }
+            [[> commonQuery]]
             BIND("gnd" as ?dataset)
         } [[> commonQueryEnd]]
     }
@@ -188,19 +188,19 @@
 [[#*inline "query-sikart"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]sikart> {
+            GRAPH <http://recherche.sik-isea.ch/graph> {
                 ?subject a ?type ;
                     crm:P1_is_identified_by/rdfs:label ?label .
-                    VALUES (?type) {
-                        ( <http://www.cidoc-crm.org/cidoc-crm/E21_Person> )
-                        ( <http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object> )
-                        ( <http://www.cidoc-crm.org/cidoc-crm/E53_Place> )
-                        ( <http://www.cidoc-crm.org/cidoc-crm/E55_Type> )
-                        ( <http://www.cidoc-crm.org/cidoc-crm/E74_Group> )
-                        ( <http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition> )
-                    }
-                    [[> commonQuery]]
+                VALUES (?type) {
+                    ( <http://www.cidoc-crm.org/cidoc-crm/E21_Person> )
+                    ( <http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object> )
+                    ( <http://www.cidoc-crm.org/cidoc-crm/E53_Place> )
+                    ( <http://www.cidoc-crm.org/cidoc-crm/E55_Type> )
+                    ( <http://www.cidoc-crm.org/cidoc-crm/E74_Group> )
+                    ( <http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition> )
                 }
+            }
+            [[> commonQuery]]
             BIND("sikart" as ?dataset)
         } [[> commonQueryEnd]]
     }  
@@ -209,11 +209,11 @@
 [[#*inline "query-ulan"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]ulan> {
+           GRAPH <http://vocab.getty.edu/ulan/graph> {
                 ?subject a gvp:PersonConcept ;
                     (gvp:prefLabelGVP | xl:prefLabel)/xl:literalForm ?label .
-                    [[> commonQuery]]
-                }
+            }
+            [[> commonQuery]]
             BIND("ulan" as ?dataset)
         } [[> commonQueryEnd]]
     }
@@ -222,11 +222,11 @@
 [[#*inline "query-thesarchesp"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]thesarchesp> {
+            GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph> {
                 ?subject a skos:Concept ;
                     skos:prefLabel ?label .
-                    [[> commonQuery]]
-                }
+            }
+            [[> commonQuery]]
             BIND("thesarchesp" as ?dataset)
         } [[> commonQueryEnd]]
     }
@@ -235,11 +235,11 @@
 [[#*inline "query-thesobjmob"]]
     {
         SELECT * WHERE {
-            SERVICE <[[> endpoint]]thesobjmob> {
+            GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph> {
                 ?subject a skos:Concept ;
                     skos:prefLabel ?label .
-                    [[> commonQuery]]
-                }
+            }
+            [[> commonQuery]]
             BIND("thesobjmob" as ?dataset)
         } [[> commonQueryEnd]]
     }

@@ -4,29 +4,28 @@ version: '3'
 
 tasks:
 
-  _add_folder_to_opensearch_index:
-    desc: Add folder to OpenSearch index
+  _add_to_search_index:
+    desc: Add dataset to OpenSearch index
     requires:
-      vars: [INPUT_DIR]
+      vars: [DATASET]
     cmds:
-      - echo "Adding data from {{.INPUT_DIR}}"
+      - echo "Adding dataset {{.DATASET}} to OpenSearch index"
       - |
-        find /{{.INPUT_DIR}} -type f \( -name "*.nq" -o -name "*.nq.gz" \) -print0 |
-        xargs -0 -I {} sh -c '
-          echo "Indexing {}"
-          python scripts/indexOpenSearch.py \
-            --nq "{}" \
-            --host opensearch-node
-        '
+        python scripts/indexOpenSearchFromSparql.py \
+          --dataset "{{.DATASET}}" \
+          --config /config/datasets.yml \
+          --endpoint "{{.QLEVER_ENDPOINT}}" \
+          --os-host opensearch-node \
+          --os-index rds-entities \
+          --page-size 100
 
   _build_qlever_index:
-    desc: Build QLever index for given data
+    desc: Build QLever index from data
     requires:
-      vars: [NAME, INPUT_DIR, GRAPH]
+      vars: [INPUT_DIR, NAME]
     cmds:
-      - echo "Building QLever index for {{.NAME}} from data in {{.INPUT_DIR}} with graph {{.GRAPH}}"
-      - mkdir -p /index/{{.NAME}}
-      - cd /index/{{.NAME}} && find /data/ingest/{{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | IndexBuilderMain --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals | tee {{.NAME}}.index-log.txt
+      - echo "Building QLever index from data in {{.INPUT_DIR}}"
+      - cd /index && find {{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | IndexBuilderMain --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals -m 10GB | tee {{.NAME}}.index-log.txt
     
   _downloadFile:
     internal: True
@@ -128,7 +127,7 @@ tasks:
         -H "Content-Type: application/sparql-query"
         -H "Accept: text/turtle"
         --data-binary "{{.QUERY}}"
-        "http://endpoints/{{.DATASET_ID}}"
+        "{{.QLEVER_ENDPOINT}}"
         -o "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
 
   _fetch-sameas-statements-remote:

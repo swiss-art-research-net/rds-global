@@ -1,0 +1,207 @@
+datasets:
+
+  aat:
+    graph: http://vocab.getty.edu/aat/graph
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology#
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      concept:
+        - gvp:Concept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?value .
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
+      labels: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+
+  geonames:
+    graph: http://sws.geonames.org/graph
+    prefixes:
+      gn: http://www.geonames.org/ontology#
+    types:
+      place:
+        - gn:Feature
+    queries:
+      description: |
+        BIND("" AS ?value) .
+      prefLabel: |
+        ?subject gn:name ?value .
+      labels: |
+        ?subject gn:alternateName ?value .
+
+  gnd:
+    graph: https://d-nb.info/gnd/authorities/graph
+    prefixes:
+      gnd: https://d-nb.info/standards/elementset/gnd#
+    types:
+      actor:
+        - gnd:Person
+        - gnd:UndifferentiatedPerson
+        - gnd:DifferentiatedPerson
+      builtWork:
+        - gnd:BuildingOrMemorial
+      bibliographicItem:
+        - gnd:Work
+      concept:
+        - gnd:SubjectHeading
+        - gnd:SubjectHeadingSensoStricto
+        - gnd:CharactersOrMorphemes
+        - gnd:Language
+        - gnd:NomenclatureInBiologyOrChemistry
+        - gnd:EthnographicName
+        - gnd:Relationship
+        - gnd:ProvenanceCharacteristic
+        - gnd:ProductNameOrBrandName
+        - gnd:SoftwareProduct
+      group:
+        - gnd:Company
+        - gnd:CorporateBody
+        - gnd:ReligiousCorporateBody
+        - gnd:MusicalCorporateBody
+        - gnd:FictiveCorporateBody
+        - gnd:OrganOfCorporateBody
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+        - gnd:AdministrativeUnit
+        - gnd:ReligiousAdministrativeUnit
+      place:
+        - gnd:Country
+        - gnd:PlaceOrGeographicName
+        - gnd:MemberState
+        - gnd:NaturalGeographicUnit
+        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
+        - gnd:WayBorderOrLine
+        - gnd:ReligiousTerritory
+        - gnd:ExtraterrestrialTerritory
+        - gnd:FictivePlace
+      event:
+        - gnd:ConferenceOrEvent
+        - gnd:SeriesOfConferenceOrEvent
+        - gnd:HistoricSingleEventOrEra
+        - gnd:ProjectOrProgram
+    queries:
+      description: |
+        ?subject ?predicateDescription ?value .
+        VALUES (?predicateDescription) {
+            ( <https://d-nb.info/standards/elementset/gnd#definition> )
+            ( <https://d-nb.info/standards/elementset/gnd#note> )
+            ( <https://d-nb.info/standards/elementset/gnd#historyOfTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#biographicalOrHistoricalInformation> )
+            ( <https://d-nb.info/standards/elementset/gnd#professionOrOccupationAsLiteral> )
+        }
+      prefLabel: |
+        ?subject ?predicatePrefLabel ?value .
+        VALUES (?predicatePrefLabel) {
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
+        }
+      labels: |
+        ?subject ?predicateLabel ?value .
+        VALUES (?predicateLabel) {
+            ( <https://d-nb.info/standards/elementset/gnd#forename> )
+            ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
+            ( <https://d-nb.info/standards/elementset/gnd#nameAddition> )
+            ( <https://d-nb.info/standards/elementset/gnd#originalScriptNameOfThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#personalName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
+            ( <https://d-nb.info/standards/elementset/gnd#surname> )
+            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeadingSensoStricto>)
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheConferenceOrEvent> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheCorporateBody> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheFamily> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePerson> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePlaceOrGeographicName> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
+            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
+        }
+
+  sikart:
+    graph: http://recherche.sik-isea.ch/graph
+    prefixes:
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      sik: https://recherche.sik-isea.ch
+    types:
+      actor:
+        - sik:SIK-ACTOR
+      place: 
+        - crm:E53_Place
+      event:
+        - sik:SIK-EXHIBITION
+        - sik:SIK-AWARD_CEREMONY
+      artwork:
+        - sik:SIK-WORK
+        - sik:SIK-WORK_GROUP
+        - sik:SIK-PARENT_WORK
+      bibliographicItem:
+        - sik:SIK-DOCUMENT
+        - sik:SIK-PUBLICATION
+        - sik:SIK-PARENT_DOCUMENT
+      concept:
+        - sik:SIK-TYPE
+    queries:
+      description: |
+        BIND("" AS ?value) .
+      prefLabel: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      labels: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
+
+  thesarchesp:
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      concept:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?value .
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+
+  thesobjmob:
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      concept:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?value .
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+
+  ulan:
+    graph: http://vocab.getty.edu/ulan/graph
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology#
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      actor:
+        - gvp:PersonConcept
+        - gvp:UnknownPersonConcept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?value .
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
+      labels: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
