@@ -79,10 +79,11 @@ COUNT_QUERY_TEMPLATE = """\
 SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
   GRAPH <{graph}> {{
-{type_constraint_block}
-{pref_label_block}
-{labels_block}
-{description_block}
+    {type_constraint_block}
+    FILTER EXISTS {{
+        {pref_label_block}
+        {description_block}
+    }}
   }}
 }}
 """
@@ -484,7 +485,7 @@ def index_dataset_to_opensearch(
     total_expected = parse_count(sparql_client.query(count_query))
 
     print(
-        f"Indexing entities for the dataset {dataset_name}...",
+        f"Indexing {total_expected} entities for the dataset {dataset_name}...",
         file=sys.stderr,
     )
 
@@ -603,7 +604,7 @@ def main() -> int:
         bulk_chunk_size=args.bulk_chunk_size,
     )
 
-    print(f"Indexed {total} docs into '{args.os_index}'", file=sys.stderr)
+    print(f"Indexed {total} entities into '{args.os_index}'", file=sys.stderr)
     return 0
 
 
