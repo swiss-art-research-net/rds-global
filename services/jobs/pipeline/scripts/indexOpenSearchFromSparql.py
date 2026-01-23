@@ -40,10 +40,11 @@ INDEX_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
   ?subject
-  (GROUP_CONCAT(DISTINCT ?prefLabel; SEPARATOR="||") AS ?prefLabels)
+  (GROUP_CONCAT(DISTINCT STR(?prefLabel); SEPARATOR="||") AS ?prefLabels)
   (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
-  (GROUP_CONCAT(DISTINCT ?label; SEPARATOR="||") AS ?labels)
+  (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
+  (GROUP_CONCAT(DISTINCT STR(?match); SEPARATOR="||") AS ?matches)
   (MIN(?description_raw) AS ?description)
   (COUNT(DISTINCT ?match) AS ?numMatches)
 WHERE {{
@@ -280,6 +281,7 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         types_concat = _get_binding_value(b, "types") or ""
         type_classes_concat = _get_binding_value(b, "typeClasses") or ""
         labels_concat = _get_binding_value(b, "labels") or ""
+        matches_concat = _get_binding_value(b, "matches") or ""
         description = _get_binding_value(b, "description")
         num_matches_str = _get_binding_value(b, "numMatches") or "0"
 
@@ -287,11 +289,12 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         type_classes = [tc for tc in type_classes_concat.split("||") if tc] if type_classes_concat else []
         labels = [l for l in labels_concat.split("||") if l] if labels_concat else []
         pref_labels = [pl for pl in pref_labels_concat.split("||") if pl] if pref_labels_concat else []
+        matches = [m for m in matches_concat.split("||") if m] if matches_concat else []
 
         try:
-            relevance = int(num_matches_str)
+            num_matches = int(num_matches_str)
         except ValueError:
-            relevance = 0
+            num_matches = 0
 
         if not subject:
             continue
@@ -304,7 +307,8 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "types": types,
                 "typeClasses": type_classes,
                 "description": description,
-                "relevance": relevance,
+                "matches": matches,
+                "numMatches": num_matches,
             }
         )
 
@@ -356,9 +360,10 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
                 "labels": {"type": "text"},
                 "types": {"type": "keyword"},
                 "typeClasses": {"type": "keyword"},
+                "matches": {"type": "keyword"},
                 "dataset": {"type": "keyword"},
                 "description": {"type": "text"},
-                "relevance": {"type": "integer"},
+                "numMatches": {"type": "integer"},
             }
         },
     }
