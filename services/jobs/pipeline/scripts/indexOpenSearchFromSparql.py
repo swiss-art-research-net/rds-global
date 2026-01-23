@@ -120,7 +120,7 @@ def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
     ?subject a ?requiredClass, ?type ."""
     return block
 
-def _collect_required_class_pairs(dataset_cfg: Dict[str, Any]) -> List[Tuple[str, str]]:
+def _collect_required_class_pairs(dataset_config: Dict[str, Any]) -> List[Tuple[str, str]]:
     """
     Build pairs of (requiredClassQName, typeClassLabel) from dataset.types.
 
@@ -132,7 +132,7 @@ def _collect_required_class_pairs(dataset_cfg: Dict[str, Any]) -> List[Tuple[str
     Produces:
       [("gnd:DifferentiatedPerson","actor"), ("gnd:Gods","actor"), ("gnd:Work","artwork"), ...]
     """
-    types_cfg = dataset_cfg.get("types", {})
+    types_cfg = dataset_config.get("types", {})
     if not isinstance(types_cfg, dict) or not types_cfg:
         raise ValueError("Dataset is missing 'types' or it is not a dict of groups -> class lists.")
 
@@ -162,14 +162,14 @@ def _generate_prefixes(prefixes: Dict[str, str]) -> str:
     items = sorted(prefixes.items(), key=lambda kv: kv[0])
     return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
 
-def _prepare_query_parts(dataset_cfg: Dict[str, Any]) -> Dict[str, str]:
-    prefixes = _generate_prefixes(dataset_cfg.get("prefixes", {}))
-    graph = dataset_cfg["graph"]
+def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
+    prefixes = _generate_prefixes(dataset_config.get("prefixes", {}))
+    graph = dataset_config["graph"]
 
-    class_pairs = _collect_required_class_pairs(dataset_cfg)
+    class_pairs = _collect_required_class_pairs(dataset_config)
     type_constraint_block = _build_type_constraint_block(class_pairs)
 
-    queries = dataset_cfg.get("queries", {})
+    queries = dataset_config.get("queries", {})
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
@@ -187,12 +187,12 @@ def _prepare_query_parts(dataset_cfg: Dict[str, Any]) -> Dict[str, str]:
         "description_block": description_block,
     }
 
-def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
-    parts = _prepare_query_parts(dataset_cfg)
+def build_count_query(dataset_config: Dict[str, Any]) -> str:
+    parts = _prepare_query_parts(dataset_config)
     return COUNT_QUERY_TEMPLATE.format(**parts)
 
-def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
-    parts = _prepare_query_parts(dataset_cfg)
+def build_query(dataset_config: Dict[str, Any], limit: int, offset: int) -> str:
+    parts = _prepare_query_parts(dataset_config)
     return INDEX_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
 
 
@@ -401,7 +401,7 @@ def bulk_index(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]
 
 def iter_dataset_rows(
     sparql_client: SparqlClient,
-    dataset_cfg: Dict[str, Any],
+    dataset_config: Dict[str, Any],
     page_size: int,
     max_pages: Optional[int],
     sleep_s: float,
@@ -413,7 +413,7 @@ def iter_dataset_rows(
         if max_pages is not None and page >= max_pages:
             break
 
-        sparql = build_query(dataset_cfg, limit=page_size, offset=offset)
+        sparql = build_query(dataset_config, limit=page_size, offset=offset)
         data = sparql_client.query(sparql)
         rows = parse_rows(data)
 
@@ -439,7 +439,7 @@ def load_config(path: str) -> Dict[str, Any]:
 def index_dataset_to_opensearch(
     sparql_client: SparqlClient,
     os_client: OpenSearch,
-    dataset_cfg: Dict[str, Any],
+    dataset_config: Dict[str, Any],
     index_name: str,
     dataset_name: str,
     page_size: int,
@@ -449,7 +449,7 @@ def index_dataset_to_opensearch(
 ) -> int:
     ensure_index(os_client, index_name)
 
-    count_query = build_count_query(dataset_cfg)
+    count_query = build_count_query(dataset_config)
     total_expected = parse_count(sparql_client.query(count_query))
 
     print(
@@ -464,7 +464,7 @@ def index_dataset_to_opensearch(
 
     for row in iter_dataset_rows(
         sparql_client=sparql_client,
-        dataset_cfg=dataset_cfg,
+        dataset_config=dataset_config,
         page_size=page_size,
         max_pages=max_pages,
         sleep_s=sleep_s,
@@ -541,7 +541,7 @@ def main() -> int:
         print(f"Dataset '{args.dataset}' not found in config. Available: {available}", file=sys.stderr)
         return 2
 
-    dataset_cfg = datasets[args.dataset]
+    dataset_config = datasets[args.dataset]
 
     sparql_client = SparqlClient(
         endpoint=args.endpoint,
@@ -563,7 +563,7 @@ def main() -> int:
     total = index_dataset_to_opensearch(
         sparql_client=sparql_client,
         os_client=os_client,
-        dataset_cfg=dataset_cfg,
+        dataset_config=dataset_config,
         index_name=args.os_index,
         dataset_name=args.dataset,
         page_size=args.page_size,
