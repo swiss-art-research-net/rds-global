@@ -25,7 +25,7 @@ datasets:
         - gn:Feature
     queries:
       description: |
-        BIND("" AS ?description) .
+        BIND("" AS ?value) .
       prefLabel: |
         ?subject gn:name ?value .
       labels: |
@@ -82,7 +82,7 @@ datasets:
         - gnd:ProjectOrProgram
     queries:
       description: |
-        ?subject ?predicateDescription ?description .
+        ?subject ?predicateDescription ?value .
         VALUES (?predicateDescription) {
             ( <https://d-nb.info/standards/elementset/gnd#definition> )
             ( <https://d-nb.info/standards/elementset/gnd#note> )
@@ -91,7 +91,7 @@ datasets:
             ( <https://d-nb.info/standards/elementset/gnd#professionOrOccupationAsLiteral> )
         }
       prefLabel: |
-        ?subject ?predicatePrefLabel ?prefLabel .
+        ?subject ?predicatePrefLabel ?value .
         VALUES (?predicatePrefLabel) {
             ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
             ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
@@ -102,7 +102,7 @@ datasets:
             ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
         }
       labels: |
-        ?subject ?predicateLabel ?label .
+        ?subject ?predicateLabel ?value .
         VALUES (?predicateLabel) {
             ( <https://d-nb.info/standards/elementset/gnd#forename> )
             ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
@@ -168,11 +168,11 @@ datasets:
         - skos:Concept
     queries:
       description: |
-        ?subject skos:definition ?description .
+        ?subject skos:definition ?value .
       prefLabel: |
-        ?subject skos:prefLabel ?prefLabel .
+        ?subject skos:prefLabel ?value .
       labels: |
-        ?subject (skos:prefLabel | skos:altLabel) ?label .
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
 
   thesobjmob:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
