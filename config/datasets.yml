@@ -10,11 +10,11 @@ datasets:
         - gvp:Concept
     queries:
       description: |
-        ?subject gvp:parentStringAbbrev ?description .
+        ?subject gvp:parentStringAbbrev ?value .
       prefLabel: |
-        ?subject gvp:prefLabelGVP/xl:literalForm ?prefLabel .
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
-        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?label .
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
 
   geonames:
     graph: http://sws.geonames.org/graph
@@ -27,9 +27,9 @@ datasets:
       description: |
         BIND("" AS ?description) .
       prefLabel: |
-        ?subject gn:name ?prefLabel .
+        ?subject gn:name ?value .
       labels: |
-        ?subject gn:alternateName ?label .
+        ?subject gn:alternateName ?value .
 
   gnd:
     graph: https://d-nb.info/gnd/authorities/graph
@@ -153,11 +153,11 @@ datasets:
         - sik:SIK-TYPE
     queries:
       description: |
-        BIND("" AS ?description) .
+        BIND("" AS ?value) .
       prefLabel: |
-        ?subject crm:P1_is_identified_by/rdfs:label ?prefLabel .
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
       labels: |
-        ?subject crm:P1_is_identified_by/rdfs:label ?label .
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
 
   thesarchesp:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
@@ -183,11 +183,11 @@ datasets:
         - skos:Concept
     queries:
       description: |
-        ?subject skos:definition ?description .
+        ?subject skos:definition ?value .
       prefLabel: |
-        ?subject skos:prefLabel ?prefLabel .
+        ?subject skos:prefLabel ?value .
       labels: |
-        ?subject (skos:prefLabel | skos:altLabel) ?label .
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
 
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
@@ -200,8 +200,8 @@ datasets:
         - gvp:UnknownPersonConcept
     queries:
       description: |
-        ?subject gvp:parentStringAbbrev ?description .
+        ?subject gvp:parentStringAbbrev ?value .
       prefLabel: |
-        ?subject gvp:prefLabelGVP/xl:literalForm ?prefLabel .
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
-        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?label .
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
