@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """
-sparql_to_opensearch.py
-
 Reads a YAML config describing datasets and query parts, generates SPARQL with a fixed template,
 paginates via LIMIT/OFFSET against a common SPARQL endpoint, parses results, and bulk-indexes
 documents into OpenSearch.
@@ -10,7 +8,7 @@ Install:
   pip install pyyaml requests opensearch-py
 
 Example:
-  python sparql_to_opensearch.py \
+  python indexOpenSearchFromSparql.py \
     --config config.yml \
     --endpoint "https://YOUR-SPARQL-ENDPOINT/sparql" \
     --dataset aat \
