@@ -310,7 +310,6 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     return rows
 
-
 # ----------------------------
 # OpenSearch helpers
 # ----------------------------
@@ -335,7 +334,6 @@ def make_os_client(
         max_retries=3,
         retry_on_timeout=True,
     )
-
 
 def ensure_index(os_client: OpenSearch, index_name: str) -> None:
     if os_client.indices.exists(index=index_name):
@@ -366,7 +364,6 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
     }
     os_client.indices.create(index=index_name, body=body)
 
-
 def iter_bulk_actions(index_name: str, rows: Iterable[Dict[str, Any]]) -> Iterable[Dict[str, Any]]:
     for r in rows:
         uri = r.get("uri")
@@ -378,7 +375,6 @@ def iter_bulk_actions(index_name: str, rows: Iterable[Dict[str, Any]]) -> Iterab
             "_id": uri,
             "_source": r,
         }
-
 
 def bulk_index(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]], chunk_size: int) -> int:
     success, errors = helpers.bulk(
@@ -429,12 +425,9 @@ def iter_dataset_rows(
         if sleep_s > 0:
             time.sleep(sleep_s)
 
-
 def load_config(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
-
-
 
 def index_dataset_to_opensearch(
     sparql_client: SparqlClient,
@@ -508,7 +501,6 @@ def index_dataset_to_opensearch(
     print(f"Done!", file=sys.stderr)
     return unique_done
 
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, help="Path to YAML configuration")
@@ -574,7 +566,6 @@ def main() -> int:
 
     print(f"Indexed {total} entities into '{args.os_index}'", file=sys.stderr)
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
