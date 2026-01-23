@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Reads a YAML config describing datasets and query parts, generates SPARQL with a fixed template,
+Reads a YAML config describing datasets and query parts, generates SPARQL with a template,
 paginates via LIMIT/OFFSET against a common SPARQL endpoint, parses results, and bulk-indexes
 documents into OpenSearch.
 
@@ -36,7 +36,7 @@ from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
 # SPARQL generation
 # ----------------------------
 
-FIXED_QUERY_TEMPLATE = """\
+INDEX_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
   ?subject
@@ -44,7 +44,7 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT ?label; SEPARATOR="||") AS ?labels)
-  ?description
+  (MIN(?description_raw) AS ?description)
   (COUNT(DISTINCT ?match) AS ?numMatches)
 WHERE {{
   {{
@@ -68,9 +68,13 @@ WHERE {{
         {labels_block}
     }}
   }}
-{matches_optional_block}
+  OPTIONAL {{
+    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
+      ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match .
+    }}
+  }}
 }}
-GROUP BY ?subject ?description
+GROUP BY ?subject
 ORDER BY ?subject
 """
 
@@ -88,24 +92,9 @@ WHERE {{
 }}
 """
 
-FIXED_MATCHES_OPTIONAL_BLOCK = """\
-  OPTIONAL {
-    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
-      ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match .
-    }
-  }"""
-
-
-def _prefix_lines(prefixes: Dict[str, str]) -> str:
+def _generate_prefixes(prefixes: Dict[str, str]) -> str:
     items = sorted(prefixes.items(), key=lambda kv: kv[0])
     return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
-
-
-def _indent_block(block: str, spaces: int = 4) -> str:
-    pad = " " * spaces
-    lines = [ln.rstrip() for ln in block.strip("\n").splitlines()]
-    return "\n".join(pad + ln if ln else "" for ln in lines) + "\n"
-
 
 def _collect_required_class_pairs(dataset_cfg: Dict[str, Any]) -> List[Tuple[str, str]]:
     """
@@ -172,19 +161,19 @@ def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
       {values_rows}
     }}
     ?subject a ?requiredClass, ?type ."""
-    return _indent_block(block, 4).rstrip("\n")
+    return block
 
 def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
-    prefixes = _prefix_lines(dataset_cfg.get("prefixes", {}))
+    prefixes = _generate_prefixes(dataset_cfg.get("prefixes", {}))
     graph = dataset_cfg["graph"]
 
     class_pairs = _collect_required_class_pairs(dataset_cfg)
     type_constraint_block = _build_type_constraint_block(class_pairs)
 
     queries = dataset_cfg.get("queries", {})
-    pref_label_block = queries.get("prefLabel", "")
-    labels_block = queries.get("labels", "")
-    description_block = queries.get("description", "")
+    pref_label_block = queries.get("prefLabel", "").replace("?value", "?prefLabel")
+    labels_block = queries.get("labels", "").replace("?value", "?label")
+    description_block = queries.get("description", "").replace("?value", "?description_raw")
 
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
@@ -194,35 +183,34 @@ def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
         prefixes=prefixes,
         graph=graph,
         type_constraint_block=type_constraint_block,
-        pref_label_block=_indent_block(pref_label_block, 4).rstrip("\n"),
-        labels_block=_indent_block(labels_block, 4).rstrip("\n"),
-        description_block=_indent_block(description_block, 4).rstrip("\n"),
+        pref_label_block=pref_label_block,
+        labels_block=labels_block,
+        description_block=description_block,
     )
 
 def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
-    prefixes = _prefix_lines(dataset_cfg.get("prefixes", {}))
+    prefixes = _generate_prefixes(dataset_cfg.get("prefixes", {}))
     graph = dataset_cfg["graph"]
 
     class_pairs = _collect_required_class_pairs(dataset_cfg)
     type_constraint_block = _build_type_constraint_block(class_pairs)
 
     queries = dataset_cfg.get("queries", {})
-    pref_label_block = queries.get("prefLabel", "")
-    labels_block = queries.get("labels", "")
-    description_block = queries.get("description", "")
+    pref_label_block = queries.get("prefLabel", "").replace("?value", "?prefLabel")
+    labels_block = queries.get("labels", "").replace("?value", "?label")
+    description_block = queries.get("description", "").replace("?value", "?description_raw")
 
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
-    return FIXED_QUERY_TEMPLATE.format(
+    return INDEX_QUERY_TEMPLATE.format(
         prefixes=prefixes,
         graph=graph,
         type_constraint_block=type_constraint_block,
-        pref_label_block=_indent_block(pref_label_block, 4).rstrip("\n"),
-        labels_block=_indent_block(labels_block, 4).rstrip("\n"),
-        description_block=_indent_block(description_block, 4).rstrip("\n"),
-        matches_optional_block=FIXED_MATCHES_OPTIONAL_BLOCK,
+        pref_label_block=pref_label_block,
+        labels_block=labels_block,
+        description_block=description_block,
         limit=limit,
         offset=offset,
     )
