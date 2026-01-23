@@ -92,9 +92,33 @@ WHERE {{
 }}
 """
 
-def _generate_prefixes(prefixes: Dict[str, str]) -> str:
-    items = sorted(prefixes.items(), key=lambda kv: kv[0])
-    return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
+def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
+    """
+    Constrain subjects to ANY allowed requiredClass, and bind the corresponding typeClass label.
+
+    VALUES (?requiredClass ?typeClass) {
+      (gnd:DifferentiatedPerson "actor")
+      (gnd:Work "artwork")
+      ...
+    }
+    ?subject a ?requiredClass, ?type .
+    """
+    if not class_pairs:
+        raise ValueError("No (requiredClass, typeClass) pairs found in dataset.types.")
+
+    # Escape double quotes in group names just in case
+    rows = []
+    for required_class, type_class in class_pairs:
+        safe_label = type_class.replace('"', '\\"')
+        rows.append(f'({required_class} "{safe_label}")')
+
+    values_rows = "\n      ".join(rows)
+    block = f"""\
+    VALUES (?requiredClass ?typeClass) {{
+      {values_rows}
+    }}
+    ?subject a ?requiredClass, ?type ."""
+    return block
 
 def _collect_required_class_pairs(dataset_cfg: Dict[str, Any]) -> List[Tuple[str, str]]:
     """
@@ -134,34 +158,9 @@ def _collect_required_class_pairs(dataset_cfg: Dict[str, Any]) -> List[Tuple[str
 
     return deduped
 
-
-def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
-    """
-    Constrain subjects to ANY allowed requiredClass, and bind the corresponding typeClass label.
-
-    VALUES (?requiredClass ?typeClass) {
-      (gnd:DifferentiatedPerson "actor")
-      (gnd:Work "artwork")
-      ...
-    }
-    ?subject a ?requiredClass, ?type .
-    """
-    if not class_pairs:
-        raise ValueError("No (requiredClass, typeClass) pairs found in dataset.types.")
-
-    # Escape double quotes in group names just in case
-    rows = []
-    for required_class, type_class in class_pairs:
-        safe_label = type_class.replace('"', '\\"')
-        rows.append(f'({required_class} "{safe_label}")')
-
-    values_rows = "\n      ".join(rows)
-    block = f"""\
-    VALUES (?requiredClass ?typeClass) {{
-      {values_rows}
-    }}
-    ?subject a ?requiredClass, ?type ."""
-    return block
+def _generate_prefixes(prefixes: Dict[str, str]) -> str:
+    items = sorted(prefixes.items(), key=lambda kv: kv[0])
+    return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
 
 def _prepare_query_parts(dataset_cfg: Dict[str, Any]) -> Dict[str, str]:
     prefixes = _generate_prefixes(dataset_cfg.get("prefixes", {}))
