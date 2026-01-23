@@ -163,7 +163,7 @@ def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
     ?subject a ?requiredClass, ?type ."""
     return block
 
-def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
+def _prepare_query_parts(dataset_cfg: Dict[str, Any]) -> Dict[str, str]:
     prefixes = _generate_prefixes(dataset_cfg.get("prefixes", {}))
     graph = dataset_cfg["graph"]
 
@@ -171,49 +171,30 @@ def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
     type_constraint_block = _build_type_constraint_block(class_pairs)
 
     queries = dataset_cfg.get("queries", {})
-    pref_label_block = queries.get("prefLabel", "").replace("?value", "?prefLabel")
-    labels_block = queries.get("labels", "").replace("?value", "?label")
-    description_block = queries.get("description", "").replace("?value", "?description_raw")
-
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
-    return COUNT_QUERY_TEMPLATE.format(
-        prefixes=prefixes,
-        graph=graph,
-        type_constraint_block=type_constraint_block,
-        pref_label_block=pref_label_block,
-        labels_block=labels_block,
-        description_block=description_block,
-    )
+    pref_label_block = queries["prefLabel"].replace("?value", "?prefLabel")
+    labels_block = queries["labels"].replace("?value", "?label")
+    description_block = queries["description"].replace("?value", "?description_raw")
+
+    return {
+        "prefixes": prefixes,
+        "graph": graph,
+        "type_constraint_block": type_constraint_block,
+        "pref_label_block": pref_label_block,
+        "labels_block": labels_block,
+        "description_block": description_block,
+    }
+
+def build_count_query(dataset_cfg: Dict[str, Any]) -> str:
+    parts = _prepare_query_parts(dataset_cfg)
+    return COUNT_QUERY_TEMPLATE.format(**parts)
 
 def build_query(dataset_cfg: Dict[str, Any], limit: int, offset: int) -> str:
-    prefixes = _generate_prefixes(dataset_cfg.get("prefixes", {}))
-    graph = dataset_cfg["graph"]
-
-    class_pairs = _collect_required_class_pairs(dataset_cfg)
-    type_constraint_block = _build_type_constraint_block(class_pairs)
-
-    queries = dataset_cfg.get("queries", {})
-    pref_label_block = queries.get("prefLabel", "").replace("?value", "?prefLabel")
-    labels_block = queries.get("labels", "").replace("?value", "?label")
-    description_block = queries.get("description", "").replace("?value", "?description_raw")
-
-    missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
-    if missing:
-        raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
-
-    return INDEX_QUERY_TEMPLATE.format(
-        prefixes=prefixes,
-        graph=graph,
-        type_constraint_block=type_constraint_block,
-        pref_label_block=pref_label_block,
-        labels_block=labels_block,
-        description_block=description_block,
-        limit=limit,
-        offset=offset,
-    )
+    parts = _prepare_query_parts(dataset_cfg)
+    return INDEX_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
 
 
 # ----------------------------
