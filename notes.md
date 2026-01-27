@@ -40,8 +40,8 @@
            }
          },
          "field_value_factor": {
-           "field": "relevance",
-           "factor": 1.0,
+           "field": "numMatches",
+           "factor": 10.0,
            "modifier": "log1p",
            "missing": 0
          },
