@@ -31,8 +31,8 @@ tasks:
       - task: update-data-ulan
       - task: index-data
       - task: generate-sameas-statements
-      #- task: index-data # Re-index after SameAs generation
-      - #task: create-search-index
+      - task: index-data # Re-index after SameAs generation
+      - task: add-data-to-search-index
       - #task: generate-labels
       - #task: ingest-metadata
       - #task: ingest-sameas-statements
