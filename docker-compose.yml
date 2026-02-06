@@ -3,6 +3,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-jobs
     build: ./services/jobs
     environment:
+      DATASETS: ${DATASETS}
       GITHUB_USERNAME_SIKART: ${GITHUB_USERNAME_SIKART}
       GITHUB_TOKEN_SIKART: ${GITHUB_TOKEN_SIKART}
       QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}

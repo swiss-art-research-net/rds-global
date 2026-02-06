@@ -41,7 +41,8 @@ tasks:
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
     vars:
-      DATASETS: aat,geonames,gnd,sikart,thesarchesp,thesobjmob,ulan
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds:
       - for:
           var: DATASETS
@@ -307,7 +308,8 @@ tasks:
   generate-labels:
     desc: Generate labels for URIs
     vars:
-      DATASETS: aat,geonames,gnd,sikart,thesarchesp,thesobjmob,ulan
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds:
       - mkdir -p /data/labels
       - for:
