@@ -1,7 +1,6 @@
 # RDS-Global
 
 Setup for the SARI Reference Data Service (RDS) Global. This repository contains the Docker configuration and ETL pipeline to setup the RDS Global service. 
-
 The RDS Global service is a reference data service that provides unified access to reference data from multiple sources. 
 
 ## Setup
