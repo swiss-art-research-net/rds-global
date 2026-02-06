@@ -1,6 +1,7 @@
 # RDS-Global
 
 Setup for the SARI Reference Data Service (RDS) Global. This repository contains the Docker configuration and ETL pipeline to setup the RDS Global service. 
+
 The RDS Global service is a reference data service that provides unified access to reference data from multiple sources. 
 
 ## Setup
@@ -37,11 +38,12 @@ An ETL Pipeline is provided that takes care of fetching and preparing the extern
 docker compose exec jobs task
 ```
 
-This will run the entire pipeline, consisting of the following steps:
+This will run the entire pipeline, currently consisting of the following steps:
 - Fetching all data sources
-- Extracting unique labels for all entities
-- Extracting sameas links for all entities
-- Loading the data into the Blazegraph triple store
+- Index all data in QLever
+- Generate SameAs statements based
+- Reindex source data and generated statements (QLever updates are currently not as performant as reindexing, but this will be improved in the future, at which point this step will be replaced by an update)
+- Add data to OpenSearch index
 
 #### Tasks
 
