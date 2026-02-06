@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Reads a YAML config describing datasets and query parts, generates SPARQL with a template,
 paginates via LIMIT/OFFSET against a common SPARQL endpoint, parses results, and bulk-indexes
@@ -488,6 +487,7 @@ def index_dataset_to_opensearch(
             pct = (unique_done / total_expected * 100.0) if total_expected > 0 else 0.0
 
             print(
+                f"Indexing {dataset_name}: "
                 f"{pct:.1f}% "
                 f"({rate:.1f} entities/s)",
                 file=sys.stderr,
