@@ -1,0 +1,152 @@
+PREFIX sp: <http://spinrdf.org/sp#>
+PREFIX spin: <http://spinrdf.org/spin#>
+PREFIX spl: <http://spinrdf.org/spl#>
+PREFIX ephedra: <http://www.researchspace.org/resource/system/ephedra#>
+PREFIX sail: <http://www.openrdf.org/config/sail#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Reuse your rds namespace (add new predicates there if needed)
+PREFIX rds: <http://www.researchspace.com/resource/assets/Ontologies/sari-rds#>
+PREFIX : <http://www.researchspace.org/resource/system/repository#>
+
+:ElasticEntitySearch a ephedra:Service ;
+  sail:sailType "researchspace:RESTSail" ;
+  rdfs:label "Elastic/OpenSearch entity search" ;
+
+  # SPARQL "request object" pattern
+  ephedra:hasSPARQLPattern (
+    [
+      sp:subject :_request ;
+      sp:predicate rds:hasQueryString ;
+      sp:object :_query
+    ]
+  ) ;
+
+  # INPUT: only one argument (the search term) mapped into the JSON body
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Search term for multi_match.query" ;
+    spl:predicate :_query ;
+    spl:valueType xsd:string ;
+    # goes to: query.function_score.query.multi_match.query
+    ephedra:inputJsonPath "query.function_score.query.multi_match.query"
+  ] ;
+
+  # OPTIONAL: hardcode other request fields (kept as constants here via additional constraints)
+  # If your RESTSail build does not honor constant insertion via constraints, move these
+  # into the repository-level template if you have that feature, or expose them in SPARQL
+  # and bind fixed literals there.
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded multi_match fields list" ;
+    spl:predicate :_fields ;
+    spl:valueType xsd:string ;
+    ephedra:inputJsonPath "query.function_score.query.multi_match.fields[0]" ;
+    spl:defaultValue "prefLabel^3"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded multi_match fields list (second)" ;
+    spl:predicate :_fields2 ;
+    spl:valueType xsd:string ;
+    ephedra:inputJsonPath "query.function_score.query.multi_match.fields[1]" ;
+    spl:defaultValue "labels"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded field_value_factor.field" ;
+    spl:predicate :_fvfField ;
+    spl:valueType xsd:string ;
+    ephedra:inputJsonPath "query.function_score.field_value_factor.field" ;
+    spl:defaultValue "numMatches"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded field_value_factor.factor" ;
+    spl:predicate :_fvfFactor ;
+    spl:valueType xsd:decimal ;
+    ephedra:inputJsonPath "query.function_score.field_value_factor.factor" ;
+    spl:defaultValue "10.0"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded field_value_factor.modifier" ;
+    spl:predicate :_fvfModifier ;
+    spl:valueType xsd:string ;
+    ephedra:inputJsonPath "query.function_score.field_value_factor.modifier" ;
+    spl:defaultValue "log1p"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded field_value_factor.missing" ;
+    spl:predicate :_fvfMissing ;
+    spl:valueType xsd:integer ;
+    ephedra:inputJsonPath "query.function_score.field_value_factor.missing" ;
+    spl:defaultValue "0"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded boost_mode" ;
+    spl:predicate :_boostMode ;
+    spl:valueType xsd:string ;
+    ephedra:inputJsonPath "query.function_score.boost_mode" ;
+    spl:defaultValue "sum"
+  ] ;
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "Hardcoded size (limit)" ;
+    spl:predicate :_size ;
+    spl:valueType xsd:integer ;
+    ephedra:inputJsonPath "size" ;
+    spl:defaultValue "10"
+  ] ;
+
+  # OUTPUT: bind each hit node first, then project properties from within each hit
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "One row per hit" ;
+    spl:predicate :_hit ;
+    spl:valueType rdfs:Resource ;
+    ephedra:jsonPath "$.hits.hits[*]"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "Document id (_id)" ;
+    spl:predicate :_outputId ;
+    spl:valueType xsd:string ;
+    ephedra:jsonPath "$._id"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "URI from _source.uri" ;
+    spl:predicate :_outputUri ;
+    spl:valueType xsd:string ;
+    ephedra:jsonPath "$._source.uri"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "Preferred label (first prefLabels)" ;
+    spl:predicate :_outputName ;
+    spl:valueType xsd:string ;
+    ephedra:jsonPath "$._source.prefLabels[0]"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "Description" ;
+    spl:predicate :_outputDescription ;
+    spl:valueType xsd:string ;
+    ephedra:jsonPath "$._source.description"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "Type class (first typeClasses entry)" ;
+    spl:predicate :_outputTypeClass ;
+    spl:valueType xsd:string ;
+    ephedra:jsonPath "$._source.typeClasses[0]"
+  ] .
