@@ -6,7 +6,6 @@ PREFIX sail: <http://www.openrdf.org/config/sail#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-# Reuse your rds namespace (add new predicates there if needed)
 PREFIX rds: <http://www.researchspace.com/resource/assets/Ontologies/sari-rds#>
 PREFIX : <http://www.researchspace.org/resource/system/repository#>
 
@@ -14,26 +13,55 @@ PREFIX : <http://www.researchspace.org/resource/system/repository#>
   sail:sailType "researchspace:RESTSail" ;
   rdfs:label "Elastic/OpenSearch entity search" ;
 
-  # SPARQL "request object" pattern
+  # Describe what triples exist in SPARQL for this service:
+  # - input(s): hasQueryString
+  # - outputs: outputId, outputUri, outputName, outputDescription, outputTypeClass
   ephedra:hasSPARQLPattern (
+    # INPUT
     [
-      sp:subject :_request ;
+      sp:subject :_hit ;
       sp:predicate rds:hasQueryString ;
       sp:object :_query
     ]
+
+    # OUTPUTS (these come from the JSON response)
+    [
+      sp:subject :_hit ;
+      sp:predicate rds:outputId ;
+      sp:object :_outputId
+    ]
+    [
+      sp:subject :_hit ;
+      sp:predicate rds:outputUri ;
+      sp:object :_outputUri
+    ]
+    [
+      sp:subject :_hit ;
+      sp:predicate rds:outputName ;
+      sp:object :_outputName
+    ]
+    [
+      sp:subject :_hit ;
+      sp:predicate rds:outputDescription ;
+      sp:object :_outputDescription
+    ]
+    [
+      sp:subject :_hit ;
+      sp:predicate rds:outputTypeClass ;
+      sp:object :_outputTypeClass
+    ]
   ) ;
 
-  # INPUT: only one argument (the search term) mapped into the JSON body
+  # SENDING JSON (only the query term is variable)
   spin:constraint [
     a spl:Argument ;
     rdfs:comment "Search term for multi_match.query" ;
     spl:predicate :_query ;
     spl:valueType xsd:string ;
-    # goes to: query.function_score.query.multi_match.query
     ephedra:inputJsonPath "query.function_score.query.multi_match.query"
   ] ;
-
-  # OPTIONAL: hardcode other request fields (kept as constants here via additional constraints)
+  
+  # hardcode other request fields (kept as constants here via additional constraints)
   # If your RESTSail build does not honor constant insertion via constraints, move these
   # into the repository-level template if you have that feature, or expose them in SPARQL
   # and bind fixed literals there.
@@ -102,7 +130,8 @@ PREFIX : <http://www.researchspace.org/resource/system/repository#>
     spl:defaultValue "10"
   ] ;
 
-  # OUTPUT: bind each hit node first, then project properties from within each hit
+  # RECEIVING COLUMNS
+  # First column creates one binding per hit object
   spin:column [
     a spin:Column ;
     rdfs:comment "One row per hit" ;
@@ -113,7 +142,7 @@ PREFIX : <http://www.researchspace.org/resource/system/repository#>
 
   spin:column [
     a spin:Column ;
-    rdfs:comment "Document id (_id)" ;
+    rdfs:comment "Document id" ;
     spl:predicate :_outputId ;
     spl:valueType xsd:string ;
     ephedra:jsonPath "$._id"
@@ -129,7 +158,7 @@ PREFIX : <http://www.researchspace.org/resource/system/repository#>
 
   spin:column [
     a spin:Column ;
-    rdfs:comment "Preferred label (first prefLabels)" ;
+    rdfs:comment "Preferred label" ;
     spl:predicate :_outputName ;
     spl:valueType xsd:string ;
     ephedra:jsonPath "$._source.prefLabels[0]"
@@ -145,7 +174,7 @@ PREFIX : <http://www.researchspace.org/resource/system/repository#>
 
   spin:column [
     a spin:Column ;
-    rdfs:comment "Type class (first typeClasses entry)" ;
+    rdfs:comment "Type class" ;
     spl:predicate :_outputTypeClass ;
     spl:valueType xsd:string ;
     ephedra:jsonPath "$._source.typeClasses[0]"
