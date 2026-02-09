@@ -15,6 +15,7 @@
                             os:hasScore ?score ;
                             os:hasSubject ?subject ;
                             os:hasDataset ?dataset ;
+                            os:hasDescription ?description ;
                             os:hasPrefLabel ?prefLabel .
                         }
                 }
@@ -24,11 +25,11 @@
         <semantic-search-result>
             <semantic-table 
                 id='grid-result'
-                query='SELECT DISTINCT ?prefLabel ?subject ?dataset (GROUP_CONCAT(STR(?sameas); SEPARATOR=", ") AS ?references) ?score WHERE {
+                query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset (GROUP_CONCAT(STR(?sameas); SEPARATOR=", ") AS ?references) ?score WHERE {
                     OPTIONAL {
                         ?subject rds:related ?sameas .
                     }
-                } GROUP BY ?subject ?prefLabel ?dataset ?score
+                } GROUP BY ?subject ?description ?prefLabel ?dataset ?score
                 ORDER BY DESC(?score)'
                 number-of-displayed-rows="50"
                 options='{
