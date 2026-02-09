@@ -316,7 +316,7 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "http://endpoints/{{.DATASET}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.QLEVER_ENDPOINT}}" {{.CLI_ARGS}}
 
   index-data:
     desc: Index all data in QLever
