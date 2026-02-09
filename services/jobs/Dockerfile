@@ -1,4 +1,4 @@
-FROM adfreiburg/qlever:commit-9410312
+FROM adfreiburg/qlever:commit-f35a290
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
