@@ -36,7 +36,40 @@
                     "showFilter": false
                 }'
                 no-result-template="Nothing found"
+                column-configuration='[
+                    {
+                        "variableName": "prefLabel",
+                        "displayName": "Label",
+                        "cellTemplate": "{{> prefLabelTemplate}}"                        
+                    },
+                    {
+                        "variableName": "description",
+                        "displayName": "Description"
+                    },
+                    {
+                        "variableName": "dataset",
+                        "displayName": "Dataset"
+                    },
+                    {
+                        "variableName": "references",
+                        "displayName": "References",
+                        "cellTemplate": "{{> referencesTemplate}}"
+                    },
+                    {
+                        "variableName": "score",
+                        "displayName": "Score"
+                    }
+                ]'
             >    
+                <template id="prefLabelTemplate">
+                    <semantic-link iri="{{subject}}">{{prefLabel.value}}</semantic-link>
+                </template>
+                <template id="referencesTemplate">
+                    {{#if references.value}}
+                        {{#each (split references.value ", ")}}
+                            <semantic-link iri="{{this}}">{{this}}</semantic-link><br>
+                        {{/each}}
+                    {{/if}}
             </semantic-table>
         </semantic-search-result>
     </semantic-search-result-holder>
