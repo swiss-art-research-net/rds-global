@@ -28,7 +28,7 @@ To start the service run:
 docker compose up -d
 ```
 
-In Development mode, RDS is then available at `http://localhost:8080`, using the default port numbers.
+~~~In Development mode, RDS is then available at `http://localhost:8080`, using the default port numbers.~~~
 
 ### Data Pipeline
 
