@@ -6,6 +6,7 @@ PREFIX ephedra: <http://www.researchspace.org/resource/system/ephedra#>
 PREFIX sail: <http://www.openrdf.org/config/sail#>
 PREFIX os: <http://www.researchspace.com/resource/assets/Ontologies/opensearch#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
 :OpenSearchService a ephedra:Service ;
@@ -45,7 +46,7 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     rdfs:comment "results" ;
     spl:predicate :_hits ;
     spl:valueType rdfs:Resource;
-    ephedra:jsonPath "$.hits.hits.[*]"
+    ephedra:jsonPath "$.hits.hits[*]"
   ] ;
 
 spin:column [
@@ -53,7 +54,7 @@ spin:column [
     rdfs:comment "results" ;
     spl:predicate :_dataset ;
     spl:valueType rdfs:Resource;
-    ephedra:jsonPath "$.dataset"
+    ephedra:jsonPath "$._source.dataset"
   ] ;
 
   spin:column [
@@ -61,6 +62,6 @@ spin:column [
     rdfs:comment "The description" ;
     spl:predicate :_description ;
     spl:valueType xsd:string;
-    ephedra:jsonPath "$.description"
+    ephedra:jsonPath "$._source.description"
   ] .
       
