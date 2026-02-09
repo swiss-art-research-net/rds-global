@@ -1,3 +1,37 @@
+"""
+OpenSearch Search Proxy
+
+A small FastAPI service that proxies search requests to an OpenSearch index.
+The service exposes a `/search` endpoint which accepts a simple query string and translates it into an OpenSearch query.
+It is designed to be used as a connector for ResearchSpace Ephedra services that are unable to construct complex OpenSearch queries on their own.
+
+## Usage
+
+Run the service:
+
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities
+
+Optional authentication flags:
+
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities \
+        --user admin --password admin
+
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities \
+        --api-key "<your_api_key>"
+
+You can also supply credentials via environment variables:
+- OPENSEARCH_USER
+- OPENSEARCH_PASSWORD
+- OPENSEARCH_API_KEY
+
+Example request:
+
+    curl -X POST http://localhost:8000/search \
+      -H "Content-Type: application/json" \
+      -d '{"query":"Leonora Carrington"}'
+
+"""
+
 import argparse
 import os
 from typing import Any, Dict, Optional
