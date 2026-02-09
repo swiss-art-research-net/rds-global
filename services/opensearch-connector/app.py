@@ -1,5 +1,5 @@
 """
-OpenSearch Search Proxy
+# OpenSearch Search Proxy
 
 A small FastAPI service that proxies search requests to an OpenSearch index.
 The service exposes a `/search` endpoint which accepts a simple query string and translates it into an OpenSearch query.
