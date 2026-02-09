@@ -32,7 +32,7 @@ tasks:
       - task: index-data
       - task: generate-sameas-statements
       - task: generate-labels
-      - task: index-data # Re-index after SameAs generation
+      - task: index-data # Re-index after data generation
       - task: add-data-to-search-index
       #- task: ingest-metadata
       #- task: ingest-sameas-statements

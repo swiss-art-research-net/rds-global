@@ -41,7 +41,8 @@ docker compose exec jobs task
 This will run the entire pipeline, currently consisting of the following steps:
 - Fetching all data sources
 - Index all data in QLever
-- Generate SameAs statements based
+- Generate SameAs statements
+- Generate labels
 - Reindex source data and generated statements (QLever updates are currently not as performant as reindexing, but this will be improved in the future, at which point this step will be replaced by an update)
 - Add data to OpenSearch index
 
@@ -58,6 +59,7 @@ docker compose exec jobs task --list
 This will output a list of tasks:
 ```
 task: Available tasks for this project:
+* add-data-to-search-index:                  Add all data to OpenSearch index
 * default:                                   Run entire pipeline
 * fetch-all-sameas-statements:               Fetch data reuired for SameAs statements
 * fetch-sameas-statements-aat:               Fetch SameAs statements contained in AAT
@@ -69,6 +71,7 @@ task: Available tasks for this project:
 * fetch-sameas-statements-wikidata:          Fetch SameAs statements from Wikidata
 * generate-labels:                           Generate labels for URIs
 * generate-sameas-statements:                Generates SameAs statements between entities
+* index-data:                                Index all data in QLever
 * ingest-metadata:                           Ingest metadata
 * ingest-sameas-statements:                  Ingest SameAs statements
 * process-sameas-statements:                 Process SameAs statements
@@ -79,6 +82,7 @@ task: Available tasks for this project:
 * update-data-thesarchesp:                   Update data for Thesaurus Architecture/Espace
 * update-data-thesobjmob:                    Update data for Thesaurus Object/Mobiliers
 * update-data-ulan:                          Update data for Getty ULAN
+* verify-data:                               Verify the validity of the source data
 ```
 
 ### Troubleshooting

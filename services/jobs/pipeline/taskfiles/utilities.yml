@@ -6,6 +6,7 @@ tasks:
 
   _add_to_search_index:
     desc: Add dataset to OpenSearch index
+    internal: True
     requires:
       vars: [DATASET]
     cmds:
@@ -21,6 +22,7 @@ tasks:
 
   _build_qlever_index:
     desc: Build QLever index from data
+    internal: True
     requires:
       vars: [INPUT_DIR, NAME]
     cmds:
