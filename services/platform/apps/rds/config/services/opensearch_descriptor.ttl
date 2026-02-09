@@ -37,7 +37,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
       sp:predicate os:hasScore ;
       sp:object :_score
     ]
-
+    
+    [
+      sp:subject :_hits ;
+      sp:predicate os:hasSubject ;
+      sp:object :_subject
+    ]
   );
 
   spin:constraint [
@@ -77,6 +82,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     spl:predicate :_score ;
     spl:valueType xsd:float;
     ephedra:jsonPath "$._score"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "The subject URI" ;
+    spl:predicate :_subject ;
+    spl:valueType rdfs:Resource;
+    ephedra:jsonPath "$._source.uri"
   ]
   .
       
