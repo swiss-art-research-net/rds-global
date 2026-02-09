@@ -34,6 +34,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
+      sp:predicate os:hasPrefLabel ;
+      sp:object :_prefLabel
+    ]
+
+    [
+      sp:subject :_hits ;
       sp:predicate os:hasScore ;
       sp:object :_score
     ]
@@ -67,6 +73,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     spl:valueType xsd:string;
     ephedra:jsonPath "$._source.dataset"
   ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "The preferred label" ;
+    spl:predicate :_prefLabel ;
+    spl:valueType xsd:string;
+    ephedra:jsonPath "$._source.prefLabels[0]"
+  ]  ;
 
   spin:column [
     a spin:Column ;
