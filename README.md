@@ -18,7 +18,7 @@ Copy and edit the provided `.env.example` file to `.env` and customise as requir
 
 For acccess to the SIKART data it is necessary to provide a GitHub Username and Personal Access Token that has access to the [sikart-data](https://github.com/swiss-art-research-net/sikart-data) repository via the `GITHUB_USERNAME_SIKART` and `GITHUB_TOKEN_SIKART` environment variables.
 
-For local development, set the `COMPOSE_FILE` environment variable to `docker-compose.dev.yml`. This setup does not require a reverse Proxy and exposes the services on the ports specified (default to 8080 for RDS and 8081 for Blazegraph).
+~~For local development, set the `COMPOSE_FILE` environment variable to `docker-compose.dev.yml`. This setup does not require a reverse Proxy and exposes the services on the ports specified (default to 8080 for RDS and 8081 for Blazegraph).~~
 
 ### Running the service
 
@@ -28,7 +28,7 @@ To start the service run:
 docker compose up -d
 ```
 
-~~~In Development mode, RDS is then available at `http://localhost:8080`, using the default port numbers.~~~
+In Development mode, RDS is then available at `http://localhost:8080`, using the default port numbers.
 
 ### Data Pipeline
 
