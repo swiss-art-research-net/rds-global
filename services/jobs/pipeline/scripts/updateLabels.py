@@ -1,6 +1,7 @@
 import os
 import argparse
 import json
+import yaml
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
 
@@ -8,33 +9,30 @@ LABEL_PREDICATE = "<http://schema.swissartresearch.net/ontology/rds#label>"
 LABEL_GRAPH = "<http://schema.swissartresearch.net/rds/labels>"
 PAGE_SIZE = 3000000
 
-def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_size=PAGE_SIZE):
+def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_size=PAGE_SIZE, config=None, dataset=None):
     
     sparql = SPARQLWrapper(endpoint)
     sparql.setReturnFormat(JSON)
     sparql.setMethod(POST)
 
-    graph_query = """
-        SELECT DISTINCT ?graph_name WHERE { 
-            GRAPH ?graph_name { ?s ?p ?o . } 
-        }
-    """
-    sparql.setQuery(graph_query)
-    count_json = sparql.query().convert()
-    named_graphs = [count_json['results']['bindings'][i]['graph_name']['value'] for i in range(len(count_json['results']['bindings']))]
+    cfg = load_config(config)
+    datasets = cfg.get("datasets", {})
 
     with open(predicate_file, 'r') as f:
         predicates = json.load(f)
-
-    # if limit_graph is set, remove all keys from predicate apart from the specified graph
-    if limit_graph:
-        for graph in predicates.keys():
-            if graph != limit_graph:
-                predicates[graph] = []
         
     file_num = 0
 
-    for graph in named_graphs:
+    # if dataset is specified, limit to that dataset
+    if dataset:
+        if dataset in datasets:
+            datasets = {dataset: datasets[dataset]}
+        else:
+            print(f"Dataset {dataset} not found in config")
+            return
+
+    for dataset in datasets.keys():
+        graph = datasets[dataset].get("graph")
         if graph in predicates and len(predicates[graph]):
             counter = 0
             # check if predicates[graph] is a list or a string
@@ -82,6 +80,10 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
 
                 file_num = file_num + 1
             
+def load_config(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
@@ -91,14 +93,18 @@ if __name__ == "__main__":
     parser.add_argument('--limit_graph', required=False, help='limit the update to a specific graph')
     parser.add_argument('--output_directory', required=False, default='/data/labels', help='directory to store output files')
     parser.add_argument('--page_size', required=False, type=int, default=3000000, help='number of results to fetch per query')
+    parser.add_argument("--config", required=True, help="Path to YAML configuration")
+    parser.add_argument("--dataset", required=False, help="Dataset to update labels for (all datasets if not specified)")
     
     args = parser.parse_args()
     predicate_file = args.predicate_file
     endpoint = args.endpoint
     output_directory = args.output_directory
+    config = args.config
+    dataset = args.dataset if args.dataset else None
     if args.limit_graph:
         limit_graph = args.limit_graph
     else:
         limit_graph = None
     page_size = args.page_size
-    main(predicate_file=predicate_file, endpoint=endpoint, limit_graph=limit_graph, output_directory=output_directory, page_size=page_size)
+    main(predicate_file=predicate_file, endpoint=endpoint, limit_graph=limit_graph, output_directory=output_directory, page_size=page_size, config=config, dataset=dataset)

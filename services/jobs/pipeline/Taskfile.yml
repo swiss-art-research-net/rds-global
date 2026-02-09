@@ -4,6 +4,7 @@ version: '3'
 
 vars:
   PREDICATES_FILE: /pipeline/config/predicates.json
+  DATASETS_CONFIG_YML: /config/datasets.yml
   DIRECTORY_INGEST_DATA: /data/ingest
   DIRECTORY_SOURCE_DATA: /data/source
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
@@ -316,7 +317,7 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.QLEVER_ENDPOINT}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" {{.CLI_ARGS}}
 
   index-data:
     desc: Index all data in QLever

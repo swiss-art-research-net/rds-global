@@ -13,7 +13,7 @@ tasks:
       - |
         python scripts/indexOpenSearchFromSparql.py \
           --dataset "{{.DATASET}}" \
-          --config /config/datasets.yml \
+          --config "{{.DATASETS_CONFIG_YML}}" \
           --endpoint "{{.QLEVER_ENDPOINT}}" \
           --os-host opensearch-node \
           --os-index rds-entities \
