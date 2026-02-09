@@ -1,0 +1,66 @@
+
+PREFIX sp: <http://spinrdf.org/sp#>
+PREFIX spin: <http://spinrdf.org/spin#>
+PREFIX spl: <http://spinrdf.org/spl#>
+PREFIX ephedra: <http://www.researchspace.org/resource/system/ephedra#>
+PREFIX sail: <http://www.openrdf.org/config/sail#>
+PREFIX os: <http://www.researchspace.com/resource/assets/Ontologies/opensearch#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
+
+:OpenSearchService a ephedra:Service ;
+	sail:sailType "researchspace:RESTSail" ;
+	rdfs:label "A wrapper for the LibraryCloud service.";
+	ephedra:hasSPARQLPattern (
+
+    [
+      sp:subject :_hits ;
+      sp:predicate os:hasQuery ;
+      sp:object :_query
+    ]
+
+    [
+      sp:subject :_hits ;
+      sp:predicate os:hasDescription ;
+      sp:object :_description
+    ]
+        
+    [
+      sp:subject :_hits ;
+      sp:predicate os:hasDataset ;
+      sp:object :_dataset
+    ]
+    
+  );
+
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "search term" ;
+    spl:predicate :_query ;
+    spl:valueType xsd:string ;
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "results" ;
+    spl:predicate :_hits ;
+    spl:valueType rdfs:Resource;
+    ephedra:jsonPath "$.hits.hits.[*]"
+  ] ;
+
+spin:column [
+    a spin:Column ;
+    rdfs:comment "results" ;
+    spl:predicate :_dataset ;
+    spl:valueType rdfs:Resource;
+    ephedra:jsonPath "$.dataset"
+  ] ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "The description" ;
+    spl:predicate :_description ;
+    spl:valueType xsd:string;
+    ephedra:jsonPath "$.description"
+  ] .
+      

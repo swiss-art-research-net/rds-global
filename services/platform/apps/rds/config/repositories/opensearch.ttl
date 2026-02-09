@@ -1,31 +1,19 @@
 @prefix repo: <http://www.openrdf.org/config/repository#> .
-@prefix reposail: <http://www.openrdf.org/config/repository/sail#> .
+@prefix sr: <http://www.openrdf.org/config/repository/sail#> .
 @prefix sail: <http://www.openrdf.org/config/sail#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ephedra: <http://www.researchspace.org/resource/system/ephedra#> .
-@prefix : <http://www.researchspace.org/resource/system/repository#> .
+@prefix : <http://www.researchspace.org/resource/system/service/custom#> .
 
 [] a repo:Repository ;
   repo:repositoryID "opensearch" ;
-  rdfs:label "Repository to connect to Elastic/OpenSearch entity search" ;
+  rdfs:label "Repository to connect to OpenSearch node" ;
   repo:repositoryImpl [
     repo:repositoryType "openrdf:SailRepository" ;
-    reposail:sailImpl [
+    sr:sailImpl [
       sail:sailType "researchspace:RESTSail" ;
-
-      ephedra:serviceURL "http://opensearch-node:9200/rds-entities/_search" ;
+      ephedra:serviceURL "http://dummy-es:8080/rds-entities/_search" ;
       ephedra:httpMethod "POST" ;
-
-      ephedra:httpHeader [
-        ephedra:name "Content-Type" ;
-        ephedra:value "application/json"
-      ] ;
-      ephedra:httpHeader [
-        ephedra:name "Accept" ;
-        ephedra:value "application/json"
-      ] ;
-
-      ephedra:inputFormat "application/json" ;
-      ephedra:implementsService :ElasticEntitySearch
+      ephedra:implementsService :OpenSearchService
     ]
   ] .
