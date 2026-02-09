@@ -40,6 +40,8 @@ services:
   qlever:
     container_name: ${COMPOSE_PROJECT_NAME}-qlever
     build: ./services/qlever
+    environment:
+      QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
     logging:
       driver: json-file
       options:
