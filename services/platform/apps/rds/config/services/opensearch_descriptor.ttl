@@ -51,9 +51,9 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
 spin:column [
     a spin:Column ;
-    rdfs:comment "results" ;
+    rdfs:comment "The dataset" ;
     spl:predicate :_dataset ;
-    spl:valueType rdfs:Resource;
+    spl:valueType xsd:string;
     ephedra:jsonPath "$._source.dataset"
   ] ;
 
