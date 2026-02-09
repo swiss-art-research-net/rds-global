@@ -9,7 +9,7 @@ LABEL_PREDICATE = "<http://schema.swissartresearch.net/ontology/rds#label>"
 LABEL_GRAPH = "<http://schema.swissartresearch.net/rds/labels>"
 PAGE_SIZE = 3000000
 
-def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_size=PAGE_SIZE, config=None, dataset=None):
+def main(*, endpoint, output_directory, limit_graph=None, page_size=PAGE_SIZE, config=None, dataset=None):
     
     sparql = SPARQLWrapper(endpoint)
     sparql.setReturnFormat(JSON)
@@ -18,9 +18,6 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
     cfg = load_config(config)
     datasets = cfg.get("datasets", {})
 
-    with open(predicate_file, 'r') as f:
-        predicates = json.load(f)
-        
     file_num = 0
 
     # if dataset is specified, limit to that dataset
@@ -33,17 +30,19 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
 
     for dataset in datasets.keys():
         graph = datasets[dataset].get("graph")
-        if graph in predicates and len(predicates[graph]):
+        predicates = datasets[dataset].get("queries", {}).get("prefLabel")
+        if graph and predicates:
             counter = 0
-            # check if predicates[graph] is a list or a string
-            if type(predicates[graph]) == list:
-                predicates_path = ' | '.join(predicates[graph])
+            # check if predicates is a list or a string
+            if type(predicates) == list:
+                predicates_path = ' | '.join(predicates)
                 predicates_query = '?subject ' + predicates_path + ' ?value .'
-            elif type(predicates[graph]) == str:
-                predicates_query = predicates[graph]
+            elif type(predicates) == str:
+                predicates_query = predicates
             hasResults = True
             while hasResults:
-                query = """
+                prefixes = _generate_prefixes(datasets[dataset].get("prefixes", {}))
+                query = prefixes + """
                 SELECT ?subject ?value WHERE {{
                     GRAPH <{0}> {{
                         {1}
@@ -83,12 +82,16 @@ def main(*, predicate_file, endpoint, output_directory, limit_graph=None, page_s
 def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+    
+def _generate_prefixes(prefixes):
+    items = sorted(prefixes.items(), key=lambda kv: kv[0])
+    return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     parser = argparse.ArgumentParser(description = 'Produce ttl files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
-    parser.add_argument('--predicate_file', required=True,help='file with predicate to use to query for entity labels')
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying and updating labels')
     parser.add_argument('--limit_graph', required=False, help='limit the update to a specific graph')
     parser.add_argument('--output_directory', required=False, default='/data/labels', help='directory to store output files')
@@ -97,7 +100,6 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", required=False, help="Dataset to update labels for (all datasets if not specified)")
     
     args = parser.parse_args()
-    predicate_file = args.predicate_file
     endpoint = args.endpoint
     output_directory = args.output_directory
     config = args.config
@@ -107,4 +109,4 @@ if __name__ == "__main__":
     else:
         limit_graph = None
     page_size = args.page_size
-    main(predicate_file=predicate_file, endpoint=endpoint, limit_graph=limit_graph, output_directory=output_directory, page_size=page_size, config=config, dataset=dataset)
+    main(endpoint=endpoint, limit_graph=limit_graph, output_directory=output_directory, page_size=page_size, config=config, dataset=dataset)

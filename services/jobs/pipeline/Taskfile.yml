@@ -3,7 +3,6 @@
 version: '3'
 
 vars:
-  PREDICATES_FILE: /pipeline/config/predicates.json
   DATASETS_CONFIG_YML: /config/datasets.yml
   DIRECTORY_INGEST_DATA: /data/ingest
   DIRECTORY_SOURCE_DATA: /data/source
@@ -32,12 +31,12 @@ tasks:
       - task: update-data-ulan
       - task: index-data
       - task: generate-sameas-statements
+      - task: generate-labels
       - task: index-data # Re-index after SameAs generation
       - task: add-data-to-search-index
-      - #task: generate-labels
-      - #task: ingest-metadata
-      - #task: ingest-sameas-statements
-      - #task: materialise-num-sameas-statements
+      #- task: ingest-metadata
+      #- task: ingest-sameas-statements
+      #- task: materialise-num-sameas-statements
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
@@ -317,7 +316,7 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --predicate_file "{{.PREDICATES_FILE}}" --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/updateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" {{.CLI_ARGS}}
 
   index-data:
     desc: Index all data in QLever
