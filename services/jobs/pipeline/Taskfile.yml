@@ -320,7 +320,6 @@ tasks:
 
   index-data:
     desc: Index all data in QLever
-    vars:
     cmds:
       - task: _build_qlever_index
         vars:
