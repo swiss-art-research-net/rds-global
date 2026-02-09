@@ -9,7 +9,7 @@ LABEL_PREDICATE = "<http://schema.swissartresearch.net/ontology/rds#label>"
 LABEL_GRAPH = "<http://schema.swissartresearch.net/rds/labels>"
 PAGE_SIZE = 3000000
 
-def main(*, endpoint, output_directory, limit_graph=None, page_size=PAGE_SIZE, config=None, dataset=None):
+def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
     
     sparql = SPARQLWrapper(endpoint)
     sparql.setReturnFormat(JSON)
@@ -93,7 +93,6 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description = 'Produce ttl files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying and updating labels')
-    parser.add_argument('--limit_graph', required=False, help='limit the update to a specific graph')
     parser.add_argument('--output_directory', required=False, default='/data/labels', help='directory to store output files')
     parser.add_argument('--page_size', required=False, type=int, default=3000000, help='number of results to fetch per query')
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
@@ -104,9 +103,6 @@ if __name__ == "__main__":
     output_directory = args.output_directory
     config = args.config
     dataset = args.dataset if args.dataset else None
-    if args.limit_graph:
-        limit_graph = args.limit_graph
-    else:
-        limit_graph = None
+ 
     page_size = args.page_size
     main(endpoint=endpoint, limit_graph=limit_graph, output_directory=output_directory, page_size=page_size, config=config, dataset=dataset)

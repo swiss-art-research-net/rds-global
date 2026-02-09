@@ -310,13 +310,14 @@ tasks:
     vars:
       DATASETS:
         sh: echo "$DATASETS"
+      OUTPUT_DIRECTORY: /data/ingest/labels
     cmds:
-      - mkdir -p /data/labels
+      - mkdir -p {{.OUTPUT_DIRECTORY}}
       - for:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/updateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
   index-data:
     desc: Index all data in QLever
