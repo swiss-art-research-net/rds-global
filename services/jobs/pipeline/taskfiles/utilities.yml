@@ -27,7 +27,7 @@ tasks:
       vars: [INPUT_DIR, NAME]
     cmds:
       - echo "Building QLever index from data in {{.INPUT_DIR}}"
-      - cd /index && find {{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | qlever-index --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals -m 10GB | tee {{.NAME}}.index-log.txt
+      - cd /index && find {{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | IndexBuilderMain --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals -m 1G --parse-parallel true | tee {{.NAME}}.index-log.txt
     
   _downloadFile:
     internal: True
