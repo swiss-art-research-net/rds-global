@@ -52,7 +52,12 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                 counter = counter + page_size
 
                 sparql.setQuery(query)
-                results = sparql.query().convert()
+                try:
+                    results = sparql.query().convert()
+                except Exception as e:
+                    print(f"Error querying SPARQL endpoint: {e}")
+                    print(f"Query: {query}")
+                    return
                 # if no results, continue to next graph
                 if len(results["results"]["bindings"]) == 0:
                     hasResults = False
@@ -62,6 +67,8 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                     subject = result["subject"]["value"]
                     value = result["value"]["value"]
                     subject_str = f"<{subject}>" if result["subject"]["type"] == "uri" else f"\"{subject}\""
+                    # Escape double quotes in value and wrap in quotes
+                    value = value.replace('"', '\\"')
                     value_str = f"\"{value}\""
                     # Add datatype or language if present
                     if "xml:lang" in result["value"]:
@@ -93,8 +100,8 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description = 'Produce ttl files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying and updating labels')
-    parser.add_argument('--output_directory', required=False, default='/data/labels', help='directory to store output files')
-    parser.add_argument('--page_size', required=False, type=int, default=3000000, help='number of results to fetch per query')
+    parser.add_argument('--output-directory', required=False, default='/data/labels', help='directory to store output files')
+    parser.add_argument('--page-size', required=False, type=int, default=3000000, help='number of results to fetch per query')
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--dataset", required=False, help="Dataset to update labels for (all datasets if not specified)")
     
@@ -105,4 +112,4 @@ if __name__ == "__main__":
     dataset = args.dataset if args.dataset else None
  
     page_size = args.page_size
-    main(endpoint=endpoint, limit_graph=limit_graph, output_directory=output_directory, page_size=page_size, config=config, dataset=dataset)
+    main(endpoint=endpoint, output_directory=output_directory, page_size=page_size, config=config, dataset=dataset)
