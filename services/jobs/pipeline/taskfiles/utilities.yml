@@ -241,8 +241,9 @@ tasks:
           [ -f "$file" ] || continue
           nquad_file="${file%.nt}.nq"
           # Insert the graph name before the final dot at the end of each triple
+
           awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$file" > "$nquad_file"     
-          rm "$file"
+          rm "$file"          rm "$file"
         done
       - # Split large files into smaller chunks of 100000 lines each
       - |
@@ -256,6 +257,52 @@ tasks:
             rm "$file"
           fi
         done
+
+  _prepareFileForIndexing:
+    desc: Prepare file for indexing
+    internal: True
+    requires:
+      vars: [FILE, FILE_FORMAT, GRAPH]
+    vars:
+      DIRECTORY_FOR_INGEST:
+         sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename $(dirname {{.FILE}}))_ingest"
+      FILE_FOR_INGEST:
+        sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename $(dirname {{.FILE}}))_ingest/$(basename {{.FILE}})"
+      FILE_TYPE:
+        sh: |
+            case "{{.FILE_FORMAT}}" in
+              rdf|owl)    echo rdfxml ;;
+              nt)         echo ntriples ;;
+              ttl)        echo turtle ;;
+              trig)       echo trig ;;
+              nq)         echo nquads ;;
+              json|rj)    echo json ;;
+              html|xhtml) echo rdfa ;;
+              xml)        echo grddl ;;
+              rss)        echo rss-tag-soup ;;
+              *)          echo guess ;;
+            esac
+    cmds:
+      - # Remove ingest file if it exists
+      - rm -f "{{.FILE_FOR_INGEST}}.nq"
+      - # Create temporary directory
+      - mkdir -p "{{.DIRECTORY_FOR_INGEST}}"
+      - |
+        if [ "{{.FILE_FORMAT}}" != "nt" ]; then
+          echo "Converting {{.FILE}} to N-Triples format for ingestion..."
+          rapper -i "{{.FILE_TYPE}}" -o ntriples "{{.FILE}}" > "{{.FILE_FOR_INGEST}}.nt"
+        else
+          echo "Copying N-Triples file {{.FILE}} to ingestion directory..."
+          cp "{{.FILE}}" "{{.FILE_FOR_INGEST}}.nt"
+        fi
+      - # Add the named graph to each triple in the nt file
+      - |
+        echo "Adding named graph {{.GRAPH}} to each triple for ingestion..."
+        nt_file="{{.FILE_FOR_INGEST}}.nt"
+        nquad_file="{{.FILE_FOR_INGEST}}.nq"
+        # Insert the graph name before the final dot at the end of each triple
+        awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$nt_file" > "$nquad_file"     
+        rm "$nt_file"
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
