@@ -1,4 +1,4 @@
-FROM adfreiburg/qlever:commit-f35a290 
+FROM adfreiburg/qlever:commit-da39172
 #commit-84156ed
 USER root
 
