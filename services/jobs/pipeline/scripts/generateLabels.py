@@ -1,9 +1,7 @@
-import os
 import argparse
-import json
-import yaml
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
+from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
 
 LABEL_PREDICATE = "<http://schema.swissartresearch.net/ontology/rds#label>"
 LABEL_GRAPH = "<http://schema.swissartresearch.net/rds/labels>"
@@ -41,7 +39,7 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                 predicates_query = predicates
             hasResults = True
             while hasResults:
-                prefixes = _generate_prefixes(datasets[dataset].get("prefixes", {}))
+                prefixes = generate_prefixes(datasets[dataset].get("prefixes", {}))
                 query = prefixes + """
                 SELECT ?subject ?value WHERE {{
                     GRAPH <{0}> {{
@@ -84,15 +82,6 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                     out_f.writelines(nquad_lines)
 
                 file_num = file_num + 1
-            
-def load_config(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-    
-def _generate_prefixes(prefixes):
-    items = sorted(prefixes.items(), key=lambda kv: kv[0])
-    return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

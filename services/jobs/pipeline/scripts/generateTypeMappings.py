@@ -1,7 +1,7 @@
 import argparse
-import yaml
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
+from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
 
 PAGE_SIZE = 3000000
 RDS_NAMESPACE = "http://schema.swissartresearch.net/ontology/rds#"
@@ -28,7 +28,7 @@ def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, con
         graph = dataset.get("graph")
         prefixes = dataset.get("prefixes", {})
         prefixes['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-        prefixesForQuery = _generate_prefixes(prefixes)
+        prefixesForQuery = generate_prefixes(prefixes)
         types = dataset.get("types")
         file_num = 0
         for typeToMap, types in types.items(): 
@@ -66,14 +66,6 @@ def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, con
                 with open(out_path, "w") as out_f:
                     out_f.writelines(nquad_lines)
                 file_num = file_num + 1
-
-def load_config(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-    
-def _generate_prefixes(prefixes):
-    items = sorted(prefixes.items(), key=lambda kv: kv[0])
-    return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
