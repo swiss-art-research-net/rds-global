@@ -29,93 +29,6 @@ tasks:
       - echo "Building QLever index from data in {{.INPUT_DIR}}"
       - cd /index && find {{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | qlever-index --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals -m 10GB | tee {{.NAME}}.index-log.txt
     
-  _downloadFile:
-    internal: True
-    interactive: True
-    desc: Download data
-    requires:
-      vars: [URL, DIRECTORY, FILE_FORMAT]
-    cmds:
-      - if [ -d "{{.DIRECTORY }}" ]; then
-          read -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (y/n) " REPLY;
-          echo;
-          if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -r -d "{{.DIRECTORY}}";
-          fi;
-        fi
-        
-        if [ ! -d "{{.DIRECTORY }}" ]; then
-          mkdir -p "{{.DIRECTORY}}";
-          cd "{{.DIRECTORY}}";
-          echo "Fetching datasources...";
-          curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}};
-          echo "Fetching completed.";
-        fi
-
-  _downloadAndUnzip:
-    internal: True
-    interactive: True
-    desc: Download and unzip data
-    requires:
-      vars: [URL, DIRECTORY, GUNZIP, FILE_FORMAT]
-    cmds:
-      - # If the directory already exists, ask the user if they want to delete it
-      - |
-        bash -lc '
-        SKIP_ALL=false
-        if [ -d "{{.DIRECTORY}}" ]; then
-          read -t 10 -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (Y/n) (defaults to Y after 10s)" REPLY
-          [ -z "$REPLY" ] && REPLY="Y"
-          echo
-          if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -r -d "{{.DIRECTORY}}"
-          else
-            SKIP_ALL=true
-          fi
-        fi
-        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
-          mkdir -p "{{.DIRECTORY}}"
-          cd "{{.DIRECTORY}}"
-          echo "Fetching datasources..."
-          if [ "{{.GUNZIP}}" == true ]; then
-            curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}}.gz
-          else
-            curl -k "{{.URL}}" -o data.zip
-          fi
-          echo "Fetching completed."
-        fi
-        if [ "{{.SKIP_UNZIPPING}}" != true ] && [ $SKIP_ALL != true ]; then
-            echo "Unzip datasources..."
-            cd "{{.DIRECTORY}}"
-            if [ "{{.GUNZIP}}" == true ]; then
-              gunzip data.{{.FILE_FORMAT}}.gz
-            elif [ -f "data.zip" ]; then
-                unzip data.zip
-            fi
-            echo "Unzipping completed."
-        fi'
-
-  _downloadFromGitHubAndUnzip:
-    internal: True
-    interactive: True
-    desc: Download and unzip data from GitHub
-    cmds:
-      - |
-        if [ -d "{{.DATA_DIRECTORY }}" ]; then
-          read -p "Do you want to remove previous data from {{.DATA_DIRECTORY}} and download new ones? (y/n) " REPLY
-          echo
-          if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -r -d "{{.DIRECTORY}}"
-          else
-            SKIP_ALL=true
-          fi
-        fi
-        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
-          mkdir -p "{{.DATA_DIRECTORY}}"
-          python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
-          unzip "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip" -d "{{.DATA_DIRECTORY}}"
-        fi
-
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
     internal: True
@@ -256,6 +169,50 @@ tasks:
             rm "$file"
           fi
         done
+
+  _postprocess_geonames:
+    internal: true
+    desc: Convert GeoNames to N-Triples if needed
+    cmds:
+      - |
+        if [ "{{.DATASET}}" != "geonames" ]; then
+          exit 0
+        fi
+
+        if [ -f "{{.DATA_DIR}}/geonames.nt" ]; then
+          echo "GeoNames data already exists. Skipping conversion."
+          exit 0
+        fi
+
+        echo "Converting GeoNames to N-Triples..."
+        cp /pipeline/scripts/convert2ntriples.py "{{.DATA_DIR}}/convert2ntriples.py"
+        cd "{{.DATA_DIR}}"
+        python convert2ntriples.py
+        rm convert2ntriples.py
+
+  _postprocess_gnd:
+    internal: true
+    desc: Download GND ontology and convert to N-Triples
+    cmds:
+      - |
+        if [ "{{.DATASET}}" != "gnd" ]; then
+          exit 0
+        fi
+
+        if [ -z "{{.ONTOLOGY_URL}}" ] || [ "{{.ONTOLOGY_URL}}" = "null" ]; then
+          echo "No ontology URL configured for GND"
+          exit 1
+        fi
+
+        echo "Downloading GND ontology from {{.ONTOLOGY_URL}}"
+        curl -L -o "{{.DATA_DIR}}/gnd-ontology.ttl" "{{.ONTOLOGY_URL}}"
+
+        echo "Converting GND ontology to N-Triples"
+        rapper -i turtle -o ntriples \
+          "{{.DATA_DIR}}/gnd-ontology.ttl" \
+          > "{{.DATA_DIR}}/gnd-ontology.nt"
+
+        rm "{{.DATA_DIR}}/gnd-ontology.ttl"
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
