@@ -79,8 +79,7 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                     graph_str = f"<http://schema.swissartresearch.net/rds/labels>"
                     nquad_line = f"{subject_str} {predicate_str} {value_str} {graph_str} .\n"
                     nquad_lines.append(nquad_line)
-                graph_for_filename = graph.replace("http://", "").replace("https://", "").replace("/", "_").replace(":", "_")
-                out_path = f"{output_directory}/labels_{graph_for_filename}_{file_num}.nq"
+                out_path = f"{output_directory}/labels_{dataset}_{file_num}.nq"
                 with open(out_path, "w") as out_f:
                     out_f.writelines(nquad_lines)
 
@@ -98,12 +97,12 @@ def _generate_prefixes(prefixes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
-    parser = argparse.ArgumentParser(description = 'Produce ttl files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
+    parser = argparse.ArgumentParser(description = 'Produce NQuad files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying and updating labels')
     parser.add_argument('--output-directory', required=False, default='/data/labels', help='directory to store output files')
     parser.add_argument('--page-size', required=False, type=int, default=3000000, help='number of results to fetch per query')
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
-    parser.add_argument("--dataset", required=False, help="Dataset to update labels for (all datasets if not specified)")
+    parser.add_argument("--dataset", required=False, help="Dataset to generate labels for (all datasets if not specified)")
     
     args = parser.parse_args()
     endpoint = args.endpoint
