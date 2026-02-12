@@ -571,9 +571,10 @@ tasks:
           GRAPH: "{{.GRAPH}}"
 
   verify-data:
-    desc: Verify the validity of the source data
+    desc: Verify the validity of the source data or any data in a specified directory passed as CLI argument
     vars:
-      DATA_DIRECTORY: /data
+      DATA_DIRECTORY:
+        sh: '[ -d "{{.CLI_ARGS}}" ] && echo "{{.CLI_ARGS}}" || echo "/data"'
     cmds:
       - |
         DATA_DIR="{{.DATA_DIRECTORY}}"
@@ -582,7 +583,7 @@ tasks:
         FILES_ERROR=0
         ERROR_REPORT=""
 
-        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)"); do
+        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\|nq\)"); do
           echo "Verifying $file,..."
 
           if out=$(rapper -g -c "$file" 2>&1); then
