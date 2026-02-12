@@ -5,6 +5,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv locales raptor2-utils sudo curl wget nodejs npm \
   && rm -rf /var/lib/apt/lists/*
 
+# Install yq (v4)
+RUN wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64 \
+    -O /usr/local/bin/yq && \
+    chmod +x /usr/local/bin/yq
+
 RUN locale-gen en_US.UTF-8
 
 RUN python3 -m venv /opt/venv
