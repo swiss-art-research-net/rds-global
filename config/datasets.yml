@@ -6,7 +6,7 @@ datasets:
       gvp: http://vocab.getty.edu/ontology#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      concept:
+      Type:
         - gvp:Concept
     queries:
       description: |
