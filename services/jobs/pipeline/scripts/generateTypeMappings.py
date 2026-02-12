@@ -1,11 +1,11 @@
 import argparse
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
-from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
+from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 PAGE_SIZE = 3000000
-RDS_NAMESPACE = "http://schema.swissartresearch.net/ontology/rds#"
-TYPES_GRAPH = "<http://schema.swissartresearch.net/rds/types>"
+TYPES_GRAPH = f"<{RDS_GRAPH_NAMESPACE}types>"
+TYPE_PREDICATE = f"<{RDS_ONTOLOGY_NAMESPACE}type>"
 
 def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, config, dataset=None):
     
@@ -61,7 +61,7 @@ def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, con
                 nquad_lines = []
                 for result in results["results"]["bindings"]:
                     subject = f"<{result["subject"]["value"]}>"
-                    nquad_lines.append(f"{subject} <http://schema.swissartresearch.net/ontology/rds#type> <{RDS_NAMESPACE}{typeToMap}> {TYPES_GRAPH} .\n")
+                    nquad_lines.append(f"{subject} {TYPE_PREDICATE} <{RDS_ONTOLOGY_NAMESPACE}{typeToMap}> {TYPES_GRAPH} .\n")
                 out_path = f"{output_directory}/types_{dataset_id}_{file_num}.nq"
                 with open(out_path, "w") as out_f:
                     out_f.writelines(nquad_lines)

@@ -1,10 +1,10 @@
 import argparse
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
-from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
+from lib.utils import RDS_ONTOLOGY_NAMESPACE, load_config, generate_prefixes_for_SPARQL as generate_prefixes, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
-LABEL_PREDICATE = "<http://schema.swissartresearch.net/ontology/rds#label>"
-LABEL_GRAPH = "<http://schema.swissartresearch.net/rds/labels>"
+LABEL_PREDICATE = f"<{RDS_ONTOLOGY_NAMESPACE}label>"
+LABEL_GRAPH = f"<{RDS_GRAPH_NAMESPACE}labels>"
 PAGE_SIZE = 3000000
 
 def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
@@ -73,9 +73,9 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                         value_str += f"@{result['value']['xml:lang']}"
                     elif "datatype" in result["value"]:
                         value_str += f"^^<{result['value']['datatype']}>"
-                    predicate_str = "<http://schema.swissartresearch.net/ontology/rds#label>"
-                    graph_str = f"<http://schema.swissartresearch.net/rds/labels>"
-                    nquad_line = f"{subject_str} {predicate_str} {value_str} {graph_str} .\n"
+                    # Sanitise value string (e.g. escape "\" characters) to ensure valid NQuads output
+                    value_str = value_str.replace('\\', '\\\\')
+                    nquad_line = f"{subject_str} {LABEL_PREDICATE} {value_str} {LABEL_GRAPH} .\n"
                     nquad_lines.append(nquad_line)
                 out_path = f"{output_directory}/labels_{dataset}_{file_num}.nq"
                 with open(out_path, "w") as out_f:
