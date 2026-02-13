@@ -29,9 +29,11 @@ tasks:
       - task: update-data-thesarchesp
       - task: update-data-thesobjmob
       - task: update-data-ulan
+      - task: prepare-metadata-for-indexing
       - task: index-data
-      - task: generate-sameas-statements
+      - task: generate-type-mappings
       - task: generate-labels
+      - task: generate-sameas-statements
       - task: index-data # Re-index after data generation
       - task: add-data-to-search-index
       #- task: ingest-metadata
@@ -128,7 +130,6 @@ tasks:
               ?candidate2 crmdig:L54_same_as ?candidate1 .
               }
             }
-
 
   fetch-sameas-statements-thesarchesp:
     desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
@@ -305,6 +306,20 @@ tasks:
           FILE_FORMAT: "{{.FILE_FORMAT}}"
           GRAPH: "{{.GRAPH}}"
   
+  generate-type-mappings:
+    desc: Generate type mappings for RDS entities
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
+      OUTPUT_DIRECTORY: /data/ingest/type-mappings
+    cmds:
+      - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        cmd: python /pipeline/scripts/generateTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
   generate-labels:
     desc: Generate labels for URIs
     vars:
@@ -317,7 +332,7 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
   index-data:
     desc: Index all data in QLever
@@ -326,29 +341,29 @@ tasks:
         vars:
           INPUT_DIR: /data/ingest
           NAME: rds
-
-  ingest-metadata:
-    desc: Ingest metadata
+    
+  prepare-metadata-for-indexing:
+    desc: Prepare RDS metadata for indexing
     sources:
       - /data/rds-metadata/_datasetsMetadata.ttl
       - /data/rds-metadata/rds-ontologies-description.ttl
       - /data/rds-metadata/type-mapping.ttl
     cmds:
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars: 
-          NAME: Dataset Metadata
-          FILE: /data/rds-metadata/_datasetsMetadata.ttl
+          FILE: /data/source/rds-metadata/_datasetsMetadata.ttl
+          FILE_FORMAT: ttl
           GRAPH: http://rds.swissartresearch.net/graph/datasetMetadata
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars:
-          NAME: RDS Ontologies
-          FILE: /data/rds-metadata/rds-ontologies-description.ttl
+          FILE_FORMAT: ttl
+          FILE: /data/source/rds-metadata/rds-ontologies-description.ttl
           GRAPH: http://rds.swissartresearch.net/graph/rdsOntologies
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars:
-          NAME: Type Mappings
-          FILE: /data/rds-metadata/type-mapping.ttl
-          GRAPH: http://schema.swissartresearch.net/rds/type-mapping
+          FILE_FORMAT: ttl
+          FILE: /data/source/rds-metadata/type-mapping.ttl
+          GRAPH: http://schema.swissartresearch.net/rds/typeMapping
 
   ingest-sameas-statements:
     desc: Ingest SameAs statements
@@ -556,9 +571,10 @@ tasks:
           GRAPH: "{{.GRAPH}}"
 
   verify-data:
-    desc: Verify the validity of the source data
+    desc: Verify the validity of the source data or any data in a specified directory passed as CLI argument
     vars:
-      DATA_DIRECTORY: /data
+      DATA_DIRECTORY:
+        sh: '[ -d "{{.CLI_ARGS}}" ] && echo "{{.CLI_ARGS}}" || echo "/data"'
     cmds:
       - |
         DATA_DIR="{{.DATA_DIRECTORY}}"
@@ -567,7 +583,7 @@ tasks:
         FILES_ERROR=0
         ERROR_REPORT=""
 
-        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)"); do
+        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\|nq\)"); do
           echo "Verifying $file,..."
 
           if out=$(rapper -g -c "$file" 2>&1); then

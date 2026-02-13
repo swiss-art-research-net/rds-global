@@ -71,9 +71,11 @@ task: Available tasks for this project:
 * fetch-sameas-statements-wikidata:          Fetch SameAs statements from Wikidata
 * generate-labels:                           Generate labels for URIs
 * generate-sameas-statements:                Generates SameAs statements between entities
+* generate-type-mappings:                    Generate type mappings for RDS entities
 * index-data:                                Index all data in QLever
-* ingest-metadata:                           Ingest metadata
 * ingest-sameas-statements:                  Ingest SameAs statements
+* materialise-num-sameas-statements:         Materialise the count of SameAs statements per entity
+* prepare-metadata-for-indexing:             Prepare RDS metadata for indexing
 * process-sameas-statements:                 Process SameAs statements
 * update-data-aat:                           Update data for Getty AAT
 * update-data-geonames:                      Update data for GeoNames
@@ -82,7 +84,7 @@ task: Available tasks for this project:
 * update-data-thesarchesp:                   Update data for Thesaurus Architecture/Espace
 * update-data-thesobjmob:                    Update data for Thesaurus Object/Mobiliers
 * update-data-ulan:                          Update data for Getty ULAN
-* verify-data:                               Verify the validity of the source data
+* verify-data:                               Verify the validity of the source data or any data in a specified directory passed as CLI argument
 ```
 
 ### Troubleshooting

@@ -6,7 +6,7 @@ datasets:
       gvp: http://vocab.getty.edu/ontology#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      concept:
+      Type:
         - gvp:Concept
     queries:
       description: |
@@ -21,7 +21,7 @@ datasets:
     prefixes:
       gn: http://www.geonames.org/ontology#
     types:
-      place:
+      Place:
         - gn:Feature
     queries:
       description: |
@@ -36,50 +36,51 @@ datasets:
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
     types:
-      actor:
-        - gnd:Person
-        - gnd:UndifferentiatedPerson
-        - gnd:DifferentiatedPerson
-      builtWork:
-        - gnd:BuildingOrMemorial
-      bibliographicItem:
+      BibliographicItem:
         - gnd:Work
-      concept:
-        - gnd:SubjectHeading
-        - gnd:SubjectHeadingSensoStricto
-        - gnd:CharactersOrMorphemes
-        - gnd:Language
-        - gnd:NomenclatureInBiologyOrChemistry
-        - gnd:EthnographicName
-        - gnd:Relationship
-        - gnd:ProvenanceCharacteristic
-        - gnd:ProductNameOrBrandName
-        - gnd:SoftwareProduct
-      group:
-        - gnd:Company
-        - gnd:CorporateBody
-        - gnd:ReligiousCorporateBody
-        - gnd:MusicalCorporateBody
-        - gnd:FictiveCorporateBody
-        - gnd:OrganOfCorporateBody
-        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
-        - gnd:AdministrativeUnit
-        - gnd:ReligiousAdministrativeUnit
-      place:
-        - gnd:Country
-        - gnd:PlaceOrGeographicName
-        - gnd:MemberState
-        - gnd:NaturalGeographicUnit
-        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
-        - gnd:WayBorderOrLine
-        - gnd:ReligiousTerritory
-        - gnd:ExtraterrestrialTerritory
-        - gnd:FictivePlace
-      event:
+      BuiltWork:
+        - gnd:BuildingOrMemorial
+      Event:
         - gnd:ConferenceOrEvent
-        - gnd:SeriesOfConferenceOrEvent
         - gnd:HistoricSingleEventOrEra
         - gnd:ProjectOrProgram
+        - gnd:SeriesOfConferenceOrEvent
+      Group:
+        - gnd:AdministrativeUnit
+        - gnd:Company
+        - gnd:CorporateBody
+        - gnd:FictiveCorporateBody
+        - gnd:OrganOfCorporateBody
+        - gnd:MusicalCorporateBody
+        - gnd:ReligiousAdministrativeUnit
+        - gnd:ReligiousCorporateBody
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+      Person:
+        - gnd:DifferentiatedPerson
+        - gnd:Person
+        - gnd:UndifferentiatedPerson
+      Place:
+        - gnd:Country
+        - gnd:ExtraterrestrialTerritory
+        - gnd:FictivePlace
+        - gnd:MemberState
+        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
+        - gnd:NaturalGeographicUnit
+        - gnd:PlaceOrGeographicName
+        - gnd:ReligiousTerritory
+        - gnd:WayBorderOrLine
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+      Type:
+        - gnd:CharactersOrMorphemes
+        - gnd:EthnographicName
+        - gnd:Language
+        - gnd:NomenclatureInBiologyOrChemistry
+        - gnd:ProductNameOrBrandName
+        - gnd:ProvenanceCharacteristic
+        - gnd:Relationship
+        - gnd:SoftwareProduct
+        - gnd:SubjectHeading
+        - gnd:SubjectHeadingSensoStricto
     queries:
       description: |
         ?subject ?predicateDescription ?value .
@@ -134,22 +135,22 @@ datasets:
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       sik: https://recherche.sik-isea.ch
     types:
-      actor:
-        - sik:SIK-ACTOR
-      place: 
-        - crm:E53_Place
-      event:
-        - sik:SIK-EXHIBITION
-        - sik:SIK-AWARD_CEREMONY
-      artwork:
+      Artwork:
         - sik:SIK-WORK
         - sik:SIK-WORK_GROUP
         - sik:SIK-PARENT_WORK
-      bibliographicItem:
+      BibliographicItem:
         - sik:SIK-DOCUMENT
         - sik:SIK-PUBLICATION
         - sik:SIK-PARENT_DOCUMENT
-      concept:
+      Event:
+        - sik:SIK-EXHIBITION
+        - sik:SIK-AWARD_CEREMONY
+      Person:
+        - sik:SIK-ACTOR
+      Place: 
+        - crm:E53_Place
+      Type:
         - sik:SIK-TYPE
     queries:
       description: |
@@ -164,7 +165,7 @@ datasets:
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      concept:
+      Type:
         - skos:Concept
     queries:
       description: |
@@ -179,7 +180,7 @@ datasets:
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      concept:
+      Type:
         - skos:Concept
     queries:
       description: |
@@ -195,7 +196,7 @@ datasets:
       gvp: http://vocab.getty.edu/ontology#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      actor:
+      Person:
         - gvp:PersonConcept
         - gvp:UnknownPersonConcept
     queries:
