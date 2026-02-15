@@ -27,7 +27,11 @@
                 id='grid-result'
                 query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset (GROUP_CONCAT(STR(?sameas); SEPARATOR=", ") AS ?references) ?score WHERE {
                     OPTIONAL {
-                        ?subject rds:related ?sameas .
+                        {
+                            ?subject rds:related ?sameas .
+                        } UNION {
+                            ?sameas rds:related ?subject .
+                        }
                     }
                 } GROUP BY ?subject ?description ?prefLabel ?dataset ?score
                 ORDER BY DESC(?score)'
