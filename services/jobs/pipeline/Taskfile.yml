@@ -64,7 +64,7 @@ tasks:
       - task: fetch-sameas-statements-thesobjmob
       - task: fetch-sameas-statements-thesarchesp
       - task: fetch-sameas-statements-sikart
-      - #task: fetch-sameas-statements-wikidata
+      #- task: fetch-sameas-statements-wikidata
 
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
