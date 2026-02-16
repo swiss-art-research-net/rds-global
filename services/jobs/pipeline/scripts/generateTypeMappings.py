@@ -5,7 +5,7 @@ from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_pref
 
 PAGE_SIZE = 3000000
 TYPES_GRAPH = f"<{RDS_GRAPH_NAMESPACE}types>"
-TYPE_PREDICATE = f"<{RDS_ONTOLOGY_NAMESPACE}type>"
+TYPE_PREDICATE = f"<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 
 def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, config, dataset=None):
     
