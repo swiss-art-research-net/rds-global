@@ -65,8 +65,6 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                     subject = result["subject"]["value"]
                     value = result["value"]["value"]
                     subject_str = f"<{subject}>" if result["subject"]["type"] == "uri" else f"\"{subject}\""
-                    # Escape double quotes in value and wrap in quotes
-                    value = value.replace('"', '\"')
                     value_str = f"\"{value}\""
                     # Add datatype or language if present
                     if "xml:lang" in result["value"]:
@@ -75,6 +73,8 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                         value_str += f"^^<{result['value']['datatype']}>"
                     # Sanitise value string (e.g. escape "\" characters) to ensure valid NQuads output
                     value_str = value_str.replace('\\', '\\\\')
+                    # Escape double quotes in value and wrap in quotes
+                    value_str = value_str.replace('"', '\"')
                     nquad_line = f"{subject_str} {LABEL_PREDICATE} {value_str} {LABEL_GRAPH} .\n"
                     nquad_lines.append(nquad_line)
                 out_path = f"{output_directory}/labels_{dataset}_{file_num}.nq"
