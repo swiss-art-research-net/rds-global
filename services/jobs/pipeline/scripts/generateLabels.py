@@ -71,9 +71,8 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                         value_str += f"@{result['value']['xml:lang']}"
                     elif "datatype" in result["value"]:
                         value_str += f"^^<{result['value']['datatype']}>"
-                    # Sanitise value string (e.g. escape "\" characters) to ensure valid NQuads output
+                    # Sanitise value string (e.g. escape \ and " characters) to ensure valid NQuads output
                     value_str = value_str.replace('\\', '\\\\')
-                    # Escape double quotes in value and wrap in quotes
                     value_str = value_str.replace('"', '\"')
                     nquad_line = f"{subject_str} {LABEL_PREDICATE} {value_str} {LABEL_GRAPH} .\n"
                     nquad_lines.append(nquad_line)
