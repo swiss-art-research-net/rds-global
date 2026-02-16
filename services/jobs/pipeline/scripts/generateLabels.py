@@ -66,7 +66,7 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                     value = result["value"]["value"]
                     subject_str = f"<{subject}>" if result["subject"]["type"] == "uri" else f"\"{subject}\""
                     # Escape double quotes in value and wrap in quotes
-                    value = value.replace('"', '\\"')
+                    value = value.replace('"', '\"')
                     value_str = f"\"{value}\""
                     # Add datatype or language if present
                     if "xml:lang" in result["value"]:
