@@ -202,7 +202,9 @@ tasks:
     vars:
       QLEVER_ACCESS_TOKEN:
         sh: echo $QLEVER_ACCESS_TOKEN
-      TEMP_DIRECTORY: ./chunks
+      
+      TEMP_DIRECTORY: 
+        sh: echo "./tmp/ingest_$(basename {{.DIRECTORY}})"
     cmds:
       - |
         for file in {{.DIRECTORY}}/*.{ttl,nt,nq,rdf}; do
@@ -211,17 +213,16 @@ tasks:
           EXT="${file##*.}"
           TARGET_GRAPH="{{.GRAPH}}"
           
-          # 1. Extraction (Correctly handling N-Quads)
+          # For NQuads, if no target graph is provided, we try to extract it from the first line of the file
           if [ "$EXT" = "nq" ] && [ -z "$TARGET_GRAPH" ]; then
             TARGET_GRAPH=$(sed -n '1s/.* <\([^>]*\)> \.$/\1/p' "$file")
           fi
 
-          # 2. Setup URL and temporary chunking
           ENCODED_G=$(echo -n "$TARGET_GRAPH" | jq -sRr @uri)
           URL_PARAMS=$( [ -n "$TARGET_GRAPH" ] && echo "graph=$ENCODED_G" || echo "default" )
           mkdir -p {{.TEMP_DIRECTORY}}
 
-          # 3. Process and Split
+          # Split files into smaller chunks for more efficient uploading
           # We convert NQ to NT on the fly during the split to save IO
           if [ "$EXT" = "nq" ]; then
             echo "Splitting $file (NQ -> NT)..."
@@ -231,13 +232,11 @@ tasks:
             split -l 100000 "$file" {{.TEMP_DIRECTORY}}/part_
             CT="application/n-triples"
           else
-            # For TTL/RDF, we can't safely split by line without a parser
-            # We copy to chunks folder as a single unit
+            # For TTL/RDF we copy to chunks folder as a single unit
             cp "$file" {{.TEMP_DIRECTORY}}/part_full
             CT=$( [ "$EXT" = "ttl" ] && echo "text/turtle" || echo "application/rdf+xml" )
           fi
 
-          # 4. Upload Chunks
           for chunk in {{.TEMP_DIRECTORY}}/part_*; do
             echo "Uploading $chunk..."
             curl -s --fail-with-body --http1.1 --max-time 300 \
