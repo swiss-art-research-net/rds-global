@@ -334,6 +334,21 @@ tasks:
           as: DATASET
         cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
+  ingest-data-from-folder:
+    desc: Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
+    vars:
+      DIRECTORY:
+        sh: echo "{{.CLI_ARGS}}"
+    cmds:
+      - |
+        if [ -z "{{.DIRECTORY}}" ]; then
+          echo "Error: No directory specified. Please provide a directory as a CLI argument."
+          exit 1
+        fi
+      - task: _ingest-data-from-folder
+        vars:
+          DIRECTORY: "{{.DIRECTORY}}"
+
   index-data:
     desc: Index all data in QLever
     cmds:
