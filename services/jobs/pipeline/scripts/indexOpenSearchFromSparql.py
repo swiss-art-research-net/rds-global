@@ -127,7 +127,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
-    pref_label_block = queries["prefLabel"].replace("?value", "?prefLabel")
+    pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ." #queries["prefLabel"].replace("?value", "?prefLabel")
     labels_block = queries["labels"].replace("?value", "?label")
     description_block = queries["description"].replace("?value", "?description_raw")
 
