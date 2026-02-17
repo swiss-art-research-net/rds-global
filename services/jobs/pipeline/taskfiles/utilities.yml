@@ -194,38 +194,39 @@ tasks:
       - cat {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
       - rm {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk
 
-  _ingest-data-from-folder:
-    desc: Ingest data from folder into QLever triple store
-    internal: True
-    requires:
-      vars: [DIRECTORY]
-    vars:
-      QLEVER_ACCESS_TOKEN:
-        sh: echo $QLEVER_ACCESS_TOKEN
-    cmds:
+  cmds:
       - echo "Loading data from /data/{{.DIRECTORY}} {{if .GRAPH}}into graph {{.GRAPH}}{{end}}"
       - |
         for file in {{.DIRECTORY}}/*.{ttl,nt,nq,rdf}; do
           [ -f "$file" ] || continue
 
           case "${file##*.}" in
-            ttl) CT="text/turtle" ;;
-            nt)  CT="application/n-triples" ;;
-            nq)  CT="application/n-quads" ;;
-            rdf) CT="application/rdf+xml" ;;
+            ttl) CT="text/turtle"; DATA_STREAM="$file" ;;
+            nt)  CT="application/n-triples"; DATA_STREAM="$file" ;;
+            rdf) CT="application/rdf+xml"; DATA_STREAM="$file" ;;
+            nq) 
+              # Convert N-Quads to N-Triples on the fly
+              CT="application/n-triples"
+              echo "Transforming $file (NQ -> NT)..."
+              sed 's/ <[^>]*> \.$/ ./' "$file" > "$file.tmp"
+              DATA_STREAM="$file.tmp"
+              ;;
             *)
               echo "Unsupported RDF format: $file" >&2
               exit 1
               ;;
           esac
 
-          echo "Loading file $file "
-          curl -v --fail-with-body --http1.1 \
+          echo "Loading file $file as $CT"
+          curl -s --fail-with-body --http1.1 \
               -X POST \
               -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
               -H "Content-Type: $CT" \
-              -T "$file" \
-              "{{.QLEVER_ENDPOINT}}/{{if .GRAPH}}?graph={{.GRAPH}}{{else}}?default{{end}}"
+              -T "$DATA_STREAM" \
+              "{{.QLEVER_ENDPOINT}}{{if .GRAPH}}?graph={{.GRAPH}}{{else}}?default{{end}}"
+          
+          # Clean up temp file if it was created
+          [ "${file##*.}" = "nq" ] && rm "$file.tmp"
         done
 
   _prepareForIndexing:
