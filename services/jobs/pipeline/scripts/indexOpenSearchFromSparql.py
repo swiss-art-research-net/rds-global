@@ -29,7 +29,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import requests
 from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
 
-from lib.utils import load_config, RDS_ONTOLOGY_NAMESPACE
+from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 
 # ----------------------------
@@ -48,39 +48,47 @@ SELECT
   (SAMPLE(?description_raw) AS ?description)
   (COUNT(DISTINCT ?match) AS ?numMatches)
 WHERE {{
-  {{
-    SELECT ?subject ?type ?typeClass WHERE {{
-        {type_constraint_block}
-        ?subject a ?queryType .
-        GRAPH <{graph}> {{
-            ?subject a ?type .
-      }}
-      }}
-      ORDER BY ?subject
-      LIMIT {limit}
-      OFFSET {offset}
+    {{
+        SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
+            GRAPH <{types_graph}> {{
+                {type_constraint_block}
+                ?subject a ?queryType .
+            }}
+            GRAPH <{dataset_graph}> {{
+                ?subject a ?type .
+            }}
+            GRAPH <{labels_graph}> {{
+                {pref_label_block}
+            }}
+        }}
+        ORDER BY ?subject
+        LIMIT {limit}
+        OFFSET {offset}
     }}
 
-    {pref_label_block}
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
+    }}
     OPTIONAL {{
-        GRAPH <{graph}> {{
+        GRAPH <{dataset_graph}> {{
             {description_block}
         }} 
     }}
-  
+
     OPTIONAL {{
-        GRAPH <{graph}> {{
+        GRAPH <{dataset_graph}> {{
             {labels_block}
         }}
     }}
+
     OPTIONAL {{
         GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
-        {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match . }}
-        UNION
-        {{ ?match <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+            {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match . }}
+            UNION
+            {{ ?match <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
         }}
     }}
-    }}
+}}
 GROUP BY ?subject
 ORDER BY ?subject
 """
@@ -89,12 +97,16 @@ COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
-    {type_constraint_block}
-    ?subject a ?queryType .
-    GRAPH <{graph}> {{
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
+    }}
+    
+    GRAPH <{dataset_graph}> {{
         ?subject a ?type .
     }}
-    FILTER EXISTS {{
+
+    GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
 }}
@@ -119,7 +131,7 @@ def _generate_prefixes(prefixes: Dict[str, str]) -> str:
 
 def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     prefixes = _generate_prefixes(dataset_config.get("prefixes", {}))
-    graph = dataset_config["graph"]
+    dataset_graph = dataset_config["graph"]
 
     type_constraint_block = _build_type_constraint_block(dataset_config.get("types", []))
 
@@ -131,10 +143,14 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ." #queries["prefLabel"].replace("?value", "?prefLabel")
     labels_block = queries["labels"].replace("?value", "?label")
     description_block = queries["description"].replace("?value", "?description_raw")
+    types_graph = RDS_GRAPH_NAMESPACE + "types"
+    labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
     return {
         "prefixes": prefixes,
-        "graph": graph,
+        "dataset_graph": dataset_graph,
+        "types_graph": types_graph,
+        "labels_graph": labels_graph,
         "type_constraint_block": type_constraint_block,
         "pref_label_block": pref_label_block,
         "labels_block": labels_block,
