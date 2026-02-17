@@ -90,6 +90,7 @@ WHERE {{
     ?subject a ?queryType .
     {type_constraint_block}
     GRAPH <{graph}> {{
+        ?subject a ?type .
         FILTER EXISTS {{
             {pref_label_block}
             {description_block}
