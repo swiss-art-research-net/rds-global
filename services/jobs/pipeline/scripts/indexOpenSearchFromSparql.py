@@ -54,17 +54,19 @@ WHERE {{
         ?subject a ?queryType .
         GRAPH <{graph}> {{
             ?subject a ?type .
-        }}
-        }}
-        ORDER BY ?subject
-        LIMIT {limit}
-        OFFSET {offset}
+      }}
+      }}
+      ORDER BY ?subject
+      LIMIT {limit}
+      OFFSET {offset}
     }}
 
-    GRAPH <{graph}> {{
-        {pref_label_block}
-        {description_block}
-    }} 
+    {pref_label_block}
+    OPTIONAL {{
+        GRAPH <{graph}> {{
+            {description_block}
+        }} 
+    }}
   
     OPTIONAL {{
         GRAPH <{graph}> {{
@@ -87,14 +89,13 @@ COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
-    ?subject a ?queryType .
     {type_constraint_block}
+    ?subject a ?queryType .
     GRAPH <{graph}> {{
         ?subject a ?type .
-        FILTER EXISTS {{
-            {pref_label_block}
-            {description_block}
-        }}
+    }}
+    FILTER EXISTS {{
+        {pref_label_block}
     }}
 }}
 """
