@@ -250,8 +250,11 @@ tasks:
               -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
               -H "Content-Type: $CT" \
               -T "$UPLOAD_FILE" \
-              "{{.QLEVER_ENDPOINT}}/?${URL_PARAMS}"
-
+              "{{.QLEVER_ENDPOINT}}/?${URL_PARAMS}" | jq -r '
+                "Status: " + .operations[0].status + 
+                " | Inserted: " + (.operations[0]."delta-triples".operation.inserted | tostring) + 
+                " | Time: " + (.time.total | tostring) + "ms"'
+          echo ""
           [ "$EXT" = "nq" ] && rm -f "$file.tmp"
         done
 
