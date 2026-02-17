@@ -203,59 +203,56 @@ tasks:
       QLEVER_ACCESS_TOKEN:
         sh: echo $QLEVER_ACCESS_TOKEN
     cmds:
-      - echo "Loading data from /data/{{.DIRECTORY}} {{if .GRAPH}}into graph {{.GRAPH}}{{end}}"
       - |
         for file in {{.DIRECTORY}}/*.{ttl,nt,nq,rdf}; do
           [ -f "$file" ] || continue
 
           EXT="${file##*.}"
           TARGET_GRAPH="{{.GRAPH}}"
-          UPLOAD_FILE="$file"
-          CT=""
-
-          case "$EXT" in
-            ttl) CT="text/turtle" ;;
-            nt)  CT="application/n-triples" ;;
-            rdf) CT="application/rdf+xml" ;;
-            nq)
-              CT="application/n-triples"
-
-              # Extract the graph URI from the first line correctly
-              # We grab the content inside the last < > pair before the dot
-              if [ -z "$TARGET_GRAPH" ]; then
-                TARGET_GRAPH=$(sed -n '1s/.* <\([^>]*\)> \.$/\1/p' "$file")
-                echo "Detected graph from NQ file: $TARGET_GRAPH"
-              fi
-
-              # Transform N-Quads to N-Triples (strip the graph URI)
-              sed 's/ <[^>]*> \.$/ ./' "$file" > "$file.tmp"
-              UPLOAD_FILE="$file.tmp"
-              ;;
-            *)
-              echo "Unsupported RDF format: $file" >&2
-              exit 1
-              ;;
-          esac
-
-          if [ -n "$TARGET_GRAPH" ]; then
-            ENCODED_GRAPH=$(echo -n "$TARGET_GRAPH" | jq -sRr @uri)
-            URL_PARAMS="graph=$ENCODED_GRAPH"
-          else
-            URL_PARAMS="default"
+          
+          # 1. Extraction (Correctly handling N-Quads)
+          if [ "$EXT" = "nq" ] && [ -z "$TARGET_GRAPH" ]; then
+            TARGET_GRAPH=$(sed -n '1s/.* <\([^>]*\)> \.$/\1/p' "$file")
           fi
 
-          echo "Loading $file to $TARGET_GRAPH"
-          curl -s --fail-with-body --http1.1 \
-              -X POST \
-              -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
-              -H "Content-Type: $CT" \
-              -T "$UPLOAD_FILE" \
-              "{{.QLEVER_ENDPOINT}}/?${URL_PARAMS}" | jq -r '
-                "Status: " + .operations[0].status + 
-                " | Inserted: " + (.operations[0]."delta-triples".operation.inserted | tostring) + 
-                " | Time: " + (.time.total | tostring) + "ms"'
-          echo ""
-          [ "$EXT" = "nq" ] && rm -f "$file.tmp"
+          # 2. Setup URL and temporary chunking
+          ENCODED_G=$(echo -n "$TARGET_GRAPH" | jq -sRr @uri)
+          URL_PARAMS=$( [ -n "$TARGET_GRAPH" ] && echo "graph=$ENCODED_G" || echo "default" )
+          mkdir -p ./chunks_tmp
+
+          # 3. Process and Split
+          # We convert NQ to NT on the fly during the split to save IO
+          if [ "$EXT" = "nq" ]; then
+            echo "Splitting $file (NQ -> NT)..."
+            sed 's/ <[^>]*> \.$/ ./' "$file" | split -l 100000 - ./chunks_tmp/part_
+            CT="application/n-triples"
+          elif [ "$EXT" = "nt" ]; then
+            split -l 100000 "$file" ./chunks_tmp/part_
+            CT="application/n-triples"
+          else
+            # For TTL/RDF, we can't safely split by line without a parser
+            # We copy to chunks folder as a single unit
+            cp "$file" ./chunks_tmp/part_full
+            CT=$( [ "$EXT" = "ttl" ] && echo "text/turtle" || echo "application/rdf+xml" )
+          fi
+
+          # 4. Upload Chunks
+          for chunk in ./chunks_tmp/part_*; do
+            echo "Uploading $chunk..."
+            curl -s --fail-with-body --http1.1 --max-time 300 \
+                -X POST \
+                -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+                -H "Content-Type: $CT" \
+                -T "$chunk" \
+                "{{.QLEVER_ENDPOINT}}/?${URL_PARAMS}" | jq -r '
+                  if .status == "ERROR" then
+                    "  [ERROR] \(.status): \(.exception // "Unknown error")"
+                  else
+                    "  [OK] Inserted: \(.operations[0]."delta-triples".operation.inserted) | Time: \(.time.total)ms"
+                  end'
+          done
+
+          rm -rf ./chunks_tmp
         done
 
   _prepareForIndexing:
