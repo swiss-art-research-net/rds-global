@@ -204,8 +204,6 @@ tasks:
         sh: echo $QLEVER_ACCESS_TOKEN
     cmds:
       - echo "Loading data from /data/{{.DIRECTORY}} {{if .GRAPH}}into graph {{.GRAPH}}{{end}}"
-      - # Loop through all permitted files (*.ttl, *.nt, *.nq, *.rdf) in the directory and load them into the triple store using curl. The content type is determined based on the file extension
-        # If a {{.GRAPH}} variable is provided, the ?graph={{.GRAPH}} parameter is added to the endpoint URL to load the data into the specified named graph. If {{.GRAPH}} is not provided, the data is loaded into the default graph or in the one provided in the nquads file.
       - |
         for file in {{.DIRECTORY}}/*.{ttl,nt,nq,rdf}; do
           [ -f "$file" ] || continue
@@ -224,11 +222,10 @@ tasks:
           echo "Loading file $file "
           curl -v --fail-with-body --http1.1 \
               -X POST \
-              -H "Expect:" \
-              -H "Content-Type: $CT" \
               -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+              -H "Content-Type: $CT" \
               -T "$file" \
-              "{{.QLEVER_ENDPOINT}}/{{if .GRAPH}}?graph={{.GRAPH}}{{end}}"
+              "{{.QLEVER_ENDPOINT}}/{{if .GRAPH}}?graph={{.GRAPH}}{{else}}?default{{end}}"
         done
 
   _prepareForIndexing:
