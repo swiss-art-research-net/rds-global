@@ -200,9 +200,9 @@ tasks:
     requires:
       vars: [DIRECTORY]
     vars:
+      MAX_NUM_LINES: 100000
       QLEVER_ACCESS_TOKEN:
-        sh: echo $QLEVER_ACCESS_TOKEN
-      
+        sh: echo $QLEVER_ACCESS_TOKEN   
       TEMP_DIRECTORY: 
         sh: echo "./tmp/ingest_$(basename {{.DIRECTORY}})"
     cmds:
@@ -226,10 +226,10 @@ tasks:
           # We convert NQ to NT on the fly during the split to save IO
           if [ "$EXT" = "nq" ]; then
             echo "Splitting $file (NQ -> NT)..."
-            sed 's/ <[^>]*> \.$/ ./' "$file" | split -l 100000 - {{.TEMP_DIRECTORY}}/part_
+            sed 's/ <[^>]*> \.$/ ./' "$file" | split -l {{.MAX_NUM_LINES}} - {{.TEMP_DIRECTORY}}/part_
             CT="application/n-triples"
           elif [ "$EXT" = "nt" ]; then
-            split -l 100000 "$file" {{.TEMP_DIRECTORY}}/part_
+            split -l {{.MAX_NUM_LINES}} "$file" {{.TEMP_DIRECTORY}}/part_
             CT="application/n-triples"
           else
             # For TTL/RDF we copy to chunks folder as a single unit
