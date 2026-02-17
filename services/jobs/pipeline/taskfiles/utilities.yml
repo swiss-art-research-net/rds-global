@@ -194,22 +194,42 @@ tasks:
       - cat {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
       - rm {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk
 
-  cmds:
+  _ingest-data-from-folder:
+    desc: Ingest data from folder into QLever triple store
+    internal: True
+    requires:
+      vars: [DIRECTORY]
+    vars:
+      QLEVER_ACCESS_TOKEN:
+        sh: echo $QLEVER_ACCESS_TOKEN
+    cmds:
       - echo "Loading data from /data/{{.DIRECTORY}} {{if .GRAPH}}into graph {{.GRAPH}}{{end}}"
       - |
         for file in {{.DIRECTORY}}/*.{ttl,nt,nq,rdf}; do
           [ -f "$file" ] || continue
 
-          case "${file##*.}" in
-            ttl) CT="text/turtle"; DATA_STREAM="$file" ;;
-            nt)  CT="application/n-triples"; DATA_STREAM="$file" ;;
-            rdf) CT="application/rdf+xml"; DATA_STREAM="$file" ;;
-            nq) 
-              # Convert N-Quads to N-Triples on the fly
+          EXT="${file##*.}"
+          TARGET_GRAPH="{{.GRAPH}}"
+          UPLOAD_FILE="$file"
+          CT=""
+
+          case "$EXT" in
+            ttl) CT="text/turtle" ;;
+            nt)  CT="application/n-triples" ;;
+            rdf) CT="application/rdf+xml" ;;
+            nq)
               CT="application/n-triples"
-              echo "Transforming $file (NQ -> NT)..."
+
+              # Extract the graph URI from the first line correctly
+              # We grab the content inside the last < > pair before the dot
+              if [ -z "$TARGET_GRAPH" ]; then
+                TARGET_GRAPH=$(sed -n '1s/.* <\([^>]*\)> \.$/\1/p' "$file")
+                echo "Detected graph from NQ file: $TARGET_GRAPH"
+              fi
+
+              # Transform N-Quads to N-Triples (strip the graph URI)
               sed 's/ <[^>]*> \.$/ ./' "$file" > "$file.tmp"
-              DATA_STREAM="$file.tmp"
+              UPLOAD_FILE="$file.tmp"
               ;;
             *)
               echo "Unsupported RDF format: $file" >&2
@@ -217,16 +237,22 @@ tasks:
               ;;
           esac
 
-          echo "Loading file $file as $CT"
+          if [ -n "$TARGET_GRAPH" ]; then
+            ENCODED_GRAPH=$(echo -n "$TARGET_GRAPH" | jq -sRr @uri)
+            URL_PARAMS="graph=$ENCODED_GRAPH"
+          else
+            URL_PARAMS="default"
+          fi
+
+          echo "Loading $file to $TARGET_GRAPH"
           curl -s --fail-with-body --http1.1 \
               -X POST \
               -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
               -H "Content-Type: $CT" \
-              -T "$DATA_STREAM" \
-              "{{.QLEVER_ENDPOINT}}{{if .GRAPH}}?graph={{.GRAPH}}{{else}}?default{{end}}"
-          
-          # Clean up temp file if it was created
-          [ "${file##*.}" = "nq" ] && rm "$file.tmp"
+              -T "$UPLOAD_FILE" \
+              "{{.QLEVER_ENDPOINT}}/?${URL_PARAMS}"
+
+          [ "$EXT" = "nq" ] && rm -f "$file.tmp"
         done
 
   _prepareForIndexing:
