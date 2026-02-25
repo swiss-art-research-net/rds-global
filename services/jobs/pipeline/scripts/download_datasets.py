@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from html import parser
 import subprocess
 import sys
 from pathlib import Path
@@ -8,6 +9,8 @@ import base64
 import hashlib
 import re
 import json
+from lib.utils import load_config
+
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
     result = subprocess.run(cmd, cwd=cwd)
@@ -95,61 +98,66 @@ def download_github_file(*, username: str, token: str, repo: str, path: str, out
 def main():
     parser = argparse.ArgumentParser(description="Download and prepare RDF datasets")
     parser.add_argument("--dataset", required=True)
-    parser.add_argument("--data-directory", required=True)
-    parser.add_argument("--source-type", required=True)
-    parser.add_argument("--source-url", default=None)
-    parser.add_argument("--file-format", default="nt")
-    parser.add_argument("--gunzip", default="false")
+    parser.add_argument("--config", required=True)
 
     # only used if source-type == github_zip
     parser.add_argument("--github-username")
     parser.add_argument("--github-token")
-    parser.add_argument("--github-repository")
-    parser.add_argument("--github-path")
 
     args = parser.parse_args()
+    
+    config = load_config(args.config)
 
-    data_dir = Path(args.data_directory)
+    try:
+        dataset_config = config["datasets"][args.dataset]
+    except KeyError:
+        raise RuntimeError(f"Dataset '{args.dataset}' not found in config")
+    
+    data_dir = Path(dataset_config["data_directory"])
+    source = dataset_config["source"]
+
+    source_type = source["type"]
+    source_url = source.get("url")
+    file_format = dataset_config.get("file_format", "nt")
+    gunzip = str(dataset_config.get("gunzip", False)).lower() == "true"
+
+    github_repo = source.get("repository")
+    github_path = source.get("path")
+    ontology_url = dataset_config.get("ontology", {}).get("url")
+
     data_dir.mkdir(parents=True, exist_ok=True)
-    gunzip = args.gunzip.lower() == "true"
 
     print(f"[{args.dataset}] Updating dataset: {data_dir}")
-    print(f"Source type: {args.source_type}")
+    print(f"Source type: {source_type}")
 
-    if args.source_type in ("http_file", "http_zip"):
-        if not args.source_url:
+    if source_type in ("http_file", "http_zip"):
+        if not source_url:
             raise RuntimeError("source-url is required for HTTP sources")
 
-        if args.source_type == "http_zip":
+        if source_type == "http_zip":
             archive = data_dir / "data.zip"
-            download_http(args.source_url, archive)
+            download_http(source_url, archive)
             run(["unzip", "-o", archive.name], cwd=data_dir)
         else:
-            out_file = data_dir / f"data.{args.file_format}"
+            out_file = data_dir / f"data.{file_format}"
             if gunzip:
                 gz = out_file.with_suffix(out_file.suffix + ".gz")
-                download_http(args.source_url, gz)
+                download_http(source_url, gz)
                 run(["gunzip", "-f", gz.name], cwd=data_dir)
             else:
-                download_http(args.source_url, out_file)
+                download_http(source_url, out_file)
 
-    elif args.source_type == "github_zip":
-        if not all(
-            [
-                args.github_username,
-                args.github_token,
-                args.github_repository,
-                args.github_path,
-            ]
-        ):
+    elif source_type == "github_zip":
+        if not all([args.github_username, args.github_token, github_repo, github_path]):
             raise RuntimeError("GitHub repository, path, username and token are required")
 
         archive = data_dir / "data.zip"
+
         download_github_file(
             username=args.github_username,
             token=args.github_token,
-            repo=args.github_repository,
-            path=args.github_path,
+            repo=github_repo,
+            path=github_path,
             out_path=archive,
         )
 
@@ -157,7 +165,31 @@ def main():
         archive.unlink()
 
     else:
-        raise ValueError(f"Unsupported source type: {args.source_type}")
+        raise ValueError(f"Unsupported source type: {source_type}")
+    
+    if args.dataset == "geonames":
+        nt_file = data_dir / "geonames.nt"
+        if not nt_file.exists():
+            print("[geonames] Converting to NTriples")
+            script_src = Path("/pipeline/scripts/convert2ntriples.py")
+            script_dst = data_dir / "convert2ntriples.py"
+            script_dst.write_bytes(script_src.read_bytes())
+            run(["python", script_dst.name], cwd=data_dir)
+            script_dst.unlink()
+        else:
+            print("[geonames] NTriples already exist — skipping conversion")
+
+    
+    if args.dataset == "gnd" and ontology_url:
+        print(f"[gnd] Downloading ontology from {ontology_url}")
+        ttl_path = data_dir / "gnd-ontology.ttl"
+        nt_path = data_dir / "gnd-ontology.nt"
+
+        download_http(ontology_url, ttl_path)
+        run(["rapper", "-i", "turtle", "-o", "ntriples", ttl_path.name], cwd=data_dir)
+
+        ttl_path.unlink()
+
 
     print(f"[{args.dataset}] Download completed successfully.")
 
