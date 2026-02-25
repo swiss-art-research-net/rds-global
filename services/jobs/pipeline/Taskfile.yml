@@ -433,47 +433,14 @@ tasks:
           else
             echo "{{.DATASET}}"
           fi
-      DATA_DIR:
-        sh: yq -r ".datasets.{{.DATASET}}.data_directory" "{{.DATASETS_CONFIG_YML}}"
-      SOURCE_TYPE:
-        sh: yq -r ".datasets.{{.DATASET}}.source.type" "{{.DATASETS_CONFIG_YML}}"
-      SOURCE_URL:
-        sh: yq -r ".datasets.{{.DATASET}}.source.url // \"\"" "{{.DATASETS_CONFIG_YML}}"
-      FILE_FORMAT:
-        sh: yq -r ".datasets.{{.DATASET}}.file_format // \"nt\"" "{{.DATASETS_CONFIG_YML}}"
-      GUNZIP:
-        sh: yq -r ".datasets.{{.DATASET}}.gunzip // false" "{{.DATASETS_CONFIG_YML}}"
-      GITHUB_REPO:
-        sh: yq -r ".datasets.{{.DATASET}}.source.repository // \"\"" "{{.DATASETS_CONFIG_YML}}"
-      GITHUB_PATH:
-        sh: yq -r ".datasets.{{.DATASET}}.source.path // \"\"" "{{.DATASETS_CONFIG_YML}}"
-      ONTOLOGY_URL:
-        sh: yq -r ".datasets.{{.DATASET}}.ontology.url" "{{.DATASETS_CONFIG_YML}}"
 
     cmds:
       - |
         python /pipeline/scripts/download_datasets.py \
           --dataset "{{.DATASET}}" \
-          --data-directory "{{.DATA_DIR}}" \
-          --source-type "{{.SOURCE_TYPE}}" \
-          --source-url "{{.SOURCE_URL}}" \
-          --file-format "{{.FILE_FORMAT}}" \
-          --gunzip "{{.GUNZIP}}" \
+          --config "{{.DATASETS_CONFIG_YML}}" \
           --github-username "{{.GITHUB_USERNAME_SIKART}}" \
-          --github-token "{{.GITHUB_TOKEN_SIKART}}" \
-          --github-repository "{{.GITHUB_REPO}}" \
-          --github-path "{{.GITHUB_PATH}}"
-
-      - task: _postprocess_geonames
-        vars:
-          DATASET: "{{.DATASET}}"
-          DATA_DIR: "{{.DATA_DIR}}"
-
-      - task: _postprocess_gnd
-        vars:
-          DATASET: "{{.DATASET}}"
-          DATA_DIR: "{{.DATA_DIR}}"
-          ONTOLOGY_URL: "{{.ONTOLOGY_URL}}"
+          --github-token "{{.GITHUB_TOKEN_SIKART}}"
 
       - task: prepare_indexing
         vars:
