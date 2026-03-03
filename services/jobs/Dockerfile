@@ -2,7 +2,7 @@ FROM adfreiburg/qlever:commit-f35a290
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-venv locales raptor2-utils sudo curl wget nodejs npm \
+    python3 python3-pip python3-venv locales raptor2-utils sudo curl wget jq nodejs npm \
   && rm -rf /var/lib/apt/lists/*
 
 # Install yq (v4)
