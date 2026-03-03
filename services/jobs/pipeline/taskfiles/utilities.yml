@@ -151,10 +151,13 @@ tasks:
                   }
                 }"
     cmds:
+      - '{{if eq .QUERYPART "null"}}echo "Matches query is not set for dataset {{.DATASET}}" >&2; exit 1{{end}}'
       - task: _fetch-sameas-statements-local
         vars:
+          DATASET: "{{.DATASET}}"
           OUTPUT_FILE: "{{.OUTPUT_FILE}}"
           QUERY: "{{.QUERY}}"
+          
 
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
@@ -162,7 +165,7 @@ tasks:
     status:
       - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     cmds:
-      - echo "Fetching SameAs Statements for {{.DATASET_ID}}"
+      - echo "Fetching SameAs Statements for {{.DATASET}}"
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
       - >
         curl -X POST
