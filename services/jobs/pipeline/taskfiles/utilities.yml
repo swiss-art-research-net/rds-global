@@ -126,6 +126,36 @@ tasks:
           unzip "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip" -d "{{.DATA_DIRECTORY}}"
         fi
 
+  _fetch-sameas-statements-for-dataset:
+    desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
+    requires:
+      vars: [DATASET]
+    vars:
+      OUTPUT_FILE:
+        sh: echo "{{.DATASET}}SameAs.ttl"
+      GRAPH:
+        sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
+      PREFIXES:
+        sh: "yq -r '.datasets.{{.DATASET}}.prefixes' '{{.DATASETS_CONFIG_YML}}' | sed -E 's|^([^:]+):[[:space:]]*(.+)$|PREFIX \\1: <\\2>|'"
+      QUERYPART:
+        sh: yq -r ".datasets.{{.DATASET}}.queries.matches" "{{.DATASETS_CONFIG_YML}}"
+      QUERY:
+        sh: |
+          echo "{{.PREFIXES}}
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                CONSTRUCT {
+                  ?subject owl:sameAs ?value .
+                } WHERE {
+                  GRAPH <{{.GRAPH}}> {
+                    {{.QUERYPART}}
+                  }
+                }"
+    cmds:
+      - task: _fetch-sameas-statements-local
+        vars:
+          OUTPUT_FILE: "{{.OUTPUT_FILE}}"
+          QUERY: "{{.QUERY}}"
+
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
     internal: True

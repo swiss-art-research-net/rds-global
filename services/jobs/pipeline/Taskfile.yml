@@ -66,6 +66,22 @@ tasks:
       - task: fetch-sameas-statements-sikart
       #- task: fetch-sameas-statements-wikidata
 
+  fetch-sameas-statements-for-dataset:
+    desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
+    cmds:
+      - task: _fetch-sameas-statements-for-dataset
+        vars:
+          DATASET: "{{.DATASET}}"
+
+
   fetch-sameas-statements-aat:
     desc: Fetch SameAs statements contained in AAT
     sources:
