@@ -56,14 +56,18 @@ tasks:
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds: 
       - mkdir -p {{.DIRECTORY_SAMEAS_STATEMENTS}}
-      - task: fetch-sameas-statements-aat
-      - task: fetch-sameas-statements-ulan
-      - task: fetch-sameas-statements-gnd
-      - task: fetch-sameas-statements-thesobjmob
-      - task: fetch-sameas-statements-thesarchesp
-      - task: fetch-sameas-statements-sikart
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: fetch-sameas-statements-for-dataset
+        vars:
+          DATASET: "{{.DATASET}}"    
       #- task: fetch-sameas-statements-wikidata
 
   fetch-sameas-statements-for-dataset:
