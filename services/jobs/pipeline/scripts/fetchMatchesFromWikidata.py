@@ -41,7 +41,9 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         try:
             wikidataProperty = datasetConfig['wikidata_match_property']
         except KeyError:
-            raise KeyError(f"Wikidata match property not defined for dataset {dataset} in config")
+            # Gracefully exit if no wikidata match property is defined for the dataset, since this is required to fetch sameAs links from Wikidata
+            print(f"No Wikidata match property defined for dataset {dataset} in config, skipping...")
+            continue
         try:
             namespace = datasetConfig['namespace']
         except KeyError:
