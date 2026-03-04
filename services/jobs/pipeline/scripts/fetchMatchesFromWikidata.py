@@ -66,99 +66,102 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         except KeyError:
             raise KeyError(f"Graph not defined for dataset {dataset} in config")
         
-        # Generate a query that retrieves the entities of the given types from the endpoint. use page_size to limit the number of results per query and use OFFSET to paginate through the results
         counter = 0
+        wdEquivalentsFound = 0
         prefixes = generate_prefixes(datasetConfig.get("prefixes", {}))
         hasResults = True
-        wdEquivalents = []
-        while hasResults:
-            query = prefixes + f"""
-               SELECT ?subject WHERE {{
-                    GRAPH <{namedGraph}> {{
-                        ?subject a ?type .
-                        VALUES ?type {{ {' '.join(rdfTypes)} }}
-                        FILTER(isIri(?subject))
+
+        outputPath = f"{output_directory}/{dataset}WikidataSameAs.ttl"
+
+        with open(outputPath, "w") as f:
+            while hasResults:
+                query = prefixes + f"""
+                SELECT ?subject WHERE {{
+                        GRAPH <{namedGraph}> {{
+                            ?subject a ?type .
+                            VALUES ?type {{ {' '.join(rdfTypes)} }}
+                            FILTER(isIri(?subject))
+                        }}
+                    }} ORDER BY DESC(?subject) OFFSET {counter} LIMIT {page_size}"""
+                counter = counter + page_size
+                sparqlLocal.setQuery(query)
+
+                try:
+                    results = sparqlLocal.query().convert()
+                except Exception as e:
+                    print(f"Error querying SPARQL endpoint: {e}")
+                    print(f"Query: {query}")
+                    return
+                
+                if len(results["results"]["bindings"]) == 0:
+                    hasResults = False
+                    continue
+
+                entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
+
+                # Strip namespace from entities to get candidate IDs for Wikidata query
+                candidateIds = [
+                    entity[len(namespace):] if entity.startswith(namespace) else entity
+                    for entity in entities
+                ]
+                # Strip trailing slash from candidate IDs if present
+                candidateIds = [cid.rstrip('/') for cid in candidateIds]
+
+                # for each page of entities we query wikidata for sameAs statements
+                sameAsQuery = prefixes + f"""
+                    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                    SELECT ?wdEntity ?candidateId WHERE {{
+                        VALUES ?candidateId {{ {' '.join(f'"{candidateId}"' for candidateId in candidateIds)} }}
+                        ?wdEntity wdt:{wikidataProperty} ?candidateId .
                     }}
-                }} ORDER BY DESC(?subject) OFFSET {counter} LIMIT {page_size}"""
-            counter = counter + page_size
-            sparqlLocal.setQuery(query)
-            try:
-                results = sparqlLocal.query().convert()
-            except Exception as e:
-                print(f"Error querying SPARQL endpoint: {e}")
-                print(f"Query: {query}")
-                return
-            
-            if len(results["results"]["bindings"]) == 0:
-                hasResults = False
-                continue
+                """
 
-            entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
+                sparqlWikidata.setQuery(sameAsQuery)
+                try:
+                    sameAsResults = sparqlWikidata.query().convert()
+                except Exception as e:
+                    print(f"Error querying Wikidata SPARQL endpoint: {e}")
+                    print(f"Query: {sameAsQuery}")
+                    return
+                
+                newWdEntities = []
+                for result in sameAsResults["results"]["bindings"]:
+                    localUri = namespace + result["candidateId"]["value"]
+                    wdUri = result["wdEntity"]["value"]
+                    f.write(f"<{localUri}> {PREDICATE} <{wdUri}> .\n")
+                    newWdEntities.append(wdUri)
 
-            # Strip namespace from entities to get candidate IDs for Wikidata query
-            candidateIds = [
-                entity[len(namespace):] if entity.startswith(namespace) else entity
-                for entity in entities
-            ]
-            # Strip trailing slash from candidate IDs if present
-            candidateIds = [cid.rstrip('/') for cid in candidateIds]
+                wdEquivalentsFound = wdEquivalentsFound + len(sameAsResults["results"]["bindings"])
+                print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {wdEquivalentsFound}")
 
-            # for each page of entities we query wikidata for sameAs statements
-            sameAsQuery = prefixes + f"""
-                PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-                SELECT ?wdEntity ?candidateId WHERE {{
-                    VALUES ?candidateId {{ {' '.join(f'"{candidateId}"' for candidateId in candidateIds)} }}
-                    ?wdEntity wdt:{wikidataProperty} ?candidateId .
-                }}
-            """
+                # Retrieve matches from wikidata for the currently retrieved wikidata entities
+                if newWdEntities:
+                    wikidataEntitiesForValues = [f"<{entity}>" for entity in newWdEntities]
+                    matchesQuery = WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", " ".join(wikidataEntitiesForValues))
+                    sparqlWikidata.setQuery(matchesQuery)
 
-            sparqlWikidata.setQuery(sameAsQuery)
-            try:
-                sameAsResults = sparqlWikidata.query().convert()
-            except Exception as e:
-                print(f"Error querying Wikidata SPARQL endpoint: {e}")
-                print(f"Query: {sameAsQuery}")
-                return
-            
-            for result in sameAsResults["results"]["bindings"]:
-                wdEquivalents.append( (namespace + result["candidateId"]["value"], result["wdEntity"]["value"] ) )
-            print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {len(wdEquivalents)}")
+                    try:
+                        matchesResults = sparqlWikidata.query().convert()
+                    except Exception as e:
+                        print(f"Error querying Wikidata SPARQL endpoint for matches: {e}")
+                        print(f"Query: {matchesQuery}")
+                        raise e
+                    
+                    for result in matchesResults["results"]["bindings"]:
+                        if "otherEntity" in result and "value" in result["otherEntity"]:
+                            wdEntity = result["wdEntity"]["value"]
+                            otherEntity = result["otherEntity"]["value"]
+                            f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
+                    wdEquivalentsFound = wdEquivalentsFound + len(matchesResults["results"]["bindings"])
+                    print(f"Found {len(matchesResults['results']['bindings'])} additional sameAs links for dataset {dataset} based on matches for retrieved Wikidata entities. Total so far: {wdEquivalentsFound}")
 
-            # Retrieve matches from wikidata for the currently retrieved wikidata entities
-            wikidataEntitiesForValues = [f"<{entityTuple[1]}>" for entityTuple in wdEquivalents]
-            matchesQuery = WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", " ".join(wikidataEntitiesForValues))
-            sparqlWikidata.setQuery(matchesQuery)
-
-            try:
-                matchesResults = sparqlWikidata.query().convert()
-            except Exception as e:
-                print(f"Error querying Wikidata SPARQL endpoint for matches: {e}")
-                print(f"Query: {matchesQuery}")
-                raise e
-            
-            for result in matchesResults["results"]["bindings"]:
-                print(result)
-                wdEntity = result["wdEntity"]["value"]
-                otherEntity = result["otherEntity"]["value"]
-                wdEquivalents.append( (otherEntity, wdEntity) )
-            print(f"Found {len(matchesResults['results']['bindings'])} additional sameAs links for dataset {dataset} based on matches for retrieved Wikidata entities. Total so far: {len(wdEquivalents)}")
-
-        # Store output as ttl file with triples of the form <datasetEntity> owl:sameAs <wikidataEntity> in the specified output directory
-        with open(f"{output_directory}/{dataset}WikidataSameAs.ttl", "w") as f:
-            for pair in wdEquivalents:
-                candidate = pair[0]
-                wdEntity = pair[1]
-                sameAsTriple = f"<{candidate}> {PREDICATE} <{wdEntity}> .\n"
-                f.write(sameAsTriple)
-        print(f"Found {len(wdEquivalents)} total sameAs links for dataset {dataset}")
+        print(f"Found {wdEquivalentsFound} total sameAs links for dataset {dataset}")
 
             
         
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    
+if __name__ == "__main__":    
     parser = argparse.ArgumentParser(description = 'Fetch matches for a dataset from Wikidata and store them.')
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying the entities')
     parser.add_argument('--wikidata-endpoint', required=False, default='https://query.wikidata.org/sparql', help='SPARQL endpoint to use for querying Wikidata')
