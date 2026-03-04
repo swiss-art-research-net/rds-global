@@ -18,6 +18,10 @@ includes:
     flatten: true
 tasks:
 
+  test:
+    cmds:
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --output-directory /data/sameAsStatements/sources --config "{{.DATASETS_CONFIG_YML}}" --dataset "aat"
+
   default:
     desc: Run entire pipeline
     interactive: True
