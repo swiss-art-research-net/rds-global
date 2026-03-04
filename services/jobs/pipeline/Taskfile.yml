@@ -20,7 +20,7 @@ tasks:
 
   test:
     cmds:
-      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --output-directory /data/sameAsStatements/sources --config "{{.DATASETS_CONFIG_YML}}" --dataset "aat"
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --output-directory /data/sameAsStatements/sources --config "{{.DATASETS_CONFIG_YML}}" {{.CLI_ARGS}}
 
   default:
     desc: Run entire pipeline

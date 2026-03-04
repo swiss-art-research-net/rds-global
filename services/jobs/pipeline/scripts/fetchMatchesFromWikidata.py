@@ -32,7 +32,41 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         rdfTypes = []
         for _, rdfType in datasetConfig.get("types", {}).items():
             rdfTypes.extend(rdfType)
-        print(f"RDF types for dataset {dataset}: {rdfTypes}")
+        try:
+            namedGraph = datasetConfig['graph']
+        except KeyError:
+            raise KeyError(f"Graph not defined for dataset {dataset} in config")
+        # Generate a query that retrieves the entities of the given types from the endpoint. use page_size to limit the number of results per query and use OFFSET to paginate through the results
+        counter = 0
+        prefixes = generate_prefixes(datasetConfig.get("prefixes", {}))
+        hasResults = True
+        while hasResults:
+            query = prefixes + f"""
+               SELECT ?subject WHERE {{
+                    GRAPH <{namedGraph}> {{
+                        ?subject a ?type .
+                        VALUES ?type {{ {' '.join(rdfTypes)} }}
+                        FILTER(isIri(?subject))
+                    }}
+                }} ORDER BY DESC(?subject) OFFSET {counter} LIMIT {page_size}"""
+            counter = counter + page_size
+            sparql.setQuery(query)
+            try:
+                results = sparql.query().convert()
+            except Exception as e:
+                print(f"Error querying SPARQL endpoint: {e}")
+                print(f"Query: {query}")
+                return
+            
+            if len(results["results"]["bindings"]) == 0:
+                hasResults = False
+                continue
+
+            entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
+            print(entities)
+
+            # debug:
+            hasResults = False
             
         
 
