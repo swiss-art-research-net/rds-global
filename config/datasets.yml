@@ -2,6 +2,7 @@ datasets:
 
   aat:
     graph: http://vocab.getty.edu/aat/graph
+    namespace: http://vocab.getty.edu/aat/
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
       skos: http://www.w3.org/2004/02/skos/core#
@@ -18,6 +19,7 @@ datasets:
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
       matches: |
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
+    wikidata_match_property: P1014
 
   geonames:
     graph: http://sws.geonames.org/graph
