@@ -4,6 +4,7 @@ datasets:
     graph: http://vocab.getty.edu/aat/graph
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
       Type:
@@ -15,11 +16,14 @@ datasets:
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
 
   geonames:
     graph: http://sws.geonames.org/graph
     prefixes:
       gn: http://www.geonames.org/ontology#
+      owl: http://www.w3.org/2002/07/owl#
     types:
       Place:
         - gn:Feature
@@ -30,11 +34,16 @@ datasets:
         ?subject gn:name ?value .
       labels: |
         ?subject gn:alternateName ?value .
+      matches: |
+        ?subject owl:sameAs ?value .
 
   gnd:
     graph: https://d-nb.info/gnd/authorities/graph
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
     types:
       BibliographicItem:
         - gnd:Work
@@ -127,11 +136,19 @@ datasets:
             ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
             ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
         }
+      matches: |
+        ?subject ?predicate ?value .
+        VALUES (?predicate) {
+          (schema:sameAs)
+          (rdfs:seeAlso)
+          (skos:exactMatch)
+        }
 
   sikart:
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       sik: https://recherche.sik-isea.ch
     types:
@@ -159,6 +176,9 @@ datasets:
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      matches:
+        ?subject crmdig:L54_is_same-as ?value .
+
 
   thesarchesp:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
@@ -174,6 +194,8 @@ datasets:
         ?subject skos:prefLabel ?value .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .
 
   thesobjmob:
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
@@ -189,11 +211,14 @@ datasets:
         ?subject skos:prefLabel ?value .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .
 
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
       Person:
@@ -206,3 +231,5 @@ datasets:
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
