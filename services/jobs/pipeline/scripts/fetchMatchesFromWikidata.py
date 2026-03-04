@@ -9,9 +9,11 @@ PREDICATE =  f"<{RDS_ONTOLOGY_NAMESPACE}related>"
 
 def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
     
-    sparql = SPARQLWrapper(endpoint)
-    sparql.setReturnFormat(JSON)
-    sparql.setMethod(POST)
+    sparqlLocal = SPARQLWrapper(endpoint)
+    sparqlLocal.setReturnFormat(JSON)
+    sparqlLocal.setMethod(POST)
+
+    sparqlWikidata = SPARQLWrapper(wikidata_endpoint)
 
     cfg = load_config(config)
     datasets = cfg.get("datasets", {})
@@ -56,9 +58,9 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                     }}
                 }} ORDER BY DESC(?subject) OFFSET {counter} LIMIT {page_size}"""
             counter = counter + page_size
-            sparql.setQuery(query)
+            sparqlLocal.setQuery(query)
             try:
-                results = sparql.query().convert()
+                results = sparqlLocal.query().convert()
             except Exception as e:
                 print(f"Error querying SPARQL endpoint: {e}")
                 print(f"Query: {query}")
@@ -81,7 +83,15 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                     ?wdEntity wdt:{wikidataProperty} ?candidate .
                 }}
             """
-            
+
+            sparqlWikidata.setQuery(sameAsQuery)
+            try:
+                sameAsResults = sparqlWikidata.query().convert()
+            except Exception as e:
+                print(f"Error querying Wikidata SPARQL endpoint: {e}")
+                print(f"Query: {sameAsQuery}")
+                return
+            print(sameAsResults)
             # debug:
             hasResults = False
             
