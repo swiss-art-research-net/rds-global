@@ -3,7 +3,7 @@ import argparse
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
 from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
 
-PAGE_SIZE = 10000
+PAGE_SIZE = 1000
 PREDICATE =  "<http://www.w3.org/2002/07/owl#sameAs>"
 
 WIKIDATA_MATCHES_QUERY_TEMPLATE = """
