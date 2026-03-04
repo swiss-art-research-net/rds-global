@@ -28,6 +28,13 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
 
     for dataset in datasets.keys():
         print(f"Processing dataset: {dataset}")
+        datasetConfig = datasets[dataset]
+        rdfTypes = []
+        for _, rdfType in datasetConfig.get("types", {}).items():
+            rdfTypes.extend(rdfType)
+        print(f"RDF types for dataset {dataset}: {rdfTypes}")
+            
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
