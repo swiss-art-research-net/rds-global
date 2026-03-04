@@ -76,7 +76,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         outputPath = f"{output_directory}/{dataset}WikidataSameAs.ttl"
 
         # Initialize the progress bar
-        countQuery = prefixes + f"SELECT (COUNT(?subject) AS ?total) WHERE {{ GRAPH <{namedGraph}> {{ ?subject a ?type . VALUES ?type {{ {' '.join(rdfTypes)} }} FILTER(isIri(?subject)) }} }}"
+        countQuery = prefixes + f"SELECT (COUNT(DISTINCT ?subject) AS ?total) WHERE {{ GRAPH <{namedGraph}> {{ ?subject a ?type . VALUES ?type {{ {' '.join(rdfTypes)} }} FILTER(isIri(?subject)) }} }}"
         sparqlLocal.setQuery(countQuery)
         totalEntities = int(sparqlLocal.query().convert()["results"]["bindings"][0]["total"]["value"])
         pbar = tqdm(total=totalEntities, desc=f"Processing {dataset}", unit="ent")
@@ -84,7 +84,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         with open(outputPath, "w") as f:
             while hasResults:
                 query = prefixes + f"""
-                SELECT ?subject WHERE {{
+                SELECT DISTINCT ?subject WHERE {{
                         GRAPH <{namedGraph}> {{
                             ?subject a ?type .
                             VALUES ?type {{ {' '.join(rdfTypes)} }}
@@ -120,7 +120,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                 sameAsQuery = prefixes + f"""
                     PREFIX owl: <http://www.w3.org/2002/07/owl#>
                     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-                    SELECT ?wdEntity ?candidateId WHERE {{
+                    SELECT DISTINCT ?wdEntity ?candidateId WHERE {{
                         VALUES ?candidateId {{ {' '.join(f'"{candidateId}"' for candidateId in candidateIds)} }}
                         ?wdEntity wdt:{wikidataProperty} ?candidateId .
                     }}
@@ -144,8 +144,9 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                 wdEquivalentsFound = wdEquivalentsFound + len(sameAsResults["results"]["bindings"])
 
                 # Retrieve matches from wikidata for the currently retrieved wikidata entities
-                if newWdEntities:
-                    wikidataEntitiesForValues = [f"<{entity}>" for entity in newWdEntities]
+                uniqueWdEntities = set(newWdEntities)
+                if uniqueWdEntities:
+                    wikidataEntitiesForValues = [f"<{entity}>" for entity in uniqueWdEntities]
                     matchesQuery = WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", " ".join(wikidataEntitiesForValues))
                     sparqlWikidata.setQuery(matchesQuery)
 
