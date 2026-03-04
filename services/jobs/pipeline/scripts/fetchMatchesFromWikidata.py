@@ -76,7 +76,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         outputPath = f"{output_directory}/{dataset}WikidataSameAs.ttl"
 
         # Initialize the progress bar
-        countQuery = prefixes + f"SELECT (COUNT(DISTINCT ?subject) AS ?total) WHERE {{ GRAPH <{namedGraph}> {{ ?subject a ?type . VALUES ?type {{ {' '.join(rdfTypes)} }} FILTER(isIri(?subject)) }} }}"
+        countQuery = prefixes + f"\nSELECT (COUNT(?subject) AS ?total) WHERE {{ GRAPH <{namedGraph}> {{ ?subject a ?type . VALUES ?type {{ {' '.join(rdfTypes)} }} FILTER(isIri(?subject)) }} }}"
         sparqlLocal.setQuery(countQuery)
         totalEntities = int(sparqlLocal.query().convert()["results"]["bindings"][0]["total"]["value"])
         pbar = tqdm(total=totalEntities, desc=f"Processing {dataset}", unit="ent")

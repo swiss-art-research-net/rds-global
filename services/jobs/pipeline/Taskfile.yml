@@ -102,7 +102,7 @@ tasks:
             echo "{{.DATASET}}"
           fi
     cmds:
-      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --output-directory /data/sameAsStatements/sources --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
