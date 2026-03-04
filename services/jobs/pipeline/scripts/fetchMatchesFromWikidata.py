@@ -83,7 +83,12 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
             entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
 
             # Strip namespace from entities to get candidate IDs for Wikidata query
-            candidateIds = [entity.replace(namespace, "") for entity in entities]   
+            candidateIds = [
+                entity[len(namespace):] if entity.startswith(namespace) else entity
+                for entity in entities
+            ]
+            # Strip trailing slash from candidate IDs if present
+            candidateIds = [cid.rstrip('/') for cid in candidateIds]
             # for each page of entities we query wikidata for sameAs statements
             sameAsQuery = prefixes + f"""
                 PREFIX owl: <http://www.w3.org/2002/07/owl#>
