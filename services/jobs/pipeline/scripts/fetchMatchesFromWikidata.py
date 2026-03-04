@@ -2,6 +2,7 @@ import argparse
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
 from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
+from tqdm import tqdm
 
 PAGE_SIZE = 1000
 PREDICATE =  "<http://www.w3.org/2002/07/owl#sameAs>"
@@ -73,6 +74,12 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
 
         outputPath = f"{output_directory}/{dataset}WikidataSameAs.ttl"
 
+        # Initialize the progress bar
+        countQuery = prefixes + f"SELECT (COUNT(?subject) AS ?total) WHERE {{ GRAPH <{namedGraph}> {{ ?subject a ?type . VALUES ?type {{ {' '.join(rdfTypes)} }} FILTER(isIri(?subject)) }} }}"
+        sparqlLocal.setQuery(countQuery)
+        totalEntities = int(sparqlLocal.query().convert()["results"]["bindings"][0]["total"]["value"])
+        pbar = tqdm(total=totalEntities, desc=f"Processing {dataset}", unit="ent")
+
         with open(outputPath, "w") as f:
             while hasResults:
                 query = prefixes + f"""
@@ -98,6 +105,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                     continue
 
                 entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
+                pbar.update(len(entities))
 
                 # Strip namespace from entities to get candidate IDs for Wikidata query
                 candidateIds = [
@@ -133,7 +141,6 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                     newWdEntities.append(wdUri)
 
                 wdEquivalentsFound = wdEquivalentsFound + len(sameAsResults["results"]["bindings"])
-                print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {wdEquivalentsFound}")
 
                 # Retrieve matches from wikidata for the currently retrieved wikidata entities
                 if newWdEntities:
@@ -154,7 +161,8 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                             otherEntity = result["otherEntity"]["value"]
                             f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
                     wdEquivalentsFound = wdEquivalentsFound + len(matchesResults["results"]["bindings"])
-                    print(f"Found {len(matchesResults['results']['bindings'])} additional sameAs links for dataset {dataset} based on matches for retrieved Wikidata entities. Total so far: {wdEquivalentsFound}")
+                
+                pbar.set_postfix({"Links": wdEquivalentsFound})
 
         print(f"Found {wdEquivalentsFound} total sameAs links for dataset {dataset}")
 
