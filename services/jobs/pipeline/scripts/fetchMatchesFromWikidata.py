@@ -30,6 +30,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
     sparqlWikidata = SPARQLWrapper(wikidata_endpoint)
     sparqlWikidata.setReturnFormat(JSON)
     sparqlWikidata.setMethod(POST)
+    sparqlWikidata.setTimeout(60) 
 
     cfg = load_config(config)
     datasets = cfg.get("datasets", {})
@@ -163,7 +164,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                     wdEquivalentsFound = wdEquivalentsFound + len(matchesResults["results"]["bindings"])
                 
                 pbar.set_postfix({"Links": wdEquivalentsFound})
-
+        pbar.close()
         print(f"Found {wdEquivalentsFound} total sameAs links for dataset {dataset}")
 
             
