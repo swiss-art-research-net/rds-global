@@ -23,6 +23,7 @@ datasets:
 
   geonames:
     graph: http://sws.geonames.org/graph
+    namespace: http://sws.geonames.org/
     prefixes:
       gn: http://www.geonames.org/ontology#
       owl: http://www.w3.org/2002/07/owl#
@@ -38,6 +39,7 @@ datasets:
         ?subject gn:alternateName ?value .
       matches: |
         ?subject owl:sameAs ?value .
+    wikidata_match_property: P1566
 
   gnd:
     graph: https://d-nb.info/gnd/authorities/graph
