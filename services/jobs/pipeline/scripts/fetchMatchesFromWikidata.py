@@ -1,10 +1,10 @@
 import argparse
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
-from lib.utils import RDS_ONTOLOGY_NAMESPACE, load_config, generate_prefixes_for_SPARQL as generate_prefixes, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
+from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
 
-PAGE_SIZE = 3000000
-PREDICATE =  f"<{RDS_ONTOLOGY_NAMESPACE}related>"
+PAGE_SIZE = 10000
+PREDICATE =  "<http://www.w3.org/2002/07/owl#sameAs>"
 
 
 def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
@@ -50,6 +50,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
             namedGraph = datasetConfig['graph']
         except KeyError:
             raise KeyError(f"Graph not defined for dataset {dataset} in config")
+        
         # Generate a query that retrieves the entities of the given types from the endpoint. use page_size to limit the number of results per query and use OFFSET to paginate through the results
         counter = 0
         prefixes = generate_prefixes(datasetConfig.get("prefixes", {}))
@@ -101,7 +102,14 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
             
             for result in sameAsResults["results"]["bindings"]:
                 wdEquivalents[result["candidateId"]["value"]] = result["wdEntity"]["value"]
-            print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {len(wdEquivalents)}")    
+            print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {len(wdEquivalents)}")
+
+        # Store output as ttl file with triples of the form <datasetEntity> owl:sameAs <wikidataEntity> in the specified output directory
+        with open(f"{output_directory}/{dataset}WikidataSameAs.ttl", "w") as f:
+            for candidateId, wdEntity in wdEquivalents.items():
+                datasetEntity = f"<{namespace}{candidateId}>"
+                sameAsTriple = f"{datasetEntity} {PREDICATE} <{wdEntity}> .\n"
+                f.write(sameAsTriple)
         print(f"Found {len(wdEquivalents)} total sameAs links for dataset {dataset}")
 
             
