@@ -43,6 +43,7 @@ datasets:
 
   gnd:
     graph: https://d-nb.info/gnd/authorities/graph
+    namespace: https://d-nb.info/gnd/
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
       rdfs: http://www.w3.org/2000/01/rdf-schema#
@@ -147,6 +148,7 @@ datasets:
           (rdfs:seeAlso)
           (skos:exactMatch)
         }
+    wikidata_match_property: P227
 
   sikart:
     graph: http://recherche.sik-isea.ch/graph
