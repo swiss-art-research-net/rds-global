@@ -68,7 +68,13 @@ tasks:
         task: fetch-sameas-statements-for-dataset
         vars:
           DATASET: "{{.DATASET}}"    
-      #- task: fetch-sameas-statements-wikidata
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: fetch-sameas-statements-for-dataset-from-wikidata
+        vars:
+          DATASET: "{{.DATASET}}"
 
   fetch-sameas-statements-for-dataset:
     desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
