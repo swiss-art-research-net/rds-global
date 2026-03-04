@@ -122,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying the entities')
     parser.add_argument('--wikidata-endpoint', required=False, default='https://query.wikidata.org/sparql', help='SPARQL endpoint to use for querying Wikidata')
     parser.add_argument('--output-directory', required=False, default='/data/sameAsStatements/sources', help='directory to store output files')
-    parser.add_argument('--page-size', required=False, type=int, default=3000000, help='number of results to fetch per query')
+    parser.add_argument('--page-size', required=False, type=int, default=PAGE_SIZE, help='number of results to fetch per query')
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--dataset", required=False, help="Dataset to generate labels for (all datasets if not specified)")
     
