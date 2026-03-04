@@ -136,7 +136,8 @@ tasks:
       GRAPH:
         sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
       PREFIXES:
-        sh: "yq -r '.datasets.{{.DATASET}}.prefixes' '{{.DATASETS_CONFIG_YML}}' | sed -E 's|^([^:]+):[[:space:]]*(.+)$|PREFIX \\1: <\\2>|'"
+        sh: |
+          yq -r '.datasets.{{.DATASET}}.prefixes | to_entries[] | "PREFIX \(.key): <\(.value)>"' '{{.DATASETS_CONFIG_YML}}'
       QUERYPART:
         sh: yq -r ".datasets.{{.DATASET}}.queries.matches" "{{.DATASETS_CONFIG_YML}}"
       QUERY:
@@ -168,7 +169,7 @@ tasks:
       - echo "Fetching SameAs Statements for {{.DATASET}}"
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
       - >
-        curl -X POST
+        curl -f -X POST
         -H "Content-Type: application/sparql-query"
         -H "Accept: text/turtle"
         --data-binary "{{.QUERY}}"
