@@ -10,13 +10,13 @@ WIKIDATA_MATCHES_QUERY_TEMPLATE = """
     PREFIX wd: <http://www.wikidata.org/entity/>
     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
     PREFIX wikibase: <http://wikiba.se/ontology#>
-    SELECT ?wdEntity ?otherEntity WHERE {
-    VALUES ?wdEntity { $VALUES }
-    ?propEntity wikibase:propertyType wikibase:ExternalId ;
-                wikibase:directClaim ?directPredicate .
-    ?wdEntity ?directPredicate ?idValue .
-    ?propEntity wdt:P1630 ?formatter .
-    BIND (REPLACE(?formatter, "\\\\$1", ?idValue) AS ?otherEntity)
+    SELECT DISTINCT ?wdEntity ?otherEntity WHERE {
+        VALUES ?wdEntity { $VALUES }
+        ?propEntity wikibase:propertyType wikibase:ExternalId ;
+                    wikibase:directClaim ?directPredicate .
+        ?wdEntity ?directPredicate ?idValue .
+        ?propEntity wdt:P1630 ?formatter .
+        BIND (REPLACE(?formatter, "\\\\$1", ?idValue) AS ?otherEntity)
     }
 """
 
@@ -102,6 +102,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
             ]
             # Strip trailing slash from candidate IDs if present
             candidateIds = [cid.rstrip('/') for cid in candidateIds]
+
             # for each page of entities we query wikidata for sameAs statements
             sameAsQuery = prefixes + f"""
                 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -121,28 +122,27 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                 return
             
             for result in sameAsResults["results"]["bindings"]:
-                wdEquivalents.append((namespace + result["candidateId"]["value"], result["wdEntity"]["value"] ))
+                wdEquivalents.append( (namespace + result["candidateId"]["value"], result["wdEntity"]["value"] ) )
             print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {len(wdEquivalents)}")
 
-            # Retrieve matches from wikidata based on WIKIDATA_MATCHES_QUERY_TEMPLATE for the currently retrieved wikidata entities
+            # Retrieve matches from wikidata for the currently retrieved wikidata entities
             wikidataEntitiesForValues = [f"<{entityTuple[1]}>" for entityTuple in wdEquivalents]
             matchesQuery = WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", " ".join(wikidataEntitiesForValues))
             sparqlWikidata.setQuery(matchesQuery)
+
             try:
                 matchesResults = sparqlWikidata.query().convert()
             except Exception as e:
                 print(f"Error querying Wikidata SPARQL endpoint for matches: {e}")
                 print(f"Query: {matchesQuery}")
-                return
-            # Add to wdEquivalents
+                raise e
+            
             for result in matchesResults["results"]["bindings"]:
+                print(result)
                 wdEntity = result["wdEntity"]["value"]
                 otherEntity = result["otherEntity"]["value"]
-                wdEquivalents.append((otherEntity, wdEntity))
-
-
-            #debug
-            hasResults = False
+                wdEquivalents.append( (otherEntity, wdEntity) )
+            print(f"Found {len(matchesResults['results']['bindings'])} additional sameAs links for dataset {dataset} based on matches for retrieved Wikidata entities. Total so far: {len(wdEquivalents)}")
 
         # Store output as ttl file with triples of the form <datasetEntity> owl:sameAs <wikidataEntity> in the specified output directory
         with open(f"{output_directory}/{dataset}WikidataSameAs.ttl", "w") as f:
