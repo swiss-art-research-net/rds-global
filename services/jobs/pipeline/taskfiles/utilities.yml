@@ -340,7 +340,7 @@ tasks:
           # Insert the graph name before the final dot at the end of each triple
 
           awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$file" > "$nquad_file"     
-          rm "$file"          rm "$file"
+          rm "$file"
         done
       - # Split large files into smaller chunks of 100000 lines each
       - |
