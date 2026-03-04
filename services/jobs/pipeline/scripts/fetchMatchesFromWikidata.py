@@ -14,6 +14,8 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
     sparqlLocal.setMethod(POST)
 
     sparqlWikidata = SPARQLWrapper(wikidata_endpoint)
+    sparqlWikidata.setReturnFormat(JSON)
+    sparqlWikidata.setMethod(POST)
 
     cfg = load_config(config)
     datasets = cfg.get("datasets", {})
@@ -35,11 +37,15 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         for _, rdfType in datasetConfig.get("types", {}).items():
             rdfTypes.extend(rdfType)
 
+        # Load Configuration
         try:
             wikidataProperty = datasetConfig['wikidata_match_property']
         except KeyError:
             raise KeyError(f"Wikidata match property not defined for dataset {dataset} in config")
-        
+        try:
+            namespace = datasetConfig['namespace']
+        except KeyError:
+            raise KeyError(f"Namespace not defined for dataset {dataset} in config")
         try:
             namedGraph = datasetConfig['graph']
         except KeyError:
@@ -48,6 +54,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         counter = 0
         prefixes = generate_prefixes(datasetConfig.get("prefixes", {}))
         hasResults = True
+        wdEquivalents = {}
         while hasResults:
             query = prefixes + f"""
                SELECT ?subject WHERE {{
@@ -72,15 +79,15 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
 
             entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
 
+            # Strip namespace from entities to get candidate IDs for Wikidata query
+            candidateIds = [entity.replace(namespace, "") for entity in entities]   
             # for each page of entities we query wikidata for sameAs statements
             sameAsQuery = prefixes + f"""
                 PREFIX owl: <http://www.w3.org/2002/07/owl#>
                 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-                CONSTRUCT {{
-                    ?wdEntity owl:sameAs ?candidate .
-                }} WHERE {{
-                    VALUES ?candidate {{ {' '.join(f'<{entity}>' for entity in entities)} }}
-                    ?wdEntity wdt:{wikidataProperty} ?candidate .
+                SELECT ?wdEntity ?candidateId WHERE {{
+                    VALUES ?candidateId {{ {' '.join(f'"{candidateId}"' for candidateId in candidateIds)} }}
+                    ?wdEntity wdt:{wikidataProperty} ?candidateId .
                 }}
             """
 
@@ -91,9 +98,12 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                 print(f"Error querying Wikidata SPARQL endpoint: {e}")
                 print(f"Query: {sameAsQuery}")
                 return
-            print(sameAsResults)
-            # debug:
-            hasResults = False
+            
+            for result in sameAsResults["results"]["bindings"]:
+                wdEquivalents[result["candidateId"]["value"]] = result["wdEntity"]["value"]
+            print(f"Found {len(sameAsResults['results']['bindings'])} new sameAs links for dataset {dataset} with offset {counter}. Total so far: {len(wdEquivalents)}")    
+        print(f"Found {len(wdEquivalents)} total sameAs links for dataset {dataset}")
+
             
         
 

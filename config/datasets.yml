@@ -216,6 +216,7 @@ datasets:
 
   ulan:
     graph: http://vocab.getty.edu/ulan/graph
+    namespace: http://vocab.getty.edu/ulan/
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
       skos: http://www.w3.org/2004/02/skos/core#
