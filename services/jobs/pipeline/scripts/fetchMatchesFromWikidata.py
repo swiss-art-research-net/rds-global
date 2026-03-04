@@ -32,6 +32,12 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
         rdfTypes = []
         for _, rdfType in datasetConfig.get("types", {}).items():
             rdfTypes.extend(rdfType)
+
+        try:
+            wikidataProperty = datasetConfig['wikidata_match_property']
+        except KeyError:
+            raise KeyError(f"Wikidata match property not defined for dataset {dataset} in config")
+        
         try:
             namedGraph = datasetConfig['graph']
         except KeyError:
@@ -63,8 +69,19 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                 continue
 
             entities = [result["subject"]["value"] for result in results["results"]["bindings"]]
-            print(entities)
 
+            # for each page of entities we query wikidata for sameAs statements
+            sameAsQuery = prefixes + f"""
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                CONSTRUCT {{
+                    ?wdEntity owl:sameAs ?candidate .
+                }} WHERE {{
+                    VALUES ?candidate {{ {' '.join(f'<{entity}>' for entity in entities)} }}
+                    ?wdEntity wdt:{wikidataProperty} ?candidate .
+                }}
+            """
+            
             # debug:
             hasResults = False
             
