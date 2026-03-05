@@ -56,7 +56,7 @@ def query_with_retry(
 def build_count_query(prefixes, named_graph, rdf_types):
     return (
         prefixes
-        + f"\nSELECT (COUNT(?subject) AS ?total) WHERE {{ GRAPH <{named_graph}> "
+        + f"\nSELECT (COUNT(DISTINCT ?subject) AS ?total) WHERE {{ GRAPH <{named_graph}> "
           f"{{ ?subject a ?type . VALUES ?type {{ {' '.join(rdf_types)} }} "
           f"FILTER(isIri(?subject)) }} }}"
     )
@@ -210,14 +210,16 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                         sparqlWikidata, matchesQuery, label=f"{datasetName}:wikidata matches"
                     )
 
-                    for r in matchesResults["results"]["bindings"]:
+                    match_bindings = matchesResults["results"]["bindings"]
+                    written_matches = 0
+                    for r in match_bindings:
                         if "otherEntity" in r and "value" in r["otherEntity"]:
                             wdEntity = r["wdEntity"]["value"]
                             otherEntity = r["otherEntity"]["value"]
                             if is_valid_turtle_iri(otherEntity):
                                 f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
 
-                    wdEquivalentsFound += len(matchesResults["results"]["bindings"])
+                    wdEquivalentsFound += written_matches
 
                 pbar.set_postfix({"Links": wdEquivalentsFound})
 
@@ -242,7 +244,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--page-size", required=False, type=int, default=PAGE_SIZE, help="number of results to fetch per query")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
-    parser.add_argument("--dataset", required=False, help="Dataset to generate labels for (all datasets if not specified)")
+    parser.add_argument("--dataset", required=False, help="Dataset to fetch Wikidata matches for (all datasets if not specified)")
 
     args = parser.parse_args()
     main(
