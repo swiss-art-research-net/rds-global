@@ -23,6 +23,8 @@ WIKIDATA_MATCHES_QUERY_TEMPLATE = """
     }
 """
 
+_TURTLE_IRIREF_FORBIDDEN = set(['<', '>', '"', '{', '}', '|', '\\', '^', '`'])
+
 def _sleep_backoff(attempt, *, base = 0.6, cap = 30.0):
     # exponential backoff with jitter
     delay = min(cap, base * (2 ** attempt))
@@ -69,6 +71,17 @@ def build_entities_page_query(prefixes, named_graph, rdf_types, offset, limit):
             }}
         }} ORDER BY DESC(?subject) OFFSET {offset} LIMIT {limit}
     """
+
+def is_valid_turtle_iri(iri):
+    if not iri:
+        return False
+    for ch in iri:
+        o = ord(ch)
+        if o <= 0x20 or o == 0x7F:
+            return False
+        if ch in _TURTLE_IRIREF_FORBIDDEN:
+            return False
+    return True
 
 def normalize_candidate_ids(entities, namespace):
     candidate_ids = [
@@ -201,7 +214,8 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                         if "otherEntity" in r and "value" in r["otherEntity"]:
                             wdEntity = r["wdEntity"]["value"]
                             otherEntity = r["otherEntity"]["value"]
-                            f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
+                            if is_valid_turtle_iri(otherEntity):
+                                f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
 
                     wdEquivalentsFound += len(matchesResults["results"]["bindings"])
 
