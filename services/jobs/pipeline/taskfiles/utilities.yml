@@ -158,6 +158,21 @@ tasks:
           DATASET: "{{.DATASET}}"
           OUTPUT_FILE: "{{.OUTPUT_FILE}}"
           QUERY: "{{.QUERY}}"
+          
+
+  _fetch-sameas-statements-local:
+    desc: Fetch SameAs Statements for different datasets
+    internal: True
+    cmds:
+      - echo "Fetching SameAs Statements for {{.DATASET}}"
+      - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
+      - >
+        curl -f -X POST
+        -H "Content-Type: application/sparql-query"
+        -H "Accept: text/turtle"
+        --data-binary "{{.QUERY}}"
+        "{{.QLEVER_ENDPOINT}}"
+        -o "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
 
   _ingest-data-from-folder:
     desc: Ingest data from folder into QLever triple store
