@@ -54,7 +54,7 @@ def query_with_retry(
 def build_count_query(prefixes, named_graph, rdf_types):
     return (
         prefixes
-        + f"\nSELECT (COUNT(?subject) AS ?total) WHERE {{ GRAPH <{named_graph}> "
+        + f"\nSELECT (COUNT(DISTINCT ?subject) AS ?total) WHERE {{ GRAPH <{named_graph}> "
           f"{{ ?subject a ?type . VALUES ?type {{ {' '.join(rdf_types)} }} "
           f"FILTER(isIri(?subject)) }} }}"
     )
