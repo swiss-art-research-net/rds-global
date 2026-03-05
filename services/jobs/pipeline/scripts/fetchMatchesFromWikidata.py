@@ -218,6 +218,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                             otherEntity = r["otherEntity"]["value"]
                             if is_valid_turtle_iri(otherEntity):
                                 f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
+                                written_matches += 1
 
                     wdEquivalentsFound += written_matches
 
