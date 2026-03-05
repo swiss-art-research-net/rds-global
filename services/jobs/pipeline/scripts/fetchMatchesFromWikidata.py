@@ -228,7 +228,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--page-size", required=False, type=int, default=PAGE_SIZE, help="number of results to fetch per query")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
-    parser.add_argument("--dataset", required=False, help="Dataset to generate labels for (all datasets if not specified)")
+    parser.add_argument("--dataset", required=False, help="Dataset to fetch Wikidata matches for (all datasets if not specified)")
 
     args = parser.parse_args()
     main(
