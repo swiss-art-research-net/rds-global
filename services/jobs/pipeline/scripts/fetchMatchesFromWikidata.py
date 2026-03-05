@@ -197,13 +197,16 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                         sparqlWikidata, matchesQuery, label=f"{datasetName}:wikidata matches"
                     )
 
-                    for r in matchesResults["results"]["bindings"]:
+                    match_bindings = matchesResults["results"]["bindings"]
+                    written_matches = 0
+                    for r in match_bindings:
                         if "otherEntity" in r and "value" in r["otherEntity"]:
                             wdEntity = r["wdEntity"]["value"]
                             otherEntity = r["otherEntity"]["value"]
                             f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
+                            written_matches += 1
 
-                    wdEquivalentsFound += len(matchesResults["results"]["bindings"])
+                    wdEquivalentsFound += written_matches
 
                 pbar.set_postfix({"Links": wdEquivalentsFound})
 
