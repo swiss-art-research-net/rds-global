@@ -93,8 +93,8 @@ tasks:
 
   fetch-sameas-statements-for-dataset-from-wikidata:
     desc: Fetch SameAs statements from Wikidata for a specified dataset passed as DATASET variable or via CLI argument
-    sources:
-      - "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.DATASET}}WikidataSameAs.ttl"
+    status:
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.DATASET}}WikidataSameAs.ttl"
     vars:
       DATASET:
         sh: |
@@ -324,17 +324,17 @@ tasks:
       GUNZIP: false
       FILE_FORMAT: ttl
     cmds:
-      - task: _downloadFromGitHubAndUnzip
-        vars:
-          GRAPH: "{{.GRAPH}}"
-          DATA_DIRECTORY: "{{.DATA_DIRECTORY}}"
-          DATA_GIT_REPOSITORY: "{{.DATA_GIT_REPOSITORY}}"
-          DATA_GIT_PATH: "{{.DATA_GIT_PATH}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          FILE_NAME: "data"
-          GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
-          GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
+      # - task: _downloadFromGitHubAndUnzip
+      #   vars:
+      #     GRAPH: "{{.GRAPH}}"
+      #     DATA_DIRECTORY: "{{.DATA_DIRECTORY}}"
+      #     DATA_GIT_REPOSITORY: "{{.DATA_GIT_REPOSITORY}}"
+      #     DATA_GIT_PATH: "{{.DATA_GIT_PATH}}"
+      #     GUNZIP: "{{.GUNZIP}}"
+      #     FILE_FORMAT: "{{.FILE_FORMAT}}"
+      #     FILE_NAME: "data"
+      #     GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
+      #     GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
       - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
