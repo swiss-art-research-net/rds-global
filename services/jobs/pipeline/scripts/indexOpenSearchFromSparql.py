@@ -105,18 +105,38 @@ MATCHES_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
   ?subject
-  (GROUP_CONCAT(DISTINCT STR(?match); SEPARATOR="||") AS ?matches)
-  (COUNT(DISTINCT ?match) AS ?numMatches)
+  (GROUP_CONCAT(DISTINCT STR(?allMatch); SEPARATOR="||") AS ?matches)
+  (COUNT(DISTINCT ?allMatch) AS ?numMatches)
 WHERE {{
     VALUES ?subject {{
         {subject_values}
     }}
 
-    OPTIONAL {{
-        GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
-            {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match . }}
-            UNION
-            {{ ?match <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
+        {{
+            {{
+                {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?directMatch . }}
+                UNION
+                {{ ?directMatch <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+            }}
+            BIND(?directMatch AS ?allMatch)
+        }}
+        UNION
+        {{
+            {{
+                {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?directMatch . }}
+                UNION
+                {{ ?directMatch <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+            }}
+
+            {{
+                {{ ?coMatch <http://schema.swissartresearch.net/ontology/rds#related> ?directMatch . }}
+                UNION
+                {{ ?directMatch <http://schema.swissartresearch.net/ontology/rds#related> ?coMatch . }}
+            }}
+
+            FILTER(?coMatch != ?subject)
+            BIND(?coMatch AS ?allMatch)
         }}
     }}
 }}
