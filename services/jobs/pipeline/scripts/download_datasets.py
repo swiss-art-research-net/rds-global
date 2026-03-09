@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-from html import parser
 import subprocess
 import sys
 from pathlib import Path
