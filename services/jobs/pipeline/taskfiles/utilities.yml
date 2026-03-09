@@ -400,49 +400,6 @@ tasks:
         # Insert the graph name before the final dot at the end of each triple
         awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$nt_file" > "$nquad_file"     
         rm "$nt_file"
-  _postprocess_geonames:
-    internal: true
-    desc: Convert GeoNames to N-Triples if needed
-    cmds:
-      - |
-        if [ "{{.DATASET}}" != "geonames" ]; then
-          exit 0
-        fi
-
-        if [ -f "{{.DATA_DIR}}/geonames.nt" ]; then
-          echo "GeoNames data already exists. Skipping conversion."
-          exit 0
-        fi
-
-        echo "Converting GeoNames to N-Triples..."
-        cp /pipeline/scripts/convert2ntriples.py "{{.DATA_DIR}}/convert2ntriples.py"
-        cd "{{.DATA_DIR}}"
-        python convert2ntriples.py
-        rm convert2ntriples.py
-
-  _postprocess_gnd:
-    internal: true
-    desc: Download GND ontology and convert to N-Triples
-    cmds:
-      - |
-        if [ "{{.DATASET}}" != "gnd" ]; then
-          exit 0
-        fi
-
-        if [ -z "{{.ONTOLOGY_URL}}" ] || [ "{{.ONTOLOGY_URL}}" = "null" ]; then
-          echo "No ontology URL configured for GND"
-          exit 1
-        fi
-
-        echo "Downloading GND ontology from {{.ONTOLOGY_URL}}"
-        curl -L -o "{{.DATA_DIR}}/gnd-ontology.ttl" "{{.ONTOLOGY_URL}}"
-
-        echo "Converting GND ontology to N-Triples"
-        rapper -i turtle -o ntriples \
-          "{{.DATA_DIR}}/gnd-ontology.ttl" \
-          > "{{.DATA_DIR}}/gnd-ontology.nt"
-
-        rm "{{.DATA_DIR}}/gnd-ontology.ttl"
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
