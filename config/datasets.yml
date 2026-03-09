@@ -1,12 +1,10 @@
 datasets:
 
   aat:
-    file_format: nt
     source:
       - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
         process:
         - unzip
-
     graph: http://vocab.getty.edu/aat/graph
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
@@ -26,15 +24,11 @@ datasets:
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
 
   geonames:
-    file_format: nt
     source:
       - url: http://download.geonames.org/all-geonames-rdf.zip
         process:
           - unzip
           - rdfxml2nt
-
-    
-
     graph: http://sws.geonames.org/graph
     prefixes:
       gn: http://www.geonames.org/ontology#
@@ -53,17 +47,14 @@ datasets:
         ?subject owl:sameAs ?value .
 
   gnd:
-    file_format: nt
     source:
       - type: http_file
         url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
         process:
-          - gunzip
-      
+          - gunzip   
       - type: http_file
         url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
         file_format: ttl
-
     graph: https://d-nb.info/gnd/authorities/graph
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
@@ -171,14 +162,13 @@ datasets:
         }
 
   sikart:
-    file_format: ttl
     source:
       - type: github_zip
         repository: swiss-art-research-net/sikart-data
         path: source/SIK_20210616_2300.ttl.zip
+        file_format: ttl
         process:
           - unzip
-
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
@@ -215,11 +205,10 @@ datasets:
 
 
   thes-arch-esp:
-    file_format: ttl
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
         type: http_file
-
+        file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
@@ -237,11 +226,10 @@ datasets:
         ?subject skos:exactMatch ?value .
 
   thes-obj-mob:
-    file_format: ttl
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
         type: http_file
-
+        file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
@@ -259,12 +247,10 @@ datasets:
         ?subject skos:exactMatch ?value .
 
   ulan:
-    file_format: nt
     source:
       - url: http://ulandownloads.getty.edu/VocabData/full.zip
         process:
           - unzip
-
     graph: http://vocab.getty.edu/ulan/graph
     prefixes:
       gvp: http://vocab.getty.edu/ontology#

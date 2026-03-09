@@ -119,7 +119,6 @@ def main():
 
     dataset_config = config["datasets"][args.dataset]
     sources = dataset_config["source"]
-    file_format = dataset_config["file_format"]
     if not isinstance(sources, list):
         sources = [sources]
 
@@ -131,6 +130,7 @@ def main():
         process_steps = source.get("process", [])
         github_repo = source.get("repository")
         github_path = source.get("path")
+        file_format = source.get("file_format", "nt")
 
         # Download step
         if source_type in ("http_file", "http_zip"):
