@@ -18,7 +18,8 @@ tasks:
           --endpoint "{{.QLEVER_ENDPOINT}}" \
           --os-host opensearch-node \
           --os-index rds-entities \
-          --page-size 100
+          --page-size 100 \
+          {{.CLI_ARGS}}
 
   _build_qlever_index:
     desc: Build QLever index from data
@@ -27,18 +28,148 @@ tasks:
       vars: [INPUT_DIR, NAME]
     cmds:
       - echo "Building QLever index from data in {{.INPUT_DIR}}"
-      - cd /index && find {{.INPUT_DIR}} -type f -name "*.nq" -exec sh -c 'cat "{}"' \; | qlever-index --index-basename {{.NAME}} --vocabulary-type on-disk-compressed -F nq -f - --text-words-from-literals -m 10GB | tee {{.NAME}}.index-log.txt
-    
+      - |
+        cd /index
+        find {{.INPUT_DIR}} -type f -name "*.nq" -exec cat {} + | qlever-index \
+            -F nq \
+            -f - \
+            --index-basename {{.NAME}} \
+            --vocabulary-type on-disk-compressed \
+            --text-words-from-literals \
+            -m 12G \
+            --parse-parallel true | tee {{.NAME}}.index-log.txt
+            
+  _downloadFile:
+    internal: True
+    interactive: True
+    desc: Download data
+    requires:
+      vars: [URL, DIRECTORY, FILE_FORMAT]
+    cmds:
+      - if [ -d "{{.DIRECTORY }}" ]; then
+          read -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (y/n) " REPLY;
+          echo;
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}";
+          fi;
+        fi
+        
+        if [ ! -d "{{.DIRECTORY }}" ]; then
+          mkdir -p "{{.DIRECTORY}}";
+          cd "{{.DIRECTORY}}";
+          echo "Fetching datasources...";
+          curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}};
+          echo "Fetching completed.";
+        fi
+
+  _downloadAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data
+    requires:
+      vars: [URL, DIRECTORY, GUNZIP, FILE_FORMAT]
+    cmds:
+      - # If the directory already exists, ask the user if they want to delete it
+      - |
+        bash -lc '
+        SKIP_ALL=false
+        if [ -d "{{.DIRECTORY}}" ]; then
+          read -t 10 -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (Y/n) (defaults to Y after 10s)" REPLY
+          [ -z "$REPLY" ] && REPLY="Y"
+          echo
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}"
+          else
+            SKIP_ALL=true
+          fi
+        fi
+        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
+          mkdir -p "{{.DIRECTORY}}"
+          cd "{{.DIRECTORY}}"
+          echo "Fetching datasources..."
+          if [ "{{.GUNZIP}}" == true ]; then
+            curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}}.gz
+          else
+            curl -k "{{.URL}}" -o data.zip
+          fi
+          echo "Fetching completed."
+        fi
+        if [ "{{.SKIP_UNZIPPING}}" != true ] && [ $SKIP_ALL != true ]; then
+            echo "Unzip datasources..."
+            cd "{{.DIRECTORY}}"
+            if [ "{{.GUNZIP}}" == true ]; then
+              gunzip data.{{.FILE_FORMAT}}.gz
+            elif [ -f "data.zip" ]; then
+                unzip data.zip
+            fi
+            echo "Unzipping completed."
+        fi'
+
+  _downloadFromGitHubAndUnzip:
+    internal: True
+    interactive: True
+    desc: Download and unzip data from GitHub
+    cmds:
+      - |
+        if [ -d "{{.DATA_DIRECTORY }}" ]; then
+          read -p "Do you want to remove previous data from {{.DATA_DIRECTORY}} and download new ones? (y/n) " REPLY
+          echo
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -r -d "{{.DIRECTORY}}"
+          else
+            SKIP_ALL=true
+          fi
+        fi
+        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
+          mkdir -p "{{.DATA_DIRECTORY}}"
+          python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
+          unzip "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip" -d "{{.DATA_DIRECTORY}}"
+        fi
+
+  _fetch-sameas-statements-for-dataset:
+    desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
+    requires:
+      vars: [DATASET]
+    vars:
+      OUTPUT_FILE:
+        sh: echo "{{.DATASET}}SameAs.ttl"
+      GRAPH:
+        sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
+      PREFIXES:
+        sh: |
+          yq -r '.datasets.{{.DATASET}}.prefixes | to_entries[] | "PREFIX \(.key): <\(.value)>"' '{{.DATASETS_CONFIG_YML}}'
+      QUERYPART:
+        sh: yq -r ".datasets.{{.DATASET}}.queries.matches" "{{.DATASETS_CONFIG_YML}}"
+      QUERY:
+        sh: |
+          echo "{{.PREFIXES}}
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                CONSTRUCT {
+                  ?subject owl:sameAs ?value .
+                } WHERE {
+                  GRAPH <{{.GRAPH}}> {
+                    {{.QUERYPART}}
+                  }
+                }"
+    cmds:
+      - '{{if eq .QUERYPART "null"}}echo "Matches query is not set for dataset {{.DATASET}}" >&2; exit 1{{end}}'
+      - task: _fetch-sameas-statements-local
+        vars:
+          DATASET: "{{.DATASET}}"
+          OUTPUT_FILE: "{{.OUTPUT_FILE}}"
+          QUERY: "{{.QUERY}}"
+          
+
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
     internal: True
     status:
       - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     cmds:
-      - echo "Fetching SameAs Statements for {{.DATASET_ID}}"
+      - echo "Fetching SameAs Statements for {{.DATASET}}"
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
       - >
-        curl -X POST
+        curl -f -X POST
         -H "Content-Type: application/sparql-query"
         -H "Accept: text/turtle"
         --data-binary "{{.QUERY}}"
@@ -97,13 +228,66 @@ tasks:
       - cat {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
       - rm {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk
 
-  _ingest-data-from-file:
-    desc: Ingest data from file
+  _ingest-data-from-folder:
+    desc: Ingest data from folder into QLever triple store
     internal: True
     requires:
-      vars: [NAME, FILE, GRAPH]
+      vars: [DIRECTORY]
+    vars:
+      MAX_NUM_LINES: 100000
+      QLEVER_ACCESS_TOKEN:
+        sh: echo $QLEVER_ACCESS_TOKEN   
+      TEMP_DIRECTORY: 
+        sh: echo "./tmp/ingest_$(basename {{.DIRECTORY}})"
     cmds:
-      - $BLAZEGRAPH_RUNNER load --journal=$BLAZEGRAPH_JOURNAL --graph={{.GRAPH}} {{.FILE}}
+      - |
+        for file in {{.DIRECTORY}}/*.{ttl,nt,nq,rdf}; do
+          [ -f "$file" ] || continue
+
+          EXT="${file##*.}"
+          TARGET_GRAPH="{{.GRAPH}}"
+          
+          # For NQuads, if no target graph is provided, we try to extract it from the first line of the file
+          if [ "$EXT" = "nq" ] && [ -z "$TARGET_GRAPH" ]; then
+            TARGET_GRAPH=$(sed -n '1s/.* <\([^>]*\)> \.$/\1/p' "$file")
+          fi
+
+          ENCODED_G=$(echo -n "$TARGET_GRAPH" | jq -sRr @uri)
+          URL_PARAMS=$( [ -n "$TARGET_GRAPH" ] && echo "graph=$ENCODED_G" || echo "default" )
+          mkdir -p {{.TEMP_DIRECTORY}}
+
+          # Split files into smaller chunks for more efficient uploading
+          # We convert NQ to NT on the fly during the split to save IO
+          if [ "$EXT" = "nq" ]; then
+            echo "Splitting $file (NQ -> NT)..."
+            sed 's/ <[^>]*> \.$/ ./' "$file" | split -l {{.MAX_NUM_LINES}} - {{.TEMP_DIRECTORY}}/part_
+            CT="application/n-triples"
+          elif [ "$EXT" = "nt" ]; then
+            split -l {{.MAX_NUM_LINES}} "$file" {{.TEMP_DIRECTORY}}/part_
+            CT="application/n-triples"
+          else
+            # For TTL/RDF we copy to chunks folder as a single unit
+            cp "$file" {{.TEMP_DIRECTORY}}/part_full
+            CT=$( [ "$EXT" = "ttl" ] && echo "text/turtle" || echo "application/rdf+xml" )
+          fi
+
+          for chunk in {{.TEMP_DIRECTORY}}/part_*; do
+            echo "Uploading $chunk..."
+            curl -s --fail-with-body --http1.1 --max-time 300 \
+                -X POST \
+                -H "Authorization: Bearer {{.QLEVER_ACCESS_TOKEN}}" \
+                -H "Content-Type: $CT" \
+                -T "$chunk" \
+                "{{.QLEVER_ENDPOINT}}/?${URL_PARAMS}" | jq -r '
+                  if .status == "ERROR" then
+                    "  [ERROR] \(.status): \(.exception // "Unknown error")"
+                  else
+                    "  [OK] Inserted: \(.operations[0]."delta-triples".operation.inserted) | Time: \(.time.total)ms"
+                  end'
+          done
+
+          rm -rf {{.TEMP_DIRECTORY}}
+        done
 
   _prepareForIndexing:
     desc: Prepare data for ingestion
@@ -154,6 +338,7 @@ tasks:
           [ -f "$file" ] || continue
           nquad_file="${file%.nt}.nq"
           # Insert the graph name before the final dot at the end of each triple
+
           awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$file" > "$nquad_file"     
           rm "$file"
         done
@@ -170,6 +355,51 @@ tasks:
           fi
         done
 
+  _prepareFileForIndexing:
+    desc: Prepare file for indexing
+    internal: True
+    requires:
+      vars: [FILE, FILE_FORMAT, GRAPH]
+    vars:
+      DIRECTORY_FOR_INGEST:
+         sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename $(dirname {{.FILE}}))_ingest"
+      FILE_FOR_INGEST:
+        sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename $(dirname {{.FILE}}))_ingest/$(basename {{.FILE}})"
+      FILE_TYPE:
+        sh: |
+            case "{{.FILE_FORMAT}}" in
+              rdf|owl)    echo rdfxml ;;
+              nt)         echo ntriples ;;
+              ttl)        echo turtle ;;
+              trig)       echo trig ;;
+              nq)         echo nquads ;;
+              json|rj)    echo json ;;
+              html|xhtml) echo rdfa ;;
+              xml)        echo grddl ;;
+              rss)        echo rss-tag-soup ;;
+              *)          echo guess ;;
+            esac
+    cmds:
+      - # Remove ingest file if it exists
+      - rm -f "{{.FILE_FOR_INGEST}}.nq"
+      - # Create temporary directory
+      - mkdir -p "{{.DIRECTORY_FOR_INGEST}}"
+      - |
+        if [ "{{.FILE_FORMAT}}" != "nt" ]; then
+          echo "Converting {{.FILE}} to N-Triples format for ingestion..."
+          rapper -i "{{.FILE_TYPE}}" -o ntriples "{{.FILE}}" > "{{.FILE_FOR_INGEST}}.nt"
+        else
+          echo "Copying N-Triples file {{.FILE}} to ingestion directory..."
+          cp "{{.FILE}}" "{{.FILE_FOR_INGEST}}.nt"
+        fi
+      - # Add the named graph to each triple in the nt file
+      - |
+        echo "Adding named graph {{.GRAPH}} to each triple for ingestion..."
+        nt_file="{{.FILE_FOR_INGEST}}.nt"
+        nquad_file="{{.FILE_FOR_INGEST}}.nq"
+        # Insert the graph name before the final dot at the end of each triple
+        awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$nt_file" > "$nquad_file"     
+        rm "$nt_file"
   _postprocess_geonames:
     internal: true
     desc: Convert GeoNames to N-Triples if needed

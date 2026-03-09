@@ -22,10 +22,12 @@ tasks:
     desc: Run entire pipeline
     interactive: True
     cmds:
-      - task: update-data
+      - task: update:data
+      - task: prepare-metadata-for-indexing
       - task: index-data
-      - task: generate-sameas-statements
+      - task: generate-type-mappings
       - task: generate-labels
+      - task: generate-sameas-statements
       - task: index-data # Re-index after data generation
       - task: add-data-to-search-index
       #- task: ingest-metadata
@@ -48,138 +50,35 @@ tasks:
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds: 
       - mkdir -p {{.DIRECTORY_SAMEAS_STATEMENTS}}
-      - task: fetch-sameas-statements-aat
-      - task: fetch-sameas-statements-ulan
-      - task: fetch-sameas-statements-gnd
-      - task: fetch-sameas-statements-thesobjmob
-      - task: fetch-sameas-statements-thesarchesp
-      - task: fetch-sameas-statements-sikart
-      - #task: fetch-sameas-statements-wikidata
-
-  fetch-sameas-statements-aat:
-    desc: Fetch SameAs statements contained in AAT
-    sources:
-      - /data/source/aat-data/*.nt
-    cmds:
-      - task: _fetch-sameas-statements-local
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: fetch-sameas-statements-for-dataset
         vars:
-          DATASET_ID: aat
-          OUTPUT_FILE: aatSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://vocab.getty.edu/aat/graph> {
-                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
-              }
-            }
-  
-  fetch-sameas-statements-gnd:
-    desc: Fetch SameAs statements contained in GND
-    sources:
-      - /data/source/gnd-data/*.ttl
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: gnd
-          OUTPUT_FILE: gndSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX schema: <http://schema.org/>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              {SELECT * WHERE {
-                  VALUES (?predicate) {
-                      (schema:sameAs)
-                      (rdfs:seeAlso)
-                      (skos:exactMatch)
-                  }
-                  GRAPH <https://d-nb.info/gnd/authorities/graph> {
-                  ?candidate2 ?predicate ?candidate1 .
-                  }
-              }}
-            }
-  
-  fetch-sameas-statements-sikart:
-    desc: Fetch SameAs statements contained in SIKART
-    sources:
-      - /data/source/sikart-data/*.ttl
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: sikart
-          OUTPUT_FILE: sikartSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX crmdig: <http://www.ics.forth.gr/isl/CRMdig/>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-            GRAPH <http://recherche.sik-isea.ch/graph> {
-              ?candidate2 crmdig:L54_same_as ?candidate1 .
-              }
-            }
+          DATASET: "{{.DATASET}}"    
+      #- task: fetch-sameas-statements-wikidata
 
-
-  fetch-sameas-statements-thesarchesp:
-    desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
-    sources:
-      - /data/source/thes-arch-esp-data/*.ttl
+  fetch-sameas-statements-for-dataset:
+    desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
     cmds:
-      - task: _fetch-sameas-statements-local
-        vars: 
-          DATASET_ID: thesarchesp
-          OUTPUT_FILE: thesarchespSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph> {
-                ?candidate2 skos:exactMatch ?candidate1 .
-              }
-            }
-
-  fetch-sameas-statements-thesobjmob:
-    desc: Fetch SameAs statements contained in Thesaurus Object/Mobiliers
-    sources:
-      - /data/source/thes-obj-mob-data/*.ttl
-    cmds:
-      - task: _fetch-sameas-statements-local
+      - task: _fetch-sameas-statements-for-dataset
         vars:
-          DATASET_ID: thesobjmob
-          OUTPUT_FILE: thesobjmobSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph> {
-                ?candidate2 skos:exactMatch ?candidate1 .
-              }
-            }
+          DATASET: "{{.DATASET}}"
 
-  fetch-sameas-statements-ulan:
-    desc: Fetch SameAs statements contained in ULAN
-    sources:
-      - /data/source/ulan-data/*.nt
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: ulan
-          OUTPUT_FILE: ulanSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://vocab.getty.edu/ulan/graph> {
-                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
-              }
-            }
-  
   fetch-sameas-statements-wikidata:
     desc: Fetch SameAs statements from Wikidata
     cmds:
@@ -299,6 +198,20 @@ tasks:
           FILE_FORMAT: "{{.FILE_FORMAT}}"
           GRAPH: "{{.GRAPH}}"
   
+  generate-type-mappings:
+    desc: Generate type mappings for RDS entities
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
+      OUTPUT_DIRECTORY: /data/ingest/type-mappings
+    cmds:
+      - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        cmd: python /pipeline/scripts/generateTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
   generate-labels:
     desc: Generate labels for URIs
     vars:
@@ -311,7 +224,22 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
+  ingest-data-from-folder:
+    desc: Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
+    vars:
+      DIRECTORY:
+        sh: echo "{{.CLI_ARGS}}"
+    cmds:
+      - |
+        if [ -z "{{.DIRECTORY}}" ]; then
+          echo "Error: No directory specified. Please provide a directory as a CLI argument."
+          exit 1
+        fi
+      - task: _ingest-data-from-folder
+        vars:
+          DIRECTORY: "{{.DIRECTORY}}"
 
   index-data:
     desc: Index all data in QLever
@@ -320,29 +248,29 @@ tasks:
         vars:
           INPUT_DIR: /data/ingest
           NAME: rds
-
-  ingest-metadata:
-    desc: Ingest metadata
+    
+  prepare-metadata-for-indexing:
+    desc: Prepare RDS metadata for indexing
     sources:
       - /data/rds-metadata/_datasetsMetadata.ttl
       - /data/rds-metadata/rds-ontologies-description.ttl
       - /data/rds-metadata/type-mapping.ttl
     cmds:
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars: 
-          NAME: Dataset Metadata
-          FILE: /data/rds-metadata/_datasetsMetadata.ttl
+          FILE: /data/source/rds-metadata/_datasetsMetadata.ttl
+          FILE_FORMAT: ttl
           GRAPH: http://rds.swissartresearch.net/graph/datasetMetadata
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars:
-          NAME: RDS Ontologies
-          FILE: /data/rds-metadata/rds-ontologies-description.ttl
+          FILE_FORMAT: ttl
+          FILE: /data/source/rds-metadata/rds-ontologies-description.ttl
           GRAPH: http://rds.swissartresearch.net/graph/rdsOntologies
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars:
-          NAME: Type Mappings
-          FILE: /data/rds-metadata/type-mapping.ttl
-          GRAPH: http://schema.swissartresearch.net/rds/type-mapping
+          FILE_FORMAT: ttl
+          FILE: /data/source/rds-metadata/type-mapping.ttl
+          GRAPH: http://schema.swissartresearch.net/rds/typeMapping
 
   ingest-sameas-statements:
     desc: Ingest SameAs statements
@@ -449,9 +377,10 @@ tasks:
 
 
   verify-data:
-    desc: Verify the validity of the source data
+    desc: Verify the validity of the source data or any data in a specified directory passed as CLI argument
     vars:
-      DATA_DIRECTORY: /data
+      DATA_DIRECTORY:
+        sh: '[ -d "{{.CLI_ARGS}}" ] && echo "{{.CLI_ARGS}}" || echo "/data"'
     cmds:
       - |
         DATA_DIR="{{.DATA_DIRECTORY}}"
@@ -460,7 +389,7 @@ tasks:
         FILES_ERROR=0
         ERROR_REPORT=""
 
-        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)"); do
+        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\|nq\)"); do
           echo "Verifying $file,..."
 
           if out=$(rapper -g -c "$file" 2>&1); then

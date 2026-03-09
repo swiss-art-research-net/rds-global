@@ -27,8 +27,9 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import requests
-import yaml
 from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
+
+from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 
 # ----------------------------
@@ -44,35 +45,49 @@ SELECT
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
   (GROUP_CONCAT(DISTINCT STR(?match); SEPARATOR="||") AS ?matches)
-  (MIN(?description_raw) AS ?description)
+  (SAMPLE(?description_raw) AS ?description)
   (COUNT(DISTINCT ?match) AS ?numMatches)
 WHERE {{
-  {{
-    SELECT ?subject ?type ?typeClass WHERE {{
-      GRAPH <{graph}> {{
-        {type_constraint_block}
-      }}
+    {{
+        SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
+            GRAPH <{types_graph}> {{
+                {type_constraint_block}
+                ?subject a ?queryType .
+            }}
+            GRAPH <{dataset_graph}> {{
+                ?subject a ?type .
+            }}
+            GRAPH <{labels_graph}> {{
+                {pref_label_block}
+            }}
+        }}
+        ORDER BY ?subject
+        LIMIT {limit}
+        OFFSET {offset}
     }}
-    ORDER BY ?subject
-    LIMIT {limit}
-    OFFSET {offset}
-  }}
 
-  GRAPH <{graph}> {{
-    {pref_label_block}
-    {description_block}
-  }} 
-  
-  OPTIONAL {{
-    GRAPH <{graph}> {{
-        {labels_block}
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
     }}
-  }}
-  OPTIONAL {{
-    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
-      ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match .
+    OPTIONAL {{
+        GRAPH <{dataset_graph}> {{
+            {description_block}
+        }} 
     }}
-  }}
+
+    OPTIONAL {{
+        GRAPH <{dataset_graph}> {{
+            {labels_block}
+        }}
+    }}
+
+    OPTIONAL {{
+        GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
+            {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match . }}
+            UNION
+            {{ ?match <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+        }}
+    }}
 }}
 GROUP BY ?subject
 ORDER BY ?subject
@@ -82,81 +97,33 @@ COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
-  GRAPH <{graph}> {{
-    {type_constraint_block}
-    FILTER EXISTS {{
-        {pref_label_block}
-        {description_block}
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
     }}
-  }}
+    
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
+
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
+    }}
 }}
 """
 
-def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
+def _build_type_constraint_block(types_by_class: Dict[str, List[str]]) -> str:
     """
-    Constrain subjects to ANY allowed requiredClass, and bind the corresponding typeClass label.
-
-    VALUES (?requiredClass ?typeClass) {
-      (gnd:DifferentiatedPerson "actor")
-      (gnd:Work "artwork")
-      ...
-    }
-    ?subject a ?requiredClass, ?type .
+    Builds a SPARQL block that constrains ?queryType to be one of the given types, grouped by their classes.
     """
-    if not class_pairs:
-        raise ValueError("No (requiredClass, typeClass) pairs found in dataset.types.")
-
-    # Escape double quotes in group names just in case
+    if not types_by_class:
+        return ""
     rows = []
-    for required_class, type_class in class_pairs:
-        safe_label = type_class.replace('"', '\\"')
-        rows.append(f'({required_class} "{safe_label}")')
-
-    values_rows = "\n      ".join(rows)
-    block = f"""\
-    VALUES (?requiredClass ?typeClass) {{
-      {values_rows}
-    }}
-    ?subject a ?requiredClass, ?type ."""
-    return block
-
-def _collect_required_class_pairs(dataset_config: Dict[str, Any]) -> List[Tuple[str, str]]:
-    """
-    Build pairs of (requiredClassQName, typeClassLabel) from dataset.types.
-
-    Example:
-      types:
-        actor: [gnd:DifferentiatedPerson, gnd:Gods]
-        artwork: [gnd:Work]
-
-    Produces:
-      [("gnd:DifferentiatedPerson","actor"), ("gnd:Gods","actor"), ("gnd:Work","artwork"), ...]
-    """
-    types_cfg = dataset_config.get("types", {})
-    if not isinstance(types_cfg, dict) or not types_cfg:
-        raise ValueError("Dataset is missing 'types' or it is not a dict of groups -> class lists.")
-
-    pairs: List[Tuple[str, str]] = []
-    for group_name, class_list in types_cfg.items():
-        if not isinstance(group_name, str) or not group_name.strip():
-            raise ValueError(f"Invalid types group name: {group_name!r}")
-        if not isinstance(class_list, list) or not class_list:
-            raise ValueError(f"types.{group_name} must be a non-empty list.")
-
-        for c in class_list:
-            if not isinstance(c, str) or not c.strip():
-                raise ValueError(f"Invalid class value in types.{group_name}: {c!r}")
-            pairs.append((c.strip(), group_name.strip()))
-
-    # De-dup pairs while preserving order
-    seen = set()
-    deduped: List[Tuple[str, str]] = []
-    for p in pairs:
-        if p not in seen:
-            seen.add(p)
-            deduped.append(p)
-
-    return deduped
+    for type_class in types_by_class.keys():
+        type_class_uri = f"<{RDS_ONTOLOGY_NAMESPACE}{type_class}>"
+        rows.append(f"( \"{type_class}\" {type_class_uri} )")
+    values_block = "VALUES (?typeClass ?queryType) {\n  " + "\n  ".join(rows) + "\n}"
+    return values_block
 
 def _generate_prefixes(prefixes: Dict[str, str]) -> str:
     items = sorted(prefixes.items(), key=lambda kv: kv[0])
@@ -164,23 +131,26 @@ def _generate_prefixes(prefixes: Dict[str, str]) -> str:
 
 def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     prefixes = _generate_prefixes(dataset_config.get("prefixes", {}))
-    graph = dataset_config["graph"]
+    dataset_graph = dataset_config["graph"]
 
-    class_pairs = _collect_required_class_pairs(dataset_config)
-    type_constraint_block = _build_type_constraint_block(class_pairs)
+    type_constraint_block = _build_type_constraint_block(dataset_config.get("types", []))
 
     queries = dataset_config.get("queries", {})
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
-    pref_label_block = queries["prefLabel"].replace("?value", "?prefLabel")
+    pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ." #queries["prefLabel"].replace("?value", "?prefLabel")
     labels_block = queries["labels"].replace("?value", "?label")
     description_block = queries["description"].replace("?value", "?description_raw")
+    types_graph = RDS_GRAPH_NAMESPACE + "types"
+    labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
     return {
         "prefixes": prefixes,
-        "graph": graph,
+        "dataset_graph": dataset_graph,
+        "types_graph": types_graph,
+        "labels_graph": labels_graph,
         "type_constraint_block": type_constraint_block,
         "pref_label_block": pref_label_block,
         "labels_block": labels_block,
@@ -428,10 +398,6 @@ def iter_dataset_rows(
 
         if sleep_s > 0:
             time.sleep(sleep_s)
-
-def load_config(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
 
 def index_dataset_to_opensearch(
     sparql_client: SparqlClient,

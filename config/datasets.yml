@@ -10,9 +10,10 @@ datasets:
     graph: http://vocab.getty.edu/aat/graph
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      concept:
+      Type:
         - gvp:Concept
     queries:
       description: |
@@ -21,6 +22,8 @@ datasets:
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
 
   geonames:
     file_format: nt
@@ -35,8 +38,9 @@ datasets:
     graph: http://sws.geonames.org/graph
     prefixes:
       gn: http://www.geonames.org/ontology#
+      owl: http://www.w3.org/2002/07/owl#
     types:
-      place:
+      Place:
         - gn:Feature
     queries:
       description: |
@@ -45,6 +49,8 @@ datasets:
         ?subject gn:name ?value .
       labels: |
         ?subject gn:alternateName ?value .
+      matches: |
+        ?subject owl:sameAs ?value .
 
   gnd:
     file_format: nt
@@ -60,51 +66,55 @@ datasets:
     graph: https://d-nb.info/gnd/authorities/graph
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
     types:
-      actor:
-        - gnd:Person
-        - gnd:UndifferentiatedPerson
-        - gnd:DifferentiatedPerson
-      builtWork:
-        - gnd:BuildingOrMemorial
-      bibliographicItem:
+      BibliographicItem:
         - gnd:Work
-      concept:
-        - gnd:SubjectHeading
-        - gnd:SubjectHeadingSensoStricto
-        - gnd:CharactersOrMorphemes
-        - gnd:Language
-        - gnd:NomenclatureInBiologyOrChemistry
-        - gnd:EthnographicName
-        - gnd:Relationship
-        - gnd:ProvenanceCharacteristic
-        - gnd:ProductNameOrBrandName
-        - gnd:SoftwareProduct
-      group:
-        - gnd:Company
-        - gnd:CorporateBody
-        - gnd:ReligiousCorporateBody
-        - gnd:MusicalCorporateBody
-        - gnd:FictiveCorporateBody
-        - gnd:OrganOfCorporateBody
-        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
-        - gnd:AdministrativeUnit
-        - gnd:ReligiousAdministrativeUnit
-      place:
-        - gnd:Country
-        - gnd:PlaceOrGeographicName
-        - gnd:MemberState
-        - gnd:NaturalGeographicUnit
-        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
-        - gnd:WayBorderOrLine
-        - gnd:ReligiousTerritory
-        - gnd:ExtraterrestrialTerritory
-        - gnd:FictivePlace
-      event:
+      BuiltWork:
+        - gnd:BuildingOrMemorial
+      Event:
         - gnd:ConferenceOrEvent
-        - gnd:SeriesOfConferenceOrEvent
         - gnd:HistoricSingleEventOrEra
         - gnd:ProjectOrProgram
+        - gnd:SeriesOfConferenceOrEvent
+      Group:
+        - gnd:AdministrativeUnit
+        - gnd:Company
+        - gnd:CorporateBody
+        - gnd:FictiveCorporateBody
+        - gnd:OrganOfCorporateBody
+        - gnd:MusicalCorporateBody
+        - gnd:ReligiousAdministrativeUnit
+        - gnd:ReligiousCorporateBody
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+      Person:
+        - gnd:DifferentiatedPerson
+        - gnd:Person
+        - gnd:UndifferentiatedPerson
+      Place:
+        - gnd:Country
+        - gnd:ExtraterrestrialTerritory
+        - gnd:FictivePlace
+        - gnd:MemberState
+        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
+        - gnd:NaturalGeographicUnit
+        - gnd:PlaceOrGeographicName
+        - gnd:ReligiousTerritory
+        - gnd:WayBorderOrLine
+        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
+      Type:
+        - gnd:CharactersOrMorphemes
+        - gnd:EthnographicName
+        - gnd:Language
+        - gnd:NomenclatureInBiologyOrChemistry
+        - gnd:ProductNameOrBrandName
+        - gnd:ProvenanceCharacteristic
+        - gnd:Relationship
+        - gnd:SoftwareProduct
+        - gnd:SubjectHeading
+        - gnd:SubjectHeadingSensoStricto
     queries:
       description: |
         ?subject ?predicateDescription ?value .
@@ -151,6 +161,13 @@ datasets:
             ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
             ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
         }
+      matches: |
+        ?subject ?predicate ?value .
+        VALUES (?predicate) {
+          (schema:sameAs)
+          (rdfs:seeAlso)
+          (skos:exactMatch)
+        }
 
   sikart:
     file_format: ttl
@@ -164,25 +181,26 @@ datasets:
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       sik: https://recherche.sik-isea.ch
     types:
-      actor:
-        - sik:SIK-ACTOR
-      place: 
-        - crm:E53_Place
-      event:
-        - sik:SIK-EXHIBITION
-        - sik:SIK-AWARD_CEREMONY
-      artwork:
+      Artwork:
         - sik:SIK-WORK
         - sik:SIK-WORK_GROUP
         - sik:SIK-PARENT_WORK
-      bibliographicItem:
+      BibliographicItem:
         - sik:SIK-DOCUMENT
         - sik:SIK-PUBLICATION
         - sik:SIK-PARENT_DOCUMENT
-      concept:
+      Event:
+        - sik:SIK-EXHIBITION
+        - sik:SIK-AWARD_CEREMONY
+      Person:
+        - sik:SIK-ACTOR
+      Place: 
+        - crm:E53_Place
+      Type:
         - sik:SIK-TYPE
     queries:
       description: |
@@ -191,6 +209,9 @@ datasets:
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      matches:
+        ?subject crmdig:L54_is_same-as ?value .
+
 
   thes-arch-esp:
     file_format: ttl
@@ -202,7 +223,7 @@ datasets:
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      concept:
+      Type:
         - skos:Concept
     queries:
       description: |
@@ -211,6 +232,8 @@ datasets:
         ?subject skos:prefLabel ?value .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .
 
   thes-obj-mob:
     file_format: ttl
@@ -222,7 +245,7 @@ datasets:
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      concept:
+      Type:
         - skos:Concept
     queries:
       description: |
@@ -231,6 +254,8 @@ datasets:
         ?subject skos:prefLabel ?value .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .
 
   ulan:
     file_format: nt
@@ -242,9 +267,10 @@ datasets:
     graph: http://vocab.getty.edu/ulan/graph
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      actor:
+      Person:
         - gvp:PersonConcept
         - gvp:UnknownPersonConcept
     queries:
@@ -254,3 +280,5 @@ datasets:
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
