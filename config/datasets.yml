@@ -206,7 +206,7 @@ datasets:
         ?subject crmdig:L54_is_same-as ?value .
 
 
-  thes-arch-esp:
+  thesarchesp:
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
         type: http_file
@@ -228,7 +228,7 @@ datasets:
       matches: |
         ?subject skos:exactMatch ?value .
 
-  thes-obj-mob:
+  thesobjmob:
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
         type: http_file
