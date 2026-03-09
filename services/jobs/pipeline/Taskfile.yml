@@ -22,7 +22,7 @@ tasks:
     desc: Run entire pipeline
     interactive: True
     cmds:
-      - task: update:data
+      - task: update-data
       - task: prepare-metadata-for-indexing
       - task: index-data
       - task: generate-type-mappings
