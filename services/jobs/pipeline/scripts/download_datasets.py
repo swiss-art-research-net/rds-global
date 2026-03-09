@@ -8,7 +8,6 @@ import requests
 import base64
 import hashlib
 import re
-import json
 from lib.utils import load_config
 import rdflib
 import os
