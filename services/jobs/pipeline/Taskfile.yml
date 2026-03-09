@@ -79,7 +79,7 @@ tasks:
   fetch-sameas-statements-gnd:
     desc: Fetch SameAs statements contained in GND
     sources:
-      - /data/source/gnd-authorities-data/*.ttl
+      - /data/source/gnd-data/*.ttl
     cmds:
       - task: _fetch-sameas-statements-local
         vars:
@@ -393,8 +393,7 @@ tasks:
     cmds:
       - task: _prepareForIndexing
         vars:
-          DIRECTORY:
-            sh: yq -r ".datasets.{{.DATASET}}.data_directory" "{{.DATASETS_CONFIG_YML}}"
+          DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
           FILE_FORMAT:
             sh: yq -r ".datasets.{{.DATASET}}.file_format // \"nt\"" "{{.DATASETS_CONFIG_YML}}"
           GRAPH:
@@ -433,11 +432,13 @@ tasks:
           else
             echo "{{.DATASET}}"
           fi
-
+      DATA_DIRECTORY:
+        sh: echo "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
     cmds:
       - |
         python /pipeline/scripts/download_datasets.py \
           --dataset "{{.DATASET}}" \
+          --data_directory "{{.DATA_DIRECTORY}}" \
           --config "{{.DATASETS_CONFIG_YML}}" \
           --github-username "{{.GITHUB_USERNAME_SIKART}}" \
           --github-token "{{.GITHUB_TOKEN_SIKART}}"
