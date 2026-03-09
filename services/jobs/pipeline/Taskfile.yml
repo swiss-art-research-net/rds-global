@@ -308,7 +308,7 @@ tasks:
               }" > /pipeline/tmp/requests/materialise_num_sameas.rq
       - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/materialise_num_sameas.rq
   
-  prepare_indexing:
+  prepare-indexing:
     desc: Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
     vars:
       DATASET:
@@ -371,7 +371,7 @@ tasks:
           --github-username "{{.GITHUB_USERNAME_SIKART}}" \
           --github-token "{{.GITHUB_TOKEN_SIKART}}"
 
-      - task: prepare_indexing
+      - task: prepare-indexing
         vars:
           DATASET: "{{.DATASET}}"
 
