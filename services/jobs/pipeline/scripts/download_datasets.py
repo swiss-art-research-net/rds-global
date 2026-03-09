@@ -10,6 +10,8 @@ import hashlib
 import re
 import json
 from lib.utils import load_config
+import rdflib
+import os
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -96,102 +98,124 @@ def download_github_file(*, username: str, token: str, repo: str, path: str, out
 
 
 def main():
+
     parser = argparse.ArgumentParser(description="Download and prepare RDF datasets")
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--config", required=True)
-
-    # only used if source-type == github_zip
+    parser.add_argument("--data_directory", required=False)
     parser.add_argument("--github-username")
     parser.add_argument("--github-token")
 
     args = parser.parse_args()
-    
     config = load_config(args.config)
 
-    try:
-        dataset_config = config["datasets"][args.dataset]
-    except KeyError:
-        raise RuntimeError(f"Dataset '{args.dataset}' not found in config")
-    
-    data_dir = Path(dataset_config["data_directory"])
-    source = dataset_config["source"]
-
-    source_type = source["type"]
-    source_url = source.get("url")
-    file_format = dataset_config.get("file_format", "nt")
-    gunzip = str(dataset_config.get("gunzip", False)).lower() == "true"
-
-    github_repo = source.get("repository")
-    github_path = source.get("path")
-    ontology_url = dataset_config.get("ontology", {}).get("url")
-
+    if args.data_directory:
+        data_dir = Path(args.data_directory)
+    else:
+        directory_source_data = Path(
+            os.environ.get("DIRECTORY_SOURCE_DATA", "/data/source")
+        )
+        data_dir = directory_source_data / f"{args.dataset}-data"
     data_dir.mkdir(parents=True, exist_ok=True)
 
+    dataset_config = config["datasets"][args.dataset]
+    sources = dataset_config["source"]
+    file_format = dataset_config["file_format"]
+    if not isinstance(sources, list):
+        sources = [sources]
+
     print(f"[{args.dataset}] Updating dataset: {data_dir}")
-    print(f"Source type: {source_type}")
 
-    if source_type in ("http_file", "http_zip"):
-        if not source_url:
-            raise RuntimeError("source-url is required for HTTP sources")
+    for source in sources:
+        source_type = source.get("type", "http_zip")
+        source_url = source.get("url")
+        process_steps = source.get("process", [])
+        github_repo = source.get("repository")
+        github_path = source.get("path")
 
-        if source_type == "http_zip":
-            archive = data_dir / "data.zip"
-            download_http(source_url, archive)
-            run(["unzip", "-o", archive.name], cwd=data_dir)
-        else:
-            out_file = data_dir / f"data.{file_format}"
-            if gunzip:
-                gz = out_file.with_suffix(out_file.suffix + ".gz")
-                download_http(source_url, gz)
-                run(["gunzip", "-f", gz.name], cwd=data_dir)
+        # Download step
+        if source_type in ("http_file", "http_zip"):
+            if not source_url:
+                raise RuntimeError("source-url is required for HTTP sources")
+            if source_type == "http_zip":
+                archive = data_dir / "data.zip"
+                download_http(source_url, archive)
+                input_file = archive
             else:
-                download_http(source_url, out_file)
-
-    elif source_type == "github_zip":
-        if not all([args.github_username, args.github_token, github_repo, github_path]):
-            raise RuntimeError("GitHub repository, path, username and token are required")
-
-        archive = data_dir / "data.zip"
-
-        download_github_file(
-            username=args.github_username,
-            token=args.github_token,
-            repo=github_repo,
-            path=github_path,
-            out_path=archive,
-        )
-
-        run(["unzip", "-o", archive.name], cwd=data_dir)
-        archive.unlink()
-
-    else:
-        raise ValueError(f"Unsupported source type: {source_type}")
-    
-    if args.dataset == "geonames":
-        nt_file = data_dir / "geonames.nt"
-        if not nt_file.exists():
-            print("[geonames] Converting to NTriples")
-            script_src = Path("/pipeline/scripts/convert2ntriples.py")
-            script_dst = data_dir / "convert2ntriples.py"
-            script_dst.write_bytes(script_src.read_bytes())
-            run(["python", script_dst.name], cwd=data_dir)
-            script_dst.unlink()
+                out_file = data_dir / f"data.{file_format}"
+                if any(p == "gunzip" for p in process_steps):
+                    gz = out_file.with_suffix(out_file.suffix + ".gz")
+                    download_http(source_url, gz)
+                    input_file = gz
+                else:
+                    download_http(source_url, out_file)
+                    input_file = out_file
+        elif source_type == "github_zip":
+            if not all([args.github_username, args.github_token, github_repo, github_path]):
+                raise RuntimeError("GitHub repository, path, username and token are required")
+            archive = data_dir / "data.zip"
+            download_github_file(
+                username=args.github_username,
+                token=args.github_token,
+                repo=github_repo,
+                path=github_path,
+                out_path=archive,
+            )
+            input_file = archive
         else:
-            print("[geonames] NTriples already exist — skipping conversion")
+            raise ValueError(f"Unsupported source type: {source_type}")
 
-    
-    if args.dataset == "gnd" and ontology_url:
-        print(f"[gnd] Downloading ontology from {ontology_url}")
-        ttl_path = data_dir / "gnd-ontology.ttl"
-        nt_path = data_dir / "gnd-ontology.nt"
+        # Process steps
+        for step in process_steps:
+            match step:
+                case "unzip":
+                    run(["unzip", "-o", input_file.name], cwd=data_dir)
+                    input_file = None
+                case "gunzip":
+                    run(["gunzip", "-f", input_file.name], cwd=data_dir)
+                    input_file = None
+                case "rdfxml2nt":
+                    # convert all .rdf files in the directory
+                    for rdf_file in data_dir.glob("*.rdf"):
+                        nt_file = rdf_file.with_suffix(".nt")
+                        g = rdflib.Graph()
+                        g.parse(str(rdf_file), format="xml")
+                        g.serialize(destination=str(nt_file), format="nt")
+                        print(f"Converted {rdf_file} to {nt_file}")
+                    # convert any .txt files line by line as RDF/XML
+                    for txt_file in data_dir.glob("*.txt"):
+                        nt_file = txt_file.with_suffix(".nt")
+                        fo = open(nt_file, "w")
+                        totalStmt = 0
+                        with open(txt_file, encoding="utf8") as fileobject:
+                            count = 0
+                            for line in fileobject:
+                                if count/10000 == int(count/10000):
+                                    print(count)
+                                if count%2 != 0:
+                                    g = rdflib.Graph()
+                                    try:
+                                        g.parse(data=line, format='xml')
+                                        totalStmt += len(g)
+                                        s = g.serialize(format='nt')
+                                        fo.write(s)
+                                    except Exception as e:
+                                        print(f"Error parsing line {count} in {txt_file.name}: {e}")
+                                count += 1
+                        print(f"Total statements from {txt_file.name}: {totalStmt}")
+                        fo.close()
+                case "ttl2nt":
+                    # convert all ttl files to nt, but already handled in _prepareForIndexing
+                    for ttl_file in data_dir.glob("*.ttl"):
+                        nt_file = ttl_file.with_suffix(".nt")
+                        g = rdflib.Graph()
+                        g.parse(str(ttl_file), format="turtle")
+                        g.serialize(destination=str(nt_file), format="nt")
+                        print(f"Converted {ttl_file} to {nt_file}")
+                case _:
+                    print(f"Unknown process step: {step}")
 
-        download_http(ontology_url, ttl_path)
-        run(["rapper", "-i", "turtle", "-o", "ntriples", ttl_path.name], cwd=data_dir)
-
-        ttl_path.unlink()
-
-
-    print(f"[{args.dataset}] Download completed successfully.")
+    print(f"[{args.dataset}] Download and processing completed successfully.")
 
 
 if __name__ == "__main__":
