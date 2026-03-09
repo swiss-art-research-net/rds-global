@@ -55,6 +55,7 @@ datasets:
       - type: http_file
         url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
         file_format: ttl
+    file_format: ttl
     graph: https://d-nb.info/gnd/authorities/graph
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
@@ -169,6 +170,7 @@ datasets:
         file_format: ttl
         process:
           - unzip
+    file_format: ttl
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
@@ -209,6 +211,7 @@ datasets:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
         type: http_file
         file_format: ttl
+    file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
@@ -230,6 +233,7 @@ datasets:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
         type: http_file
         file_format: ttl
+    file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
