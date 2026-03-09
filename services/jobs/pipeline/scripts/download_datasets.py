@@ -123,7 +123,7 @@ def main():
 
     print(f"[{args.dataset}] Updating dataset: {data_dir}")
 
-    for source in sources:
+    for idx, source in enumerate(sources):
         source_type = source.get("type", "http_zip")
         source_url = source.get("url")
         process_steps = source.get("process", [])
@@ -136,11 +136,11 @@ def main():
             if not source_url:
                 raise RuntimeError("source-url is required for HTTP sources")
             if source_type == "http_zip":
-                archive = data_dir / "data.zip"
+                archive = data_dir / f"data_{idx}.zip"
                 download_http(source_url, archive)
                 input_file = archive
             else:
-                out_file = data_dir / f"data.{file_format}"
+                out_file = data_dir / f"data_{idx}.{file_format}"
                 if any(p == "gunzip" for p in process_steps):
                     gz = out_file.with_suffix(out_file.suffix + ".gz")
                     download_http(source_url, gz)
@@ -151,7 +151,7 @@ def main():
         elif source_type == "github_zip":
             if not all([args.github_username, args.github_token, github_repo, github_path]):
                 raise RuntimeError("GitHub repository, path, username and token are required")
-            archive = data_dir / "data.zip"
+            archive = data_dir / f"data_{idx}.zip"
             download_github_file(
                 username=args.github_username,
                 token=args.github_token,
