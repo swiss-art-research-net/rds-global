@@ -22,13 +22,7 @@ tasks:
     desc: Run entire pipeline
     interactive: True
     cmds:
-      - task: update-data-aat
-      - task: update-data-geonames
-      - task: update-data-gnd
-      - task: update-data-sikart
-      - task: update-data-thesarchesp
-      - task: update-data-thesobjmob
-      - task: update-data-ulan
+      - task: update:data
       - task: prepare-metadata-for-indexing
       - task: index-data
       - task: generate-type-mappings
@@ -314,6 +308,25 @@ tasks:
               }" > /pipeline/tmp/requests/materialise_num_sameas.rq
       - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/materialise_num_sameas.rq
   
+  prepare_indexing:
+    desc: Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
+    cmds:
+      - task: _prepareForIndexing
+        vars:
+          DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
+          FILE_FORMAT:
+            sh: yq -r ".datasets.{{.DATASET}}.file_format // \"nt\"" "{{.DATASETS_CONFIG_YML}}"
+          GRAPH:
+            sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
+  
   process-sameas-statements:
     desc: Process SameAs statements
     sources:
@@ -322,166 +335,46 @@ tasks:
       - mkdir -p /data/sameAsStatements/combined
       - cd /pipeline/scripts/sameAsProcessing; npm run start
 
-  update-data-aat:
-    desc: Update data for Getty AAT
+  update-data:
+    desc: Update RDF datasets
+    interactive: true
     vars:
-      GRAPH: http://vocab.getty.edu/aat/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/aat-data"
-      DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
-      GUNZIP: false
-      FILE_FORMAT: nt
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds:
-      - task: _downloadAndUnzip
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: update_individual_dataset
         vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
+          DATASET: "{{.DATASET}}"
 
-  update-data-geonames:
-    desc: Update data for GeoNames
+  update_individual_dataset:
+    desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
     vars:
-      GRAPH: http://sws.geonames.org/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/geonames-data"
-      DATA_URL: http://download.geonames.org/all-geonames-rdf.zip
-      GUNZIP: false
-      FILE_FORMAT: nt
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
+      DATA_DIRECTORY:
+        sh: echo "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
     cmds:
-      - task: _downloadAndUnzip
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - echo "Preparing Geonames Data"
       - |
-        if [ ! -f "{{.DATA_DIRECTORY}}/geonames.nt" ]; then
-          cp /pipeline/scripts/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
-        else
-          echo "Geonames data already exists. Skipping conversion."
-        fi
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
-  
-  update-data-gnd:
-    desc: Update data for GND
-    vars:
-      GRAPH: https://d-nb.info/gnd/authorities/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/gnd-authorities-data"
-      DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
-      ONTOLOGY_URL: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
-      GUNZIP: true
-      FILE_FORMAT: nt
-    cmds:
-      - task: _downloadAndUnzip
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - curl -o "{{.DATA_DIRECTORY}}/gnd-ontology.ttl" "{{.ONTOLOGY_URL}}"
-      - rapper -i turtle -o ntriples "{{.DATA_DIRECTORY}}/gnd-ontology.ttl" > "{{.DATA_DIRECTORY}}/gnd-ontology.nt"
-      - rm "{{.DATA_DIRECTORY}}/gnd-ontology.ttl"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
+        python /pipeline/scripts/download_datasets.py \
+          --dataset "{{.DATASET}}" \
+          --data_directory "{{.DATA_DIRECTORY}}" \
+          --config "{{.DATASETS_CONFIG_YML}}" \
+          --github-username "{{.GITHUB_USERNAME_SIKART}}" \
+          --github-token "{{.GITHUB_TOKEN_SIKART}}"
 
-  update-data-sikart:
-    desc: Update data for SIKART
-    vars:
-      GRAPH: http://recherche.sik-isea.ch/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/sikart-data"
-      DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
-      DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
-      GUNZIP: false
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _downloadFromGitHubAndUnzip
+      - task: prepare_indexing
         vars:
-          GRAPH: "{{.GRAPH}}"
-          DATA_DIRECTORY: "{{.DATA_DIRECTORY}}"
-          DATA_GIT_REPOSITORY: "{{.DATA_GIT_REPOSITORY}}"
-          DATA_GIT_PATH: "{{.DATA_GIT_PATH}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          FILE_NAME: "data"
-          GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
-          GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
+          DATASET: "{{.DATASET}}"
 
-  update-data-thesarchesp:
-    desc: Update data for Thesaurus Architecture/Espace 
-    vars:
-      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/thes-arch-esp-data"
-      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
-      GUNZIP: false
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _downloadFile
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
-
-  update-data-thesobjmob:
-    desc: Update data for Thesaurus Object/Mobiliers
-    vars:
-      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/thes-obj-mob-data"
-      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _downloadFile
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
-
-  update-data-ulan:
-    desc: Update data for Getty ULAN
-    vars:
-      GRAPH: http://vocab.getty.edu/ulan/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/ulan-data"
-      DATA_URL: http://ulandownloads.getty.edu/VocabData/full.zip
-      GUNZIP: false
-      FILE_FORMAT: nt
-    cmds:
-      - task: _downloadAndUnzip
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
 
   verify-data:
     desc: Verify the validity of the source data or any data in a specified directory passed as CLI argument
