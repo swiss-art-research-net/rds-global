@@ -368,8 +368,8 @@ tasks:
           --dataset "{{.DATASET}}" \
           --data_directory "{{.DATA_DIRECTORY}}" \
           --config "{{.DATASETS_CONFIG_YML}}" \
-          --github-username "{{.GITHUB_USERNAME_SIKART}}" \
-          --github-token "{{.GITHUB_TOKEN_SIKART}}"
+          --github-username "$GITHUB_USERNAME_SIKART" \
+          --github-token "$GITHUB_TOKEN_SIKART"
 
       - task: prepare-indexing
         vars:
