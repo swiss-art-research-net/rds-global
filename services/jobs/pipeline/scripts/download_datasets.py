@@ -184,25 +184,24 @@ def main():
                     # convert any .txt files line by line as RDF/XML
                     for txt_file in data_dir.glob("*.txt"):
                         nt_file = txt_file.with_suffix(".nt")
-                        fo = open(nt_file, "w")
-                        totalStmt = 0
-                        with open(txt_file, encoding="utf8") as fileobject:
-                            count = 0
-                            for line in fileobject:
-                                if count/10000 == int(count/10000):
-                                    print(count)
-                                if count%2 != 0:
-                                    g = rdflib.Graph()
-                                    try:
-                                        g.parse(data=line, format='xml')
-                                        totalStmt += len(g)
-                                        s = g.serialize(format='nt')
-                                        fo.write(s)
-                                    except Exception as e:
-                                        print(f"Error parsing line {count} in {txt_file.name}: {e}")
-                                count += 1
-                        print(f"Total statements from {txt_file.name}: {totalStmt}")
-                        fo.close()
+                        with open(nt_file, "w") as fo:
+                            totalStmt = 0
+                            with open(txt_file, encoding="utf8") as fileobject:
+                                count = 0
+                                for line in fileobject:
+                                    if count/10000 == int(count/10000):
+                                        print(count)
+                                    if count%2 != 0:
+                                        g = rdflib.Graph()
+                                        try:
+                                            g.parse(data=line, format='xml')
+                                            totalStmt += len(g)
+                                            s = g.serialize(format='nt')
+                                            fo.write(s)
+                                        except Exception as e:
+                                            print(f"Error parsing line {count} in {txt_file.name}: {e}")
+                                    count += 1
+                            print(f"Total statements from {txt_file.name}: {totalStmt}")
                 case "ttl2nt":
                     # convert all ttl files to nt, but already handled in _prepareForIndexing
                     for ttl_file in data_dir.glob("*.ttl"):
