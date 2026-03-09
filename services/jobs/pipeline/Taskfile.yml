@@ -346,11 +346,11 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        task: update_individual_dataset
+        task: update-individual-dataset
         vars:
           DATASET: "{{.DATASET}}"
 
-  update_individual_dataset:
+  update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
     vars:
       DATASET:
