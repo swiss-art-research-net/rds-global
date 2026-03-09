@@ -1,12 +1,11 @@
 datasets:
 
   aat:
-    data_directory: "/data/source/aat-data"
-    source:
-      type: http_zip
-      url: http://aatdownloads.getty.edu/VocabData/explicit.zip
     file_format: nt
-    gunzip: false
+    source:
+      - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
+        process:
+        - unzip
 
     graph: http://vocab.getty.edu/aat/graph
     prefixes:
@@ -24,17 +23,14 @@ datasets:
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
 
   geonames:
-    data_directory: "/data/source/geonames-data"
-    source:
-      type: http_zip
-      url: http://download.geonames.org/all-geonames-rdf.zip
     file_format: nt
-    gunzip: false
+    source:
+      - url: http://download.geonames.org/all-geonames-rdf.zip
+        process:
+          - unzip
+          - rdfxml2nt
 
-    postprocess:
-      convert_to_nt:
-        script: /pipeline/scripts/convert2ntriples.py
-        output_file: geonames.nt
+    
 
     graph: http://sws.geonames.org/graph
     prefixes:
@@ -51,15 +47,15 @@ datasets:
         ?subject gn:alternateName ?value .
 
   gnd:
-    data_directory: "/data/source/gnd-authorities-data"
-    source:
-      type: http_file
-      url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
     file_format: nt
-    gunzip: true
-    ontology:
-      url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
-      format: ttl
+    source:
+      - type: http_file
+        url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+        process:
+          - gunzip
+      
+      - url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
+        file_format: ttl
 
     graph: https://d-nb.info/gnd/authorities/graph
     prefixes:
@@ -157,12 +153,13 @@ datasets:
         }
 
   sikart:
-    data_directory: "/data/source/sikart-data"
-    source:
-      type: github_zip
-      repository: swiss-art-research-net/sikart-data
-      path: source/SIK_20210616_2300.ttl.zip
     file_format: ttl
+    source:
+      - type: github_zip
+        repository: swiss-art-research-net/sikart-data
+        path: source/SIK_20210616_2300.ttl.zip
+        process:
+          - unzip
 
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
@@ -195,12 +192,11 @@ datasets:
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
 
-  thesarchesp:
-    data_directory: "/data/source/thes-arch-esp-data"
-    source:
-      type: http_file
-      url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+  thes-arch-esp:
     file_format: ttl
+    source:
+      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+        type: http_file
 
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
     prefixes:
@@ -216,12 +212,11 @@ datasets:
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
 
-  thesobjmob:
-    data_directory: "/data/source/thes-obj-mob-data"
-    source:
-      type: http_file
-      url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+  thes-obj-mob:
     file_format: ttl
+    source:
+      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+        type: http_file
 
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
     prefixes:
@@ -238,12 +233,11 @@ datasets:
         ?subject (skos:prefLabel | skos:altLabel) ?value .
 
   ulan:
-    data_directory: "/data/source/ulan-data"
-    source:
-      type: http_zip
-      url: http://ulandownloads.getty.edu/VocabData/full.zip
     file_format: nt
-    gunzip: false
+    source:
+      - url: http://ulandownloads.getty.edu/VocabData/full.zip
+        process:
+          - unzip
 
     graph: http://vocab.getty.edu/ulan/graph
     prefixes:
