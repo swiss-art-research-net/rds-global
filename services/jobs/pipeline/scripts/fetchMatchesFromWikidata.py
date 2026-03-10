@@ -241,7 +241,8 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                             propEntityLabel = r["propEntityLabel"]["value"]
                             if is_valid_turtle_iri(otherEntity):
                                 f.write(f"<{otherEntity}> {PREDICATE_SAMEAS} <{wdEntity}> .\n")
-                                f.write(f"<{otherEntity}> {PREDICATE_DESCRIPTION} \"{propEntityLabel}\" .\n")
+                                # TODO: find way of including labels that does not interfere with the sameas processing
+                                #f.write(f"<{otherEntity}> {PREDICATE_DESCRIPTION} \"{propEntityLabel}\" .\n")
                                 written_matches += 1
 
                     wdEquivalentsFound += written_matches

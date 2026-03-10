@@ -1,7 +1,7 @@
 import argparse
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
-from lib.utils import RDS_ONTOLOGY_NAMESPACE, load_config, generate_prefixes_for_SPARQL as generate_prefixes, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
+from lib.utils import RDS_ONTOLOGY_NAMESPACE, load_config, generate_prefixes_for_SPARQL as generate_prefixes, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE, sanitise_string_value_for_turtle
 
 LABEL_PREDICATE = f"<{RDS_ONTOLOGY_NAMESPACE}label>"
 LABEL_GRAPH = f"<{RDS_GRAPH_NAMESPACE}labels>"
@@ -64,12 +64,9 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                 for result in results["results"]["bindings"]:
                     subject = result["subject"]["value"]
                     value = result["value"]["value"]
+                    value_str = sanitise_string_value_for_turtle(value)
                     subject_str = f"<{subject}>" if result["subject"]["type"] == "uri" else f"\"{subject}\""
-                    # Sanitise value string (e.g. escape \ and " characters) to ensure valid NQuads output
                     
-                    value_str = value.replace('\\', '\\\\')
-                    value_str = value_str.replace('"', '\\"')
-                    value_str = f"\"{value_str}\""
                     # Add datatype or language if present
                     if "xml:lang" in result["value"]:
                         value_str += f"@{result['value']['xml:lang']}"
