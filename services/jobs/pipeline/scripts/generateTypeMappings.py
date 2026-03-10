@@ -69,8 +69,6 @@ def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, con
                 with open(out_path, "w") as out_f:
                     out_f.writelines(nquad_lines)
                 file_num = file_num + 1
-                # debug
-                hasResults = False
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
