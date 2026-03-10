@@ -6,6 +6,7 @@ from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_pref
 PAGE_SIZE = 3000000
 TYPES_GRAPH = f"<{RDS_GRAPH_NAMESPACE}types>"
 TYPE_PREDICATE = f"<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+DEFAULT_TYPE_QUERY = "?subject a ?value ."
 
 def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, config, dataset=None):
     
@@ -30,18 +31,20 @@ def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, con
         prefixes['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         prefixesForQuery = generate_prefixes(prefixes)
         types = dataset.get("types")
+        typeQuery = dataset.get("queries", {}).get("types", DEFAULT_TYPE_QUERY).replace("?value", "?type")
         file_num = 0
         for typeToMap, types in types.items(): 
             counter = 0
             hasResults = True
             typeValues = ' '.join([f"({t})" for t in types])
+            
             while hasResults:
                 offset = str(counter)
                 limit = str(page_size)
                 query = prefixesForQuery + f"""
                     SELECT ?subject WHERE {{
                         GRAPH <{graph}> {{
-                            ?subject rdf:type ?type .
+                            {typeQuery}
                             VALUES (?type) {{ 
                                 {typeValues}
                             }}
