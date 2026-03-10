@@ -1,0 +1,26 @@
+dataGeneration:
+  query: |
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?propEntity ?propEntityLabel ?directPredicate ?formatter WHERE {
+        ?propEntity wikibase:propertyType wikibase:ExternalId ;
+                    wikibase:directClaim ?directPredicate ;
+                    rdfs:label ?propEntityLabel .
+        ?propEntity wdt:P1630 ?formatter .
+        FILTER(LANG(?propEntityLabel) = "en")
+    } ORDER BY ?propEntity
+  useQuery:
+    | 
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT DISTINCT ?directPredicate ?formatter ?propEntityLabel (COUNT(?wdEntity) AS ?num) WHERE {
+      ?propEntity wikibase:propertyType wikibase:ExternalId ;
+                  wikibase:directClaim ?directPredicate ;
+                  rdfs:label ?propEntityLabel .
+      ?propEntity wdt:P1630 ?formatter .
+      ?wdEntity ?directPredicate ?id .
+      FILTER (LANG(?propEntityLabel) = "en")
+    }
+    GROUP BY ?directPredicate ?formatter ?propEntityLabel
