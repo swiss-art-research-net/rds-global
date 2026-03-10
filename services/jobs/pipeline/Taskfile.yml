@@ -257,10 +257,10 @@ tasks:
 
 
   verify-data:
-    desc: Verify the validity of the source data or any data in a specified directory passed as CLI argument
+    desc: Verify the validity of the ingest data or any data in a specified directory passed as CLI argument
     vars:
       DATA_DIRECTORY:
-        sh: '[ -d "{{.CLI_ARGS}}" ] && echo "{{.CLI_ARGS}}" || echo "/data"'
+        sh: '[ -d "{{.CLI_ARGS}}" ] && echo "{{.CLI_ARGS}}" || echo "/data/ingest"'
     cmds:
       - |
         DATA_DIR="{{.DATA_DIRECTORY}}"
