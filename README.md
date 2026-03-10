@@ -48,7 +48,7 @@ This will run the entire pipeline, currently consisting of the following steps:
 
 #### Tasks
 
-The pipeline is can be controlled by the [Task](https://taskfile.dev/#/) runner. The tasks are defined in the `Taskfile.yml` file.
+The pipeline is controlled through the [Task](https://taskfile.dev/#/) runner. The tasks are defined in the `Taskfile.yml` file.
 
 To list available tasks, run:
 
