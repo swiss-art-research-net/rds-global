@@ -52,49 +52,16 @@ datasets:
     types:
       BibliographicItem:
         - gnd:Work
-      BuiltWork:
-        - gnd:BuildingOrMemorial
       Event:
         - gnd:ConferenceOrEvent
-        - gnd:HistoricSingleEventOrEra
-        - gnd:ProjectOrProgram
-        - gnd:SeriesOfConferenceOrEvent
       Group:
-        - gnd:AdministrativeUnit
-        - gnd:Company
         - gnd:CorporateBody
-        - gnd:FictiveCorporateBody
-        - gnd:OrganOfCorporateBody
-        - gnd:MusicalCorporateBody
-        - gnd:ReligiousAdministrativeUnit
-        - gnd:ReligiousCorporateBody
-        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
       Person:
-        - gnd:DifferentiatedPerson
         - gnd:Person
-        - gnd:UndifferentiatedPerson
       Place:
-        - gnd:Country
-        - gnd:ExtraterrestrialTerritory
-        - gnd:FictivePlace
-        - gnd:MemberState
-        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
-        - gnd:NaturalGeographicUnit
         - gnd:PlaceOrGeographicName
-        - gnd:ReligiousTerritory
-        - gnd:WayBorderOrLine
-        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
       Type:
-        - gnd:CharactersOrMorphemes
-        - gnd:EthnographicName
-        - gnd:Language
-        - gnd:NomenclatureInBiologyOrChemistry
-        - gnd:ProductNameOrBrandName
-        - gnd:ProvenanceCharacteristic
-        - gnd:Relationship
-        - gnd:SoftwareProduct
         - gnd:SubjectHeading
-        - gnd:SubjectHeadingSensoStricto
     queries:
       description: |
         ?subject ?predicateDescription ?value .
@@ -141,6 +108,8 @@ datasets:
             ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
             ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
         }
+      type:
+        ?subject a/rdfs:subClassOf? ?value .
       matches: |
         ?subject ?predicate ?value .
         VALUES (?predicate) {
