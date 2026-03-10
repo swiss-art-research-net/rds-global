@@ -1,4 +1,5 @@
 import argparse
+import csv
 import random
 import time
 
@@ -13,12 +14,10 @@ WIKIDATA_MATCHES_QUERY_TEMPLATE = """
     PREFIX wd: <http://www.wikidata.org/entity/>
     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
     PREFIX wikibase: <http://wikiba.se/ontology#>
-    SELECT DISTINCT ?wdEntity ?otherEntity WHERE {
+    SELECT DISTINCT ?wdEntity ?otherEntity ?propEntityLabel WHERE {
         VALUES ?wdEntity { $VALUES }
-        ?propEntity wikibase:propertyType wikibase:ExternalId ;
-                    wikibase:directClaim ?directPredicate .
+        VALUES (?directPredicate ?formatter ?propEntityLabel) { $PREDICATES_FORMATTERS_AND_LABELS }
         ?wdEntity ?directPredicate ?idValue .
-        ?propEntity wdt:P1630 ?formatter .
         BIND (REPLACE(?formatter, "\\\\$1", ?idValue) AS ?otherEntity)
     }
 """
@@ -101,12 +100,20 @@ def build_wd_sameas_query(prefixes, wikidata_property, candidate_ids):
         }}
     """
 
-def build_wd_matches_query(unique_wd_entities):
+def build_wd_matches_query(unique_wd_entities, wikidata_external_id_properties):
     wikidata_entities_for_values = " ".join(f"<{e}>" for e in unique_wd_entities)
-    return WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", wikidata_entities_for_values)
+    predicates_and_formatter_values = []
+    for prop in wikidata_external_id_properties:
+        directPredicate = prop['directPredicate']
+        formatter = prop['formatter']
+        propEntityLabel = prop['propEntityLabel']
+        if not formatter:
+            continue
+        predicates_and_formatter_values.append(f"( <{directPredicate}> \"{formatter}\" \"{propEntityLabel}\" )")
+    return WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", wikidata_entities_for_values).replace("$PREDICATES_FORMATTERS_AND_LABELS", " ".join(predicates_and_formatter_values))
 
 
-def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
+def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
     sparqlLocal = SPARQLWrapper(endpoint)
     sparqlLocal.setReturnFormat(JSON)
     sparqlLocal.setMethod(POST)
@@ -118,6 +125,17 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
 
     cfg = load_config(config)
     datasets = cfg.get("datasets", {})
+
+    wikidata_external_id_properties = []
+    try:
+        with open(wikidata_properties_csv, "r", newline="") as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                if row['use']:
+                    wikidata_external_id_properties.append(row)
+    except Exception as e:
+        print(f"Error reading Wikidata properties CSV: {e}")
+        return
 
     # if dataset is specified, limit to that dataset
     if dataset:
@@ -205,7 +223,7 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                 # retrieve formatter-url matches for the currently retrieved wikidata entities
                 uniqueWdEntities = set(newWdEntities)
                 if uniqueWdEntities:
-                    matchesQuery = build_wd_matches_query(unique_wd_entities=uniqueWdEntities)
+                    matchesQuery = build_wd_matches_query(unique_wd_entities=uniqueWdEntities, wikidata_external_id_properties=wikidata_external_id_properties)
                     matchesResults = query_with_retry(
                         sparqlWikidata, matchesQuery, label=f"{datasetName}:wikidata matches"
                     )
@@ -216,8 +234,10 @@ def main(*, endpoint, wikidata_endpoint, output_directory, page_size=PAGE_SIZE, 
                         if "otherEntity" in r and "value" in r["otherEntity"]:
                             wdEntity = r["wdEntity"]["value"]
                             otherEntity = r["otherEntity"]["value"]
+                            propEntityLabel = r["propEntityLabel"]["value"]
                             if is_valid_turtle_iri(otherEntity):
                                 f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
+                                f.write(f"<{otherEntity}> <http://www.w3.org/2000/01/rdf-schema#label> \"{propEntityLabel}\" .\n")
                                 written_matches += 1
 
                     wdEquivalentsFound += written_matches
@@ -238,6 +258,11 @@ if __name__ == "__main__":
         help="SPARQL endpoint to use for querying Wikidata",
     )
     parser.add_argument(
+        "--wikidata-properties-csv",
+        required=True,
+        help="Path to CSV file containing Wikidata properties to use for matching"
+    )
+    parser.add_argument(
         "--output-directory",
         required=False,
         default="/data/sameAsStatements/sources",
@@ -251,6 +276,7 @@ if __name__ == "__main__":
     main(
         endpoint=args.endpoint,
         wikidata_endpoint=args.wikidata_endpoint,
+        wikidata_properties_csv=args.wikidata_properties_csv,
         output_directory=args.output_directory,
         page_size=args.page_size,
         config=args.config,
