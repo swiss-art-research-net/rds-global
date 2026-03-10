@@ -68,46 +68,15 @@ datasets:
         VALUES (?predicateDescription) {
             ( <https://d-nb.info/standards/elementset/gnd#definition> )
             ( <https://d-nb.info/standards/elementset/gnd#note> )
-            ( <https://d-nb.info/standards/elementset/gnd#historyOfTheCorporateBody> )
             ( <https://d-nb.info/standards/elementset/gnd#biographicalOrHistoricalInformation> )
             ( <https://d-nb.info/standards/elementset/gnd#professionOrOccupationAsLiteral> )
         }
       prefLabel: |
         ?subject ?predicatePrefLabel ?value .
-        VALUES (?predicatePrefLabel) {
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
-        }
+        ?predicatePrefLabel rdfs:subPropertyOf gnd:preferredName .
       labels: |
-        ?subject ?predicateLabel ?value .
-        VALUES (?predicateLabel) {
-            ( <https://d-nb.info/standards/elementset/gnd#forename> )
-            ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
-            ( <https://d-nb.info/standards/elementset/gnd#nameAddition> )
-            ( <https://d-nb.info/standards/elementset/gnd#originalScriptNameOfThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#personalName> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
-            ( <https://d-nb.info/standards/elementset/gnd#surname> )
-            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeadingSensoStricto>)
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheFamily> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
-        }
+        ?subject ?predicatePrefLabel ?value .
+        ?predicatePrefLabel rdfs:subPropertyOf gnd:variantName .
       type:
         ?subject a/rdfs:subClassOf? ?value .
       matches: |
