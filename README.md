@@ -87,6 +87,12 @@ sudo chown -R 999:999 binds/qlever-index
 
 ### Data Verification
 
+To verify the validity of the generated data to be ingested, or any other data folder, the `verify-data` task can be used. This will check if the data is in valid NTriples format and if the IRIs are valid. To run the task, execute:
+
+```bash
+docker compose exec jobs task verify-data -- /path/to/data
+```
+
 If the GND data fails to be verified, it can help to split it into separate files:
 ```
 split -l 1000000 -d -a 3 data.nt data.temp.
