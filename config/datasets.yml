@@ -95,7 +95,7 @@ datasets:
       labels: |
         ?subject ?predicatePrefLabel ?value .
         ?predicatePrefLabel rdfs:subPropertyOf gnd:variantName .
-      type:
+      types: |
         ?subject a/rdfs:subClassOf? ?value .
       matches: |
         ?subject ?predicate ?value .
