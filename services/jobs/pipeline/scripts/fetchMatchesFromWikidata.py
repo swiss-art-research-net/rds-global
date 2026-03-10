@@ -8,7 +8,8 @@ from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_pref
 from tqdm import tqdm
 
 PAGE_SIZE = 1000
-PREDICATE = "<http://www.w3.org/2002/07/owl#sameAs>"
+PREDICATE_SAMEAS = "<http://www.w3.org/2002/07/owl#sameAs>"
+PREDICATE_DESCRIPTION = "<http://www.w3.org/2000/01/rdf-schema#comment>"
 
 WIKIDATA_MATCHES_QUERY_TEMPLATE = """
     PREFIX wd: <http://www.wikidata.org/entity/>
@@ -215,7 +216,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                 for r in sameAsResults["results"]["bindings"]:
                     localUri = namespace + r["candidateId"]["value"]
                     wdUri = r["wdEntity"]["value"]
-                    f.write(f"<{localUri}> {PREDICATE} <{wdUri}> .\n")
+                    f.write(f"<{localUri}> {PREDICATE_SAMEAS} <{wdUri}> .\n")
                     newWdEntities.append(wdUri)
 
                 wdEquivalentsFound += len(sameAsResults["results"]["bindings"])
@@ -236,8 +237,8 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                             otherEntity = r["otherEntity"]["value"]
                             propEntityLabel = r["propEntityLabel"]["value"]
                             if is_valid_turtle_iri(otherEntity):
-                                f.write(f"<{otherEntity}> {PREDICATE} <{wdEntity}> .\n")
-                                f.write(f"<{otherEntity}> <http://www.w3.org/2000/01/rdf-schema#label> \"{propEntityLabel}\" .\n")
+                                f.write(f"<{otherEntity}> {PREDICATE_SAMEAS} <{wdEntity}> .\n")
+                                f.write(f"<{otherEntity}> {PREDICATE_DESCRIPTION} \"{propEntityLabel}\" .\n")
                                 written_matches += 1
 
                     wdEquivalentsFound += written_matches
