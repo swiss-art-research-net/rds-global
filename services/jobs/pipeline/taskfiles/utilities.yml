@@ -176,58 +176,6 @@ tasks:
         "{{.QLEVER_ENDPOINT}}"
         -o "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
 
-  _fetch-sameas-statements-remote:
-    desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
-    internal: True
-    vars:
-      NUM_DOWNLOAD_ATTEMPTS: 5
-      CONNECTION_TIMEOUT: 10
-      MAX_TIME: 1200
-    status:
-      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-    cmds:
-      - rm -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-      - |
-        for ((i=1; i<={{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
-          if [[ ! -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}" ]]; then
-            echo "Fetching SameAs Statements for {{.DATASET}} (Attempt $i of {{.NUM_DOWNLOAD_ATTEMPTS}})"
-            curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-          fi
-        done
-
-  _fetch-sameas-statements-remote-chunked:
-    desc: Fetch SameAs Statements for different datasets from an external SPARQL endpoint
-    internal: True
-    vars:
-      MAX_RESULTS_PER_REQUEST: 200000
-      NUM_DOWNLOAD_ATTEMPTS: 5
-      CONNECTION_TIMEOUT: 10
-      MAX_TIME: 1200
-    status:
-      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-    cmds:
-      - rm -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-      - |
-        for ((n=0; n<="{{.NUM_CHUNKS}}"; n++)) do
-          OFFSET=$((n * {{.MAX_RESULTS_PER_REQUEST}}))
-          if (( n==0 )); then
-            OFFSET_STR=""
-          else
-            OFFSET_STR="OFFSET $OFFSET"
-          fi
-          echo "Fetching SameAs Statements for {{.DATASET}} (Chunk $n of {{.NUM_CHUNKS}})"
-          OUTPUT_FILE_CHUNK="{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.$n.chunk"
-          for ((i=0; i<{{.NUM_DOWNLOAD_ATTEMPTS}}; i++)) do
-            if [[ ! -f $OUTPUT_FILE_CHUNK ]]; then
-              LIMIT_STATEMENT="LIMIT {{.MAX_RESULTS_PER_REQUEST}} $OFFSET_STR"
-              curl -s -X POST -H "Accept: text/turtle" --data-urlencode "query={{.QUERY}}" --max-time {{.MAX_TIME}} --connect-timeout {{.CONNECTION_TIMEOUT}} "{{.ENDPOINT}}" > $OUTPUT_FILE_CHUNK
-            fi
-          done
-        done
-      - # Combine all the chunks into a single file
-      - cat {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk > "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
-      - rm {{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}.*.chunk
-
   _ingest-data-from-folder:
     desc: Ingest data from folder into QLever triple store
     internal: True

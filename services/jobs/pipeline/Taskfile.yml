@@ -7,6 +7,7 @@ vars:
   DIRECTORY_INGEST_DATA: /data/ingest
   DIRECTORY_SOURCE_DATA: /data/source
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
+  WIKIDATA_IDS_CSV: /config/wikidata/wikidata-external-id-properties.csv
 
 env:
   QLEVER_ENDPOINT: http://qlever:7001
@@ -62,7 +63,13 @@ tasks:
         task: fetch-sameas-statements-for-dataset
         vars:
           DATASET: "{{.DATASET}}"    
-      #- task: fetch-sameas-statements-wikidata
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: fetch-sameas-statements-for-dataset-from-wikidata
+        vars:
+          DATASET: "{{.DATASET}}"
 
   fetch-sameas-statements-for-dataset:
     desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
@@ -79,108 +86,20 @@ tasks:
         vars:
           DATASET: "{{.DATASET}}"
 
-  fetch-sameas-statements-wikidata:
-    desc: Fetch SameAs statements from Wikidata
+  fetch-sameas-statements-for-dataset-from-wikidata:
+    desc: Fetch SameAs statements from Wikidata for a specified dataset passed as DATASET variable or via CLI argument
+    status:
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.DATASET}}WikidataSameAs.ttl"
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
     cmds:
-      - task: _fetch-sameas-statements-remote-chunked
-        vars:
-          DATASET: Wikidata VIAF
-          OUTPUT_FILE: wikidataSameAsVIAF.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              {
-                SELECT ?candidate ?sameAsID WHERE {
-                    ?candidate wdt:P214 ?sameAsID .
-                  } $LIMIT_STATEMENT
-                }
-              BIND (IRI(CONCAT(\"http://viaf.org/viaf/\", ?sameAsID)) as ?sameAs)
-            }
-          NUM_CHUNKS: 20
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata GND
-          OUTPUT_FILE: wikidataSameAsGND.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P227 ?sameAsID .
-              BIND (IRI(CONCAT(\"https://d-nb.info/gnd/\", ?sameAsID)) as ?sameAs)
-            }           
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata BNF
-          OUTPUT_FILE: wikidataSameAsBNF.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P268 ?sameAsID .
-              BIND(IRI(CONCAT('http://data.bnf.fr/ark:/12148/', ?sameAsID)) as ?sameAs)
-            }
-      - task: _fetch-sameas-statements-remote-chunked
-        vars:
-          DATASET: Wikidata LOC
-          OUTPUT_FILE: wikidataSameAsLOC.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              {
-                SELECT ?candidate ?sameAsID WHERE {
-                  ?candidate wdt:P244 ?sameAsID .
-                  FILTER(! CONTAINS(STR(?sameAsID), \" \") && ! CONTAINS(STR(?sameAsID), \"|\"))
-                } $LIMIT_STATEMENT
-              }
-              BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
-            }
-          NUM_CHUNKS: 7
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata ULAN
-          OUTPUT_FILE: wikidataSameAsULAN.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P245 ?sameAsID .
-              BIND (IRI(CONCAT(\"http://vocab.getty.edu/ulan/\", ?sameAsID)) as ?sameAs)
-            }
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata SIKART (Persons)
-          OUTPUT_FILE: wikidataSameAsSIKARTPersons.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX wd: <http://www.wikidata.org/entity/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P781 ?sameAsID .
-              FILTER EXISTS {
-                ?candidate wdt:P31 wd:Q5 .
-              }
-              BIND (IRI(CONCAT(\"https://recherche.sik-isea.ch/person-\", ?sameAsID)) as ?sameAs) .
-            }
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities

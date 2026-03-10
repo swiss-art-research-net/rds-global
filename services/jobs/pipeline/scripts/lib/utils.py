@@ -11,3 +11,8 @@ def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
     
+def sanitise_string_value_for_turtle(value):
+    value_str = value.replace('\\', '\\\\')
+    value_str = value_str.replace('"', '\\"')
+    value_str = f"\"{value_str}\""
+    return value_str
