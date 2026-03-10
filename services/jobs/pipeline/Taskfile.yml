@@ -7,6 +7,7 @@ vars:
   DIRECTORY_INGEST_DATA: /data/ingest
   DIRECTORY_SOURCE_DATA: /data/source
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
+  WIKIDATA_IDS_CSV: /config/wikidata/wikidata-external-id-properties.csv
 
 env:
   QLEVER_ENDPOINT: http://qlever:7001
@@ -104,7 +105,7 @@ tasks:
             echo "{{.DATASET}}"
           fi
     cmds:
-      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
