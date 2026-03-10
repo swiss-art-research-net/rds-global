@@ -127,6 +127,7 @@ tasks:
         fi
 
   _fetch-sameas-statements-for-dataset:
+    internal: True
     desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
     requires:
       vars: [DATASET]
