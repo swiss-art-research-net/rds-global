@@ -31,9 +31,6 @@ tasks:
       - task: generate-sameas-statements
       - task: index-data # Re-index after data generation
       - task: add-data-to-search-index
-      #- task: ingest-metadata
-      #- task: ingest-sameas-statements
-      #- task: materialise-num-sameas-statements
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
@@ -190,43 +187,7 @@ tasks:
           FILE_FORMAT: ttl
           FILE: /data/source/rds-metadata/type-mapping.ttl
           GRAPH: http://schema.swissartresearch.net/rds/typeMapping
-
-  ingest-sameas-statements:
-    desc: Ingest SameAs statements
-    sources:
-      - /data/sameAsStatements/combined/*.ttl
-    cmds:
-      - task: _ingest-data-from-file
-        vars:
-          NAME: Type Mappings
-          FILE: /data/sameAsStatements/combined/*.ttl
-          GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
    
-  materialise-num-sameas-statements:
-    desc: Materialise the count of SameAs statements per entity
-    sources:
-      - /data/sameAsStatements/combined/*.ttl
-    vars:
-      GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
-    cmds:
-      - mkdir -p /pipeline/tmp/requests
-      - |
-        echo "PREFIX rds: <http://schema.swissartresearch.net/ontology/rds#>
-              INSERT {
-                GRAPH <{{.GRAPH}}>
-                {
-                  ?subject <http://schema.swissartresearch.net/rds/numSameAsStatements> ?numSameAs .
-                }
-              } WHERE {
-                ?subject rds:related ?sameAs .
-                {
-                  SELECT (COUNT(?sameAs) as ?numSameAs) ?subject WHERE {
-                    ?subject rds:related ?sameAs .
-                  } GROUP BY ?subject
-                }
-              }" > /pipeline/tmp/requests/materialise_num_sameas.rq
-      - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/materialise_num_sameas.rq
-  
   prepare-indexing:
     desc: Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
     vars:
