@@ -4,7 +4,7 @@ import random
 import time
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
-from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
+from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes, sanitise_string_value_for_turtle
 from tqdm import tqdm
 
 PAGE_SIZE = 1000
@@ -236,6 +236,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                             wdEntity = r["wdEntity"]["value"]
                             otherEntity = r["otherEntity"]["value"]
                             propEntityLabel = r["propEntityLabel"]["value"]
+                            propEntityLabel = sanitise_string_value_for_turtle(propEntityLabel)
                             if is_valid_turtle_iri(otherEntity):
                                 f.write(f"<{otherEntity}> {PREDICATE_SAMEAS} <{wdEntity}> .\n")
                                 f.write(f"<{otherEntity}> {PREDICATE_DESCRIPTION} \"{propEntityLabel}\" .\n")
