@@ -101,7 +101,7 @@ tasks:
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
     vars:
-      DATA_DIRECTORY: /data/sameAsStatements/combinedSameAs
+      DATA_DIRECTORY: /data/sameAsStatements/combined
       FILE_FORMAT: ttl
       GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
     cmds:
@@ -213,6 +213,7 @@ tasks:
       - /data/sameAsStatements/*.ttl
     cmds:
       - mkdir -p /data/sameAsStatements/combined
+      - rm -rf /pipeline/scripts/sameAsProcessing/processing_db
       - cd /pipeline/scripts/sameAsProcessing; npm run start
 
   update-data:
