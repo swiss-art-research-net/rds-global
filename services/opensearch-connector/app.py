@@ -57,8 +57,8 @@ def build_query(q: str) -> Dict[str, Any]:
                 },
                 "field_value_factor": {
                     "field": "numMatches",
-                    "factor": 10.0,
-                    "modifier": "log1p",
+                    "factor": 3,
+                    "modifier": "sqrt",
                     "missing": 0,
                 },
                 "boost_mode": "sum",
