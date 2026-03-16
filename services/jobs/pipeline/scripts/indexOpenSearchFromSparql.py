@@ -16,7 +16,6 @@ Example:
     --os-index rds-entities \
     --page-size 1000
 """
-
 from __future__ import annotations
 
 import argparse
@@ -24,11 +23,12 @@ import json
 import sys
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional
 
 import requests
-import yaml
 from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
+
+from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 
 # ----------------------------
@@ -43,36 +43,40 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
-  (GROUP_CONCAT(DISTINCT STR(?match); SEPARATOR="||") AS ?matches)
-  (MIN(?description_raw) AS ?description)
-  (COUNT(DISTINCT ?match) AS ?numMatches)
+  (SAMPLE(?description_raw) AS ?description)
 WHERE {{
-  {{
-    SELECT ?subject ?type ?typeClass WHERE {{
-      GRAPH <{graph}> {{
-        {type_constraint_block}
-      }}
+    {{
+        SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
+            GRAPH <{types_graph}> {{
+                {type_constraint_block}
+                ?subject a ?queryType .
+            }}
+            GRAPH <{dataset_graph}> {{
+                ?subject a ?type .
+            }}
+            GRAPH <{labels_graph}> {{
+                {pref_label_block}
+            }}
+        }}
+        ORDER BY ?subject
+        LIMIT {limit}
+        OFFSET {offset}
     }}
-    ORDER BY ?subject
-    LIMIT {limit}
-    OFFSET {offset}
-  }}
 
-  GRAPH <{graph}> {{
-    {pref_label_block}
-    {description_block}
-  }} 
-  
-  OPTIONAL {{
-    GRAPH <{graph}> {{
-        {labels_block}
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
     }}
-  }}
-  OPTIONAL {{
-    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
-      ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match .
+    OPTIONAL {{
+        GRAPH <{dataset_graph}> {{
+            {description_block}
+        }}
     }}
-  }}
+
+    OPTIONAL {{
+        GRAPH <{dataset_graph}> {{
+            {labels_block}
+        }}
+    }}
 }}
 GROUP BY ?subject
 ORDER BY ?subject
@@ -82,81 +86,77 @@ COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
-  GRAPH <{graph}> {{
-    {type_constraint_block}
-    FILTER EXISTS {{
-        {pref_label_block}
-        {description_block}
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
     }}
-  }}
+
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
+
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
+    }}
 }}
 """
 
-def _build_type_constraint_block(class_pairs: List[Tuple[str, str]]) -> str:
-    """
-    Constrain subjects to ANY allowed requiredClass, and bind the corresponding typeClass label.
-
-    VALUES (?requiredClass ?typeClass) {
-      (gnd:DifferentiatedPerson "actor")
-      (gnd:Work "artwork")
-      ...
-    }
-    ?subject a ?requiredClass, ?type .
-    """
-    if not class_pairs:
-        raise ValueError("No (requiredClass, typeClass) pairs found in dataset.types.")
-
-    # Escape double quotes in group names just in case
-    rows = []
-    for required_class, type_class in class_pairs:
-        safe_label = type_class.replace('"', '\\"')
-        rows.append(f'({required_class} "{safe_label}")')
-
-    values_rows = "\n      ".join(rows)
-    block = f"""\
-    VALUES (?requiredClass ?typeClass) {{
-      {values_rows}
+MATCHES_QUERY_TEMPLATE = """\
+{prefixes}
+SELECT
+  ?subject
+  (GROUP_CONCAT(DISTINCT STR(?allMatch); SEPARATOR="||") AS ?matches)
+  (COUNT(DISTINCT ?allMatch) AS ?numMatches)
+WHERE {{
+    VALUES ?subject {{
+        {subject_values}
     }}
-    ?subject a ?requiredClass, ?type ."""
-    return block
 
-def _collect_required_class_pairs(dataset_config: Dict[str, Any]) -> List[Tuple[str, str]]:
+    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
+        {{
+            {{
+                {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?directMatch . }}
+                UNION
+                {{ ?directMatch <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+            }}
+            BIND(?directMatch AS ?allMatch)
+        }}
+        UNION
+        {{
+            {{
+                {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?directMatch . }}
+                UNION
+                {{ ?directMatch <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
+            }}
+
+            {{
+                {{ ?coMatch <http://schema.swissartresearch.net/ontology/rds#related> ?directMatch . }}
+                UNION
+                {{ ?directMatch <http://schema.swissartresearch.net/ontology/rds#related> ?coMatch . }}
+            }}
+
+            FILTER(?coMatch != ?subject)
+            BIND(?coMatch AS ?allMatch)
+        }}
+    }}
+}}
+GROUP BY ?subject
+ORDER BY ?subject
+"""
+
+
+def _build_type_constraint_block(types_by_class: Dict[str, List[str]]) -> str:
     """
-    Build pairs of (requiredClassQName, typeClassLabel) from dataset.types.
-
-    Example:
-      types:
-        actor: [gnd:DifferentiatedPerson, gnd:Gods]
-        artwork: [gnd:Work]
-
-    Produces:
-      [("gnd:DifferentiatedPerson","actor"), ("gnd:Gods","actor"), ("gnd:Work","artwork"), ...]
+    Builds a SPARQL block that constrains ?queryType to be one of the given types, grouped by their classes.
     """
-    types_cfg = dataset_config.get("types", {})
-    if not isinstance(types_cfg, dict) or not types_cfg:
-        raise ValueError("Dataset is missing 'types' or it is not a dict of groups -> class lists.")
-
-    pairs: List[Tuple[str, str]] = []
-    for group_name, class_list in types_cfg.items():
-        if not isinstance(group_name, str) or not group_name.strip():
-            raise ValueError(f"Invalid types group name: {group_name!r}")
-        if not isinstance(class_list, list) or not class_list:
-            raise ValueError(f"types.{group_name} must be a non-empty list.")
-
-        for c in class_list:
-            if not isinstance(c, str) or not c.strip():
-                raise ValueError(f"Invalid class value in types.{group_name}: {c!r}")
-            pairs.append((c.strip(), group_name.strip()))
-
-    # De-dup pairs while preserving order
-    seen = set()
-    deduped: List[Tuple[str, str]] = []
-    for p in pairs:
-        if p not in seen:
-            seen.add(p)
-            deduped.append(p)
-
-    return deduped
+    if not types_by_class:
+        return ""
+    rows = []
+    for type_class in types_by_class.keys():
+        type_class_uri = f"<{RDS_ONTOLOGY_NAMESPACE}{type_class}>"
+        rows.append(f"( \"{type_class}\" {type_class_uri} )")
+    values_block = "VALUES (?typeClass ?queryType) {\n  " + "\n  ".join(rows) + "\n}"
+    return values_block
 
 def _generate_prefixes(prefixes: Dict[str, str]) -> str:
     items = sorted(prefixes.items(), key=lambda kv: kv[0])
@@ -164,23 +164,26 @@ def _generate_prefixes(prefixes: Dict[str, str]) -> str:
 
 def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     prefixes = _generate_prefixes(dataset_config.get("prefixes", {}))
-    graph = dataset_config["graph"]
+    dataset_graph = dataset_config["graph"]
 
-    class_pairs = _collect_required_class_pairs(dataset_config)
-    type_constraint_block = _build_type_constraint_block(class_pairs)
+    type_constraint_block = _build_type_constraint_block(dataset_config.get("types", []))
 
     queries = dataset_config.get("queries", {})
     missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
-    pref_label_block = queries["prefLabel"].replace("?value", "?prefLabel")
+    pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ."
     labels_block = queries["labels"].replace("?value", "?label")
     description_block = queries["description"].replace("?value", "?description_raw")
+    types_graph = RDS_GRAPH_NAMESPACE + "types"
+    labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
     return {
         "prefixes": prefixes,
-        "graph": graph,
+        "dataset_graph": dataset_graph,
+        "types_graph": types_graph,
+        "labels_graph": labels_graph,
         "type_constraint_block": type_constraint_block,
         "pref_label_block": pref_label_block,
         "labels_block": labels_block,
@@ -194,6 +197,11 @@ def build_count_query(dataset_config: Dict[str, Any]) -> str:
 def build_query(dataset_config: Dict[str, Any], limit: int, offset: int) -> str:
     parts = _prepare_query_parts(dataset_config)
     return INDEX_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
+
+def build_matches_query(dataset_config: Dict[str, Any], subjects: List[str]) -> str:
+    parts = _prepare_query_parts(dataset_config)
+    subject_values = "\n        ".join(f"<{subject}>" for subject in subjects)
+    return MATCHES_QUERY_TEMPLATE.format(**parts, subject_values=subject_values)
 
 
 # ----------------------------
@@ -228,7 +236,6 @@ class SparqlClient:
                 if resp.status_code == 200:
                     return resp.json()
 
-                # Non-200 response → retryable error
                 raise RuntimeError(
                     f"SPARQL endpoint returned HTTP {resp.status_code}\n"
                     f"Response (first 1000 chars):\n{resp.text[:1000]}"
@@ -237,7 +244,7 @@ class SparqlClient:
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries:
-                    sleep_time = self.retry_sleep_s * attempt  # simple linear backoff
+                    sleep_time = self.retry_sleep_s * attempt
                     print(
                         f"[SPARQL] attempt {attempt}/{self.max_retries} failed, retrying in {sleep_time:.1f}s…",
                         file=sys.stderr,
@@ -246,7 +253,6 @@ class SparqlClient:
                 else:
                     break
 
-        # All retries exhausted
         raise RuntimeError(
             f"SPARQL query failed after {self.max_retries} attempts"
         ) from last_error
@@ -280,20 +286,12 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         types_concat = _get_binding_value(b, "types") or ""
         type_classes_concat = _get_binding_value(b, "typeClasses") or ""
         labels_concat = _get_binding_value(b, "labels") or ""
-        matches_concat = _get_binding_value(b, "matches") or ""
         description = _get_binding_value(b, "description")
-        num_matches_str = _get_binding_value(b, "numMatches") or "0"
 
         types = [t for t in types_concat.split("||") if t] if types_concat else []
         type_classes = [tc for tc in type_classes_concat.split("||") if tc] if type_classes_concat else []
         labels = [l for l in labels_concat.split("||") if l] if labels_concat else []
         pref_labels = [pl for pl in pref_labels_concat.split("||") if pl] if pref_labels_concat else []
-        matches = [m for m in matches_concat.split("||") if m] if matches_concat else []
-
-        try:
-            num_matches = int(num_matches_str)
-        except ValueError:
-            num_matches = 0
 
         if not subject:
             continue
@@ -306,12 +304,40 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "types": types,
                 "typeClasses": type_classes,
                 "description": description,
-                "matches": matches,
-                "numMatches": num_matches,
+                "matches": [],
+                "numMatches": 0,
             }
         )
 
     return rows
+
+
+def parse_match_rows(results_json: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    rows_by_subject: Dict[str, Dict[str, Any]] = {}
+    bindings = results_json.get("results", {}).get("bindings", [])
+
+    for b in bindings:
+        subject = _get_binding_value(b, "subject")
+        if not subject:
+            continue
+
+        matches_concat = _get_binding_value(b, "matches") or ""
+        num_matches_str = _get_binding_value(b, "numMatches") or "0"
+
+        matches = [m for m in matches_concat.split("||") if m] if matches_concat else []
+
+        try:
+            num_matches = int(num_matches_str)
+        except ValueError:
+            num_matches = 0
+
+        rows_by_subject[subject] = {
+            "matches": matches,
+            "numMatches": num_matches,
+        }
+
+    return rows_by_subject
+
 
 # ----------------------------
 # OpenSearch helpers
@@ -380,6 +406,27 @@ def iter_bulk_actions(index_name: str, rows: Iterable[Dict[str, Any]]) -> Iterab
             "_source": r,
         }
 
+
+def iter_bulk_update_actions(
+    index_name: str,
+    rows: Iterable[Dict[str, Any]],
+) -> Iterable[Dict[str, Any]]:
+    for r in rows:
+        uri = r.get("uri")
+        if not uri:
+            continue
+        yield {
+            "_op_type": "update",
+            "_index": index_name,
+            "_id": uri,
+            "doc": {
+                "matches": r.get("matches", []),
+                "numMatches": r.get("numMatches", 0),
+            },
+            "doc_as_upsert": False,
+        }
+
+
 def bulk_index(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]], chunk_size: int) -> int:
     success, errors = helpers.bulk(
         os_client,
@@ -391,6 +438,20 @@ def bulk_index(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]
     )
     if errors:
         print(f"Bulk completed with {len(errors)} errors (showing first 3):", file=sys.stderr)
+        print(json.dumps(errors[:3], indent=2, ensure_ascii=False)[:4000], file=sys.stderr)
+    return int(success)
+
+def bulk_update_matches(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]], chunk_size: int) -> int:
+    success, errors = helpers.bulk(
+        os_client,
+        iter_bulk_update_actions(index_name, rows),
+        chunk_size=chunk_size,
+        request_timeout=120,
+        raise_on_error=False,
+        raise_on_exception=False,
+    )
+    if errors:
+        print(f"Bulk update completed with {len(errors)} errors (showing first 3):", file=sys.stderr)
         print(json.dumps(errors[:3], indent=2, ensure_ascii=False)[:4000], file=sys.stderr)
     return int(success)
 
@@ -429,9 +490,42 @@ def iter_dataset_rows(
         if sleep_s > 0:
             time.sleep(sleep_s)
 
-def load_config(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+def update_matches_for_batch(
+    sparql_client: SparqlClient,
+    os_client: OpenSearch,
+    dataset_config: Dict[str, Any],
+    index_name: str,
+    uris: List[str],
+    bulk_chunk_size: int,
+) -> int:
+    if not uris:
+        return 0
+
+    sparql = build_matches_query(dataset_config, uris)
+    data = sparql_client.query(sparql)
+    match_rows_by_subject = parse_match_rows(data)
+
+    updates: List[Dict[str, Any]] = []
+    for uri in uris:
+        match_row = match_rows_by_subject.get(uri)
+        if match_row is None:
+            updates.append(
+                {
+                    "uri": uri,
+                    "matches": [],
+                    "numMatches": 0,
+                }
+            )
+        else:
+            updates.append(
+                {
+                    "uri": uri,
+                    "matches": match_row["matches"],
+                    "numMatches": match_row["numMatches"],
+                }
+            )
+
+    return bulk_update_matches(os_client, index_name, updates, chunk_size=bulk_chunk_size)
 
 def index_dataset_to_opensearch(
     sparql_client: SparqlClient,
@@ -480,6 +574,17 @@ def index_dataset_to_opensearch(
 
         if len(buffer) >= bulk_chunk_size:
             bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+
+            uris = [r["uri"] for r in buffer]
+            update_matches_for_batch(
+                sparql_client=sparql_client,
+                os_client=os_client,
+                dataset_config=dataset_config,
+                index_name=index_name,
+                uris=uris,
+                bulk_chunk_size=bulk_chunk_size,
+            )
+
             buffer.clear()
 
             elapsed = time.time() - start_time
@@ -495,6 +600,17 @@ def index_dataset_to_opensearch(
 
     if buffer:
         bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+
+        uris = [r["uri"] for r in buffer]
+        update_matches_for_batch(
+            sparql_client=sparql_client,
+            os_client=os_client,
+            dataset_config=dataset_config,
+            index_name=index_name,
+            uris=uris,
+            bulk_chunk_size=bulk_chunk_size,
+        )
+
         buffer.clear()
 
         elapsed = time.time() - start_time
@@ -503,7 +619,7 @@ def index_dataset_to_opensearch(
         print(f"{pct:.1f}% ({rate:.1f} entities/s)", file=sys.stderr)
 
     os_client.indices.refresh(index=index_name)
-    print(f"Done!", file=sys.stderr)
+    print("Done!", file=sys.stderr)
     return unique_done
 
 def main() -> int:

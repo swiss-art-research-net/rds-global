@@ -25,10 +25,8 @@
         <semantic-search-result>
             <semantic-table 
                 id='grid-result'
-                query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset (GROUP_CONCAT(STR(?sameas); SEPARATOR=", ") AS ?references) ?score WHERE {
-                    OPTIONAL {
-                        ?subject rds:related ?sameas .
-                    }
+                query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset ?score WHERE {
+                    
                 } GROUP BY ?subject ?description ?prefLabel ?dataset ?score
                 ORDER BY DESC(?score)'
                 number-of-displayed-rows="50"
@@ -65,11 +63,37 @@
                     <semantic-link iri="{{subject.value}}">{{prefLabel.value}}</semantic-link>
                 </template>
                 <template id="referencesTemplate">
-                    {{#if references.value}}
-                        {{#each (split references.value ", ")}}
-                            <semantic-link iri="{{this}}">{{this}}</semantic-link><br>
-                        {{/each}}
-                    {{/if}}
+                    <semantic-query
+                        query='SELECT DISTINCT ?reference WHERE {
+                             BIND(<{{subject.value}}> AS ?subject)
+                             {
+                                {
+                                ?subject rds:related ?sameas .
+                                } UNION {
+                                ?sameas rds:related ?subject .
+                                }
+                                BIND(?sameas AS ?reference)
+                            }
+                            UNION
+                            {
+                                {
+                                ?subject rds:related ?sameas .
+                                } UNION {
+                                ?sameas rds:related ?subject .
+                                }
+
+                                {
+                                ?other rds:related ?sameas .
+                                } UNION {
+                                ?sameas rds:related ?other .
+                                }
+
+                                FILTER(?other != ?subject)
+                                BIND(?other AS ?reference)
+                            }
+                        }'
+                    ></semantic-query>
+                </template>
             </semantic-table>
         </semantic-search-result>
     </semantic-search-result-holder>

@@ -1,12 +1,10 @@
-import os
 import argparse
-import json
-import yaml
 
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
+from lib.utils import RDS_ONTOLOGY_NAMESPACE, load_config, generate_prefixes_for_SPARQL as generate_prefixes, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE, sanitise_string_value_for_turtle
 
-LABEL_PREDICATE = "<http://schema.swissartresearch.net/ontology/rds#label>"
-LABEL_GRAPH = "<http://schema.swissartresearch.net/rds/labels>"
+LABEL_PREDICATE = f"<{RDS_ONTOLOGY_NAMESPACE}label>"
+LABEL_GRAPH = f"<{RDS_GRAPH_NAMESPACE}labels>"
 PAGE_SIZE = 3000000
 
 def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
@@ -41,7 +39,7 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                 predicates_query = predicates
             hasResults = True
             while hasResults:
-                prefixes = _generate_prefixes(datasets[dataset].get("prefixes", {}))
+                prefixes = generate_prefixes(datasets[dataset].get("prefixes", {}))
                 query = prefixes + """
                 SELECT ?subject ?value WHERE {{
                     GRAPH <{0}> {{
@@ -66,44 +64,31 @@ def main(*, endpoint, output_directory, page_size=PAGE_SIZE, config=None, datase
                 for result in results["results"]["bindings"]:
                     subject = result["subject"]["value"]
                     value = result["value"]["value"]
+                    value_str = sanitise_string_value_for_turtle(value)
                     subject_str = f"<{subject}>" if result["subject"]["type"] == "uri" else f"\"{subject}\""
-                    # Escape double quotes in value and wrap in quotes
-                    value = value.replace('"', '\\"')
-                    value_str = f"\"{value}\""
+                    
                     # Add datatype or language if present
                     if "xml:lang" in result["value"]:
                         value_str += f"@{result['value']['xml:lang']}"
                     elif "datatype" in result["value"]:
                         value_str += f"^^<{result['value']['datatype']}>"
-                    predicate_str = "<http://schema.swissartresearch.net/ontology/rds#label>"
-                    graph_str = f"<http://schema.swissartresearch.net/rds/labels>"
-                    nquad_line = f"{subject_str} {predicate_str} {value_str} {graph_str} .\n"
+                    nquad_line = f"{subject_str} {LABEL_PREDICATE} {value_str} {LABEL_GRAPH} .\n"
                     nquad_lines.append(nquad_line)
-                graph_for_filename = graph.replace("http://", "").replace("https://", "").replace("/", "_").replace(":", "_")
-                out_path = f"{output_directory}/labels_{graph_for_filename}_{file_num}.nq"
+                out_path = f"{output_directory}/labels_{dataset}_{file_num}.nq"
                 with open(out_path, "w") as out_f:
                     out_f.writelines(nquad_lines)
 
                 file_num = file_num + 1
-            
-def load_config(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-    
-def _generate_prefixes(prefixes):
-    items = sorted(prefixes.items(), key=lambda kv: kv[0])
-    return "\n".join([f"PREFIX {p}: <{uri}>" for p, uri in items])
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
-    parser = argparse.ArgumentParser(description = 'Produce ttl files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
+    parser = argparse.ArgumentParser(description = 'Produce NQuad files with entities and their labels using a unified RDS predicate <http://schema.swissartresearch.net/ontology/rds#label>')
     parser.add_argument('--endpoint',required=True, help='SPARQL endpoint to use for querying and updating labels')
     parser.add_argument('--output-directory', required=False, default='/data/labels', help='directory to store output files')
     parser.add_argument('--page-size', required=False, type=int, default=3000000, help='number of results to fetch per query')
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
-    parser.add_argument("--dataset", required=False, help="Dataset to update labels for (all datasets if not specified)")
+    parser.add_argument("--dataset", required=False, help="Dataset to generate labels for (all datasets if not specified)")
     
     args = parser.parse_args()
     endpoint = args.endpoint

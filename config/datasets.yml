@@ -1,12 +1,18 @@
 datasets:
 
   aat:
+    source:
+      - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
+        process:
+        - unzip
     graph: http://vocab.getty.edu/aat/graph
+    namespace: http://vocab.getty.edu/aat/
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      concept:
+      Type:
         - gvp:Concept
     queries:
       description: |
@@ -15,13 +21,23 @@ datasets:
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
+    wikidata_match_property: P1014
 
   geonames:
+    source:
+      - url: http://download.geonames.org/all-geonames-rdf.zip
+        process:
+          - unzip
+          - rdfxml2nt
     graph: http://sws.geonames.org/graph
+    namespace: https://sws.geonames.org/
     prefixes:
       gn: http://www.geonames.org/ontology#
+      owl: http://www.w3.org/2002/07/owl#
     types:
-      place:
+      Place:
         - gn:Feature
     queries:
       description: |
@@ -30,126 +46,98 @@ datasets:
         ?subject gn:name ?value .
       labels: |
         ?subject gn:alternateName ?value .
+      matches: |
+        ?subject owl:sameAs ?value .
+    wikidata_match_property: P1566
 
   gnd:
+    source:
+      - type: http_file
+        url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+        process:
+          - gunzip   
+      - type: http_file
+        url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
+        file_format: ttl
+    file_format: ttl
     graph: https://d-nb.info/gnd/authorities/graph
+    namespace: https://d-nb.info/gnd/
     prefixes:
       gnd: https://d-nb.info/standards/elementset/gnd#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
     types:
-      actor:
-        - gnd:Person
-        - gnd:UndifferentiatedPerson
-        - gnd:DifferentiatedPerson
-      builtWork:
-        - gnd:BuildingOrMemorial
-      bibliographicItem:
+      BibliographicItem:
         - gnd:Work
-      concept:
-        - gnd:SubjectHeading
-        - gnd:SubjectHeadingSensoStricto
-        - gnd:CharactersOrMorphemes
-        - gnd:Language
-        - gnd:NomenclatureInBiologyOrChemistry
-        - gnd:EthnographicName
-        - gnd:Relationship
-        - gnd:ProvenanceCharacteristic
-        - gnd:ProductNameOrBrandName
-        - gnd:SoftwareProduct
-      group:
-        - gnd:Company
-        - gnd:CorporateBody
-        - gnd:ReligiousCorporateBody
-        - gnd:MusicalCorporateBody
-        - gnd:FictiveCorporateBody
-        - gnd:OrganOfCorporateBody
-        - gnd:TerritorialCorporateBodyOrAdministrativeUnit
-        - gnd:AdministrativeUnit
-        - gnd:ReligiousAdministrativeUnit
-      place:
-        - gnd:Country
-        - gnd:PlaceOrGeographicName
-        - gnd:MemberState
-        - gnd:NaturalGeographicUnit
-        - gnd:NameOfSmallGeographicUnitLyingWithinAnotherGeographicUnit
-        - gnd:WayBorderOrLine
-        - gnd:ReligiousTerritory
-        - gnd:ExtraterrestrialTerritory
-        - gnd:FictivePlace
-      event:
+      Event:
         - gnd:ConferenceOrEvent
-        - gnd:SeriesOfConferenceOrEvent
-        - gnd:HistoricSingleEventOrEra
-        - gnd:ProjectOrProgram
+      Group:
+        - gnd:CorporateBody
+      Person:
+        - gnd:Person
+      Place:
+        - gnd:PlaceOrGeographicName
+      Type:
+        - gnd:SubjectHeading
     queries:
       description: |
         ?subject ?predicateDescription ?value .
         VALUES (?predicateDescription) {
             ( <https://d-nb.info/standards/elementset/gnd#definition> )
             ( <https://d-nb.info/standards/elementset/gnd#note> )
-            ( <https://d-nb.info/standards/elementset/gnd#historyOfTheCorporateBody> )
             ( <https://d-nb.info/standards/elementset/gnd#biographicalOrHistoricalInformation> )
             ( <https://d-nb.info/standards/elementset/gnd#professionOrOccupationAsLiteral> )
         }
       prefLabel: |
         ?subject ?predicatePrefLabel ?value .
-        VALUES (?predicatePrefLabel) {
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
-        }
+        ?predicatePrefLabel rdfs:subPropertyOf gnd:preferredName .
       labels: |
-        ?subject ?predicateLabel ?value .
-        VALUES (?predicateLabel) {
-            ( <https://d-nb.info/standards/elementset/gnd#forename> )
-            ( <https://d-nb.info/standards/elementset/gnd#gndIdentifier> )
-            ( <https://d-nb.info/standards/elementset/gnd#nameAddition> )
-            ( <https://d-nb.info/standards/elementset/gnd#originalScriptNameOfThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#personalName> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheFamily> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheSubjectHeading> )
-            ( <https://d-nb.info/standards/elementset/gnd#preferredNameForTheWork> )
-            ( <https://d-nb.info/standards/elementset/gnd#surname> )
-            ( <https://d-nb.info/standards/elementset/gnd#SubjectHeadingSensoStricto>)
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheConferenceOrEvent> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheCorporateBody> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheFamily> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePerson> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForThePlaceOrGeographicName> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheSubjectHeading> )
-            ( <https://d-nb.info/standards/elementset/gnd#variantNameForTheWork> )
+        ?subject ?predicatePrefLabel ?value .
+        ?predicatePrefLabel rdfs:subPropertyOf gnd:variantName .
+      types: |
+        { ?subject a ?value } UNION { ?subject a/rdfs:subClassOf ?value } .
+      matches: |
+        ?subject ?predicate ?value .
+        VALUES (?predicate) {
+          (schema:sameAs)
+          (rdfs:seeAlso)
+          (skos:exactMatch)
         }
+    wikidata_match_property: P227
 
   sikart:
+    source:
+      - type: github_zip
+        repository: swiss-art-research-net/sikart-data
+        path: source/SIK_20210616_2300.ttl.zip
+        file_format: ttl
+        process:
+          - unzip
+    file_format: ttl
     graph: http://recherche.sik-isea.ch/graph
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       sik: https://recherche.sik-isea.ch
     types:
-      actor:
-        - sik:SIK-ACTOR
-      place: 
-        - crm:E53_Place
-      event:
-        - sik:SIK-EXHIBITION
-        - sik:SIK-AWARD_CEREMONY
-      artwork:
+      Artwork:
         - sik:SIK-WORK
         - sik:SIK-WORK_GROUP
         - sik:SIK-PARENT_WORK
-      bibliographicItem:
+      BibliographicItem:
         - sik:SIK-DOCUMENT
         - sik:SIK-PUBLICATION
         - sik:SIK-PARENT_DOCUMENT
-      concept:
+      Event:
+        - sik:SIK-EXHIBITION
+        - sik:SIK-AWARD_CEREMONY
+      Person:
+        - sik:SIK-ACTOR
+      Place: 
+        - crm:E53_Place
+      Type:
         - sik:SIK-TYPE
     queries:
       description: |
@@ -158,13 +146,21 @@ datasets:
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      matches:
+        ?subject crmdig:L54_is_same-as ?value .
+
 
   thesarchesp:
+    source:
+      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+        type: http_file
+        file_format: ttl
+    file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      concept:
+      Type:
         - skos:Concept
     queries:
       description: |
@@ -173,13 +169,20 @@ datasets:
         ?subject skos:prefLabel ?value .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .
 
   thesobjmob:
+    source:
+      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+        type: http_file
+        file_format: ttl
+    file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      concept:
+      Type:
         - skos:Concept
     queries:
       description: |
@@ -188,14 +191,22 @@ datasets:
         ?subject skos:prefLabel ?value .
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .
 
   ulan:
+    source:
+      - url: http://ulandownloads.getty.edu/VocabData/full.zip
+        process:
+          - unzip
     graph: http://vocab.getty.edu/ulan/graph
+    namespace: http://vocab.getty.edu/ulan/
     prefixes:
       gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      actor:
+      Person:
         - gvp:PersonConcept
         - gvp:UnknownPersonConcept
     queries:
@@ -205,3 +216,6 @@ datasets:
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
+    wikidata_match_property: P245

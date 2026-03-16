@@ -7,6 +7,7 @@ vars:
   DIRECTORY_INGEST_DATA: /data/ingest
   DIRECTORY_SOURCE_DATA: /data/source
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
+  WIKIDATA_IDS_CSV: /config/wikidata/wikidata-external-id-properties.csv
 
 env:
   QLEVER_ENDPOINT: http://qlever:7001
@@ -22,21 +23,14 @@ tasks:
     desc: Run entire pipeline
     interactive: True
     cmds:
-      - task: update-data-aat
-      - task: update-data-geonames
-      - task: update-data-gnd
-      - task: update-data-sikart
-      - task: update-data-thesarchesp
-      - task: update-data-thesobjmob
-      - task: update-data-ulan
+      - task: update-data
+      - task: prepare-metadata-for-indexing
       - task: index-data
-      - task: generate-sameas-statements
+      - task: generate-type-mappings
       - task: generate-labels
+      - task: generate-sameas-statements
       - task: index-data # Re-index after data generation
       - task: add-data-to-search-index
-      #- task: ingest-metadata
-      #- task: ingest-sameas-statements
-      #- task: materialise-num-sameas-statements
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
@@ -54,245 +48,60 @@ tasks:
 
   fetch-all-sameas-statements:
     desc: Fetch data reuired for SameAs statements
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds: 
       - mkdir -p {{.DIRECTORY_SAMEAS_STATEMENTS}}
-      - task: fetch-sameas-statements-aat
-      - task: fetch-sameas-statements-ulan
-      - task: fetch-sameas-statements-gnd
-      - task: fetch-sameas-statements-thesobjmob
-      - task: fetch-sameas-statements-thesarchesp
-      - task: fetch-sameas-statements-sikart
-      - #task: fetch-sameas-statements-wikidata
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: fetch-sameas-statements-for-dataset
+        vars:
+          DATASET: "{{.DATASET}}"    
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: fetch-sameas-statements-for-dataset-from-wikidata
+        vars:
+          DATASET: "{{.DATASET}}"
 
-  fetch-sameas-statements-aat:
-    desc: Fetch SameAs statements contained in AAT
-    sources:
-      - /data/source/aat-data/*.nt
+  fetch-sameas-statements-for-dataset:
+    desc: Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
     cmds:
-      - task: _fetch-sameas-statements-local
+      - task: _fetch-sameas-statements-for-dataset
         vars:
-          DATASET_ID: aat
-          OUTPUT_FILE: aatSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://vocab.getty.edu/aat/graph> {
-                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
-              }
-            }
-  
-  fetch-sameas-statements-gnd:
-    desc: Fetch SameAs statements contained in GND
-    sources:
-      - /data/source/gnd-authorities-data/*.ttl
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: gnd
-          OUTPUT_FILE: gndSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX schema: <http://schema.org/>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              {SELECT * WHERE {
-                  VALUES (?predicate) {
-                      (schema:sameAs)
-                      (rdfs:seeAlso)
-                      (skos:exactMatch)
-                  }
-                  GRAPH <https://d-nb.info/gnd/authorities/graph> {
-                  ?candidate2 ?predicate ?candidate1 .
-                  }
-              }}
-            }
-  
-  fetch-sameas-statements-sikart:
-    desc: Fetch SameAs statements contained in SIKART
-    sources:
-      - /data/source/sikart-data/*.ttl
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: sikart
-          OUTPUT_FILE: sikartSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX crmdig: <http://www.ics.forth.gr/isl/CRMdig/>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-            GRAPH <http://recherche.sik-isea.ch/graph> {
-              ?candidate2 crmdig:L54_same_as ?candidate1 .
-              }
-            }
+          DATASET: "{{.DATASET}}"
 
-
-  fetch-sameas-statements-thesarchesp:
-    desc: Fetch SameAs statements contained in Thesaurus Architecture/Espace
-    sources:
-      - /data/source/thes-arch-esp-data/*.ttl
+  fetch-sameas-statements-for-dataset-from-wikidata:
+    desc: Fetch SameAs statements from Wikidata for a specified dataset passed as DATASET variable or via CLI argument
+    status:
+      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.DATASET}}WikidataSameAs.ttl"
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
     cmds:
-      - task: _fetch-sameas-statements-local
-        vars: 
-          DATASET_ID: thesarchesp
-          OUTPUT_FILE: thesarchespSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph> {
-                ?candidate2 skos:exactMatch ?candidate1 .
-              }
-            }
-
-  fetch-sameas-statements-thesobjmob:
-    desc: Fetch SameAs statements contained in Thesaurus Object/Mobiliers
-    sources:
-      - /data/source/thes-obj-mob-data/*.ttl
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: thesobjmob
-          OUTPUT_FILE: thesobjmobSameAs.ttl
-          QUERY: |
-            PREFIX schema: <http://schema.org/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph> {
-                ?candidate2 skos:exactMatch ?candidate1 .
-              }
-            }
-
-  fetch-sameas-statements-ulan:
-    desc: Fetch SameAs statements contained in ULAN
-    sources:
-      - /data/source/ulan-data/*.nt
-    cmds:
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET_ID: ulan
-          OUTPUT_FILE: ulanSameAs.ttl
-          QUERY: |
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            CONSTRUCT { ?candidate2 owl:sameAs ?candidate1 . } WHERE {
-              GRAPH <http://vocab.getty.edu/ulan/graph> {
-                ?candidate2 (skos:exactMatch | skos:closeMatch) ?candidate1 .
-              }
-            }
-  
-  fetch-sameas-statements-wikidata:
-    desc: Fetch SameAs statements from Wikidata
-    cmds:
-      - task: _fetch-sameas-statements-remote-chunked
-        vars:
-          DATASET: Wikidata VIAF
-          OUTPUT_FILE: wikidataSameAsVIAF.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              {
-                SELECT ?candidate ?sameAsID WHERE {
-                    ?candidate wdt:P214 ?sameAsID .
-                  } $LIMIT_STATEMENT
-                }
-              BIND (IRI(CONCAT(\"http://viaf.org/viaf/\", ?sameAsID)) as ?sameAs)
-            }
-          NUM_CHUNKS: 20
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata GND
-          OUTPUT_FILE: wikidataSameAsGND.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P227 ?sameAsID .
-              BIND (IRI(CONCAT(\"https://d-nb.info/gnd/\", ?sameAsID)) as ?sameAs)
-            }           
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata BNF
-          OUTPUT_FILE: wikidataSameAsBNF.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P268 ?sameAsID .
-              BIND(IRI(CONCAT('http://data.bnf.fr/ark:/12148/', ?sameAsID)) as ?sameAs)
-            }
-      - task: _fetch-sameas-statements-remote-chunked
-        vars:
-          DATASET: Wikidata LOC
-          OUTPUT_FILE: wikidataSameAsLOC.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              {
-                SELECT ?candidate ?sameAsID WHERE {
-                  ?candidate wdt:P244 ?sameAsID .
-                  FILTER(! CONTAINS(STR(?sameAsID), \" \") && ! CONTAINS(STR(?sameAsID), \"|\"))
-                } $LIMIT_STATEMENT
-              }
-              BIND (IRI(CONCAT(\"http://id.loc.gov/authorities/names/\", ?sameAsID)) as ?sameAs)
-            }
-          NUM_CHUNKS: 7
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata ULAN
-          OUTPUT_FILE: wikidataSameAsULAN.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P245 ?sameAsID .
-              BIND (IRI(CONCAT(\"http://vocab.getty.edu/ulan/\", ?sameAsID)) as ?sameAs)
-            }
-      - task: _fetch-sameas-statements-remote
-        vars:
-          DATASET: Wikidata SIKART (Persons)
-          OUTPUT_FILE: wikidataSameAsSIKARTPersons.ttl
-          ENDPOINT: $WIKIDATA_ENDPOINT
-          QUERY: |
-            PREFIX wd: <http://www.wikidata.org/entity/>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-            CONSTRUCT {
-                ?candidate owl:sameAs ?sameAs .
-            } WHERE {
-              ?candidate wdt:P781 ?sameAsID .
-              FILTER EXISTS {
-                ?candidate wdt:P31 wd:Q5 .
-              }
-              BIND (IRI(CONCAT(\"https://recherche.sik-isea.ch/person-\", ?sameAsID)) as ?sameAs) .
-            }
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
     vars:
-      DATA_DIRECTORY: /data/sameAsStatements/combinedSameAs
+      DATA_DIRECTORY: /data/sameAsStatements/combined
       FILE_FORMAT: ttl
       GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
     cmds:
@@ -305,6 +114,20 @@ tasks:
           FILE_FORMAT: "{{.FILE_FORMAT}}"
           GRAPH: "{{.GRAPH}}"
   
+  generate-type-mappings:
+    desc: Generate type mappings for RDS entities
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
+      OUTPUT_DIRECTORY: /data/ingest/type-mappings
+    cmds:
+      - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        cmd: python /pipeline/scripts/generateTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
   generate-labels:
     desc: Generate labels for URIs
     vars:
@@ -317,7 +140,22 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/updateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+        cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
+  ingest-data-from-folder:
+    desc: Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
+    vars:
+      DIRECTORY:
+        sh: echo "{{.CLI_ARGS}}"
+    cmds:
+      - |
+        if [ -z "{{.DIRECTORY}}" ]; then
+          echo "Error: No directory specified. Please provide a directory as a CLI argument."
+          exit 1
+        fi
+      - task: _ingest-data-from-folder
+        vars:
+          DIRECTORY: "{{.DIRECTORY}}"
 
   index-data:
     desc: Index all data in QLever
@@ -326,65 +164,48 @@ tasks:
         vars:
           INPUT_DIR: /data/ingest
           NAME: rds
-
-  ingest-metadata:
-    desc: Ingest metadata
+    
+  prepare-metadata-for-indexing:
+    desc: Prepare RDS metadata for indexing
     sources:
       - /data/rds-metadata/_datasetsMetadata.ttl
       - /data/rds-metadata/rds-ontologies-description.ttl
       - /data/rds-metadata/type-mapping.ttl
     cmds:
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars: 
-          NAME: Dataset Metadata
-          FILE: /data/rds-metadata/_datasetsMetadata.ttl
+          FILE: /data/source/rds-metadata/_datasetsMetadata.ttl
+          FILE_FORMAT: ttl
           GRAPH: http://rds.swissartresearch.net/graph/datasetMetadata
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars:
-          NAME: RDS Ontologies
-          FILE: /data/rds-metadata/rds-ontologies-description.ttl
+          FILE_FORMAT: ttl
+          FILE: /data/source/rds-metadata/rds-ontologies-description.ttl
           GRAPH: http://rds.swissartresearch.net/graph/rdsOntologies
-      - task: _ingest-data-from-file
+      - task: _prepareFileForIndexing
         vars:
-          NAME: Type Mappings
-          FILE: /data/rds-metadata/type-mapping.ttl
-          GRAPH: http://schema.swissartresearch.net/rds/type-mapping
-
-  ingest-sameas-statements:
-    desc: Ingest SameAs statements
-    sources:
-      - /data/sameAsStatements/combined/*.ttl
-    cmds:
-      - task: _ingest-data-from-file
-        vars:
-          NAME: Type Mappings
-          FILE: /data/sameAsStatements/combined/*.ttl
-          GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
+          FILE_FORMAT: ttl
+          FILE: /data/source/rds-metadata/type-mapping.ttl
+          GRAPH: http://schema.swissartresearch.net/rds/typeMapping
    
-  materialise-num-sameas-statements:
-    desc: Materialise the count of SameAs statements per entity
-    sources:
-      - /data/sameAsStatements/combined/*.ttl
+  prepare-indexing:
+    desc: Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
     vars:
-      GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
     cmds:
-      - mkdir -p /pipeline/tmp/requests
-      - |
-        echo "PREFIX rds: <http://schema.swissartresearch.net/ontology/rds#>
-              INSERT {
-                GRAPH <{{.GRAPH}}>
-                {
-                  ?subject <http://schema.swissartresearch.net/rds/numSameAsStatements> ?numSameAs .
-                }
-              } WHERE {
-                ?subject rds:related ?sameAs .
-                {
-                  SELECT (COUNT(?sameAs) as ?numSameAs) ?subject WHERE {
-                    ?subject rds:related ?sameAs .
-                  } GROUP BY ?subject
-                }
-              }" > /pipeline/tmp/requests/materialise_num_sameas.rq
-      - $BLAZEGRAPH_RUNNER update --journal=$BLAZEGRAPH_JOURNAL /pipeline/tmp/requests/materialise_num_sameas.rq
+      - task: _prepareForIndexing
+        vars:
+          DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
+          FILE_FORMAT:
+            sh: yq -r ".datasets.{{.DATASET}}.file_format // \"nt\"" "{{.DATASETS_CONFIG_YML}}"
+          GRAPH:
+            sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
   
   process-sameas-statements:
     desc: Process SameAs statements
@@ -392,173 +213,55 @@ tasks:
       - /data/sameAsStatements/*.ttl
     cmds:
       - mkdir -p /data/sameAsStatements/combined
+      - rm -rf /pipeline/scripts/sameAsProcessing/processing_db
       - cd /pipeline/scripts/sameAsProcessing; npm run start
 
-  update-data-aat:
-    desc: Update data for Getty AAT
+  update-data:
+    desc: Update RDF datasets
+    interactive: true
     vars:
-      GRAPH: http://vocab.getty.edu/aat/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/aat-data"
-      DATA_URL: http://aatdownloads.getty.edu/VocabData/explicit.zip
-      GUNZIP: false
-      FILE_FORMAT: nt
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds:
-      - task: _downloadAndUnzip
+      - for:
+          var: DATASETS
+          split: ','
+          as: DATASET
+        task: update-individual-dataset
         vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
+          DATASET: "{{.DATASET}}"
 
-  update-data-geonames:
-    desc: Update data for GeoNames
+  update-individual-dataset:
+    desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
     vars:
-      GRAPH: http://sws.geonames.org/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/geonames-data"
-      DATA_URL: http://download.geonames.org/all-geonames-rdf.zip
-      GUNZIP: false
-      FILE_FORMAT: nt
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
+      DATA_DIRECTORY:
+        sh: echo "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
     cmds:
-      - task: _downloadAndUnzip
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - echo "Preparing Geonames Data"
       - |
-        if [ ! -f "{{.DATA_DIRECTORY}}/geonames.nt" ]; then
-          cp /pipeline/scripts/convert2ntriples.py {{.DATA_DIRECTORY}}/convert2ntriples.py; cd {{.DATA_DIRECTORY}}; python convert2ntriples.py; rm convert2ntriples.py; cd -
-        else
-          echo "Geonames data already exists. Skipping conversion."
-        fi
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
-  
-  update-data-gnd:
-    desc: Update data for GND
-    vars:
-      GRAPH: https://d-nb.info/gnd/authorities/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/gnd-authorities-data"
-      DATA_URL: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
-      ONTOLOGY_URL: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
-      GUNZIP: true
-      FILE_FORMAT: nt
-    cmds:
-      - task: _downloadAndUnzip
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - curl -o "{{.DATA_DIRECTORY}}/gnd-ontology.ttl" "{{.ONTOLOGY_URL}}"
-      - rapper -i turtle -o ntriples "{{.DATA_DIRECTORY}}/gnd-ontology.ttl" > "{{.DATA_DIRECTORY}}/gnd-ontology.nt"
-      - rm "{{.DATA_DIRECTORY}}/gnd-ontology.ttl"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
+        python /pipeline/scripts/download_datasets.py \
+          --dataset "{{.DATASET}}" \
+          --data_directory "{{.DATA_DIRECTORY}}" \
+          --config "{{.DATASETS_CONFIG_YML}}" \
+          --github-username "$GITHUB_USERNAME_SIKART" \
+          --github-token "$GITHUB_TOKEN_SIKART"
 
-  update-data-sikart:
-    desc: Update data for SIKART
-    vars:
-      GRAPH: http://recherche.sik-isea.ch/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/sikart-data"
-      DATA_GIT_REPOSITORY: swiss-art-research-net/sikart-data
-      DATA_GIT_PATH: source/SIK_20210616_2300.ttl.zip
-      GUNZIP: false
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _downloadFromGitHubAndUnzip
+      - task: prepare-indexing
         vars:
-          GRAPH: "{{.GRAPH}}"
-          DATA_DIRECTORY: "{{.DATA_DIRECTORY}}"
-          DATA_GIT_REPOSITORY: "{{.DATA_GIT_REPOSITORY}}"
-          DATA_GIT_PATH: "{{.DATA_GIT_PATH}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          FILE_NAME: "data"
-          GITHUB_USERNAME: $GITHUB_USERNAME_SIKART
-          GITHUB_TOKEN: $GITHUB_TOKEN_SIKART
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
+          DATASET: "{{.DATASET}}"
 
-  update-data-thesarchesp:
-    desc: Update data for Thesaurus Architecture/Espace 
-    vars:
-      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/thes-arch-esp-data"
-      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
-      GUNZIP: false
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _downloadFile
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
-
-  update-data-thesobjmob:
-    desc: Update data for Thesaurus Object/Mobiliers
-    vars:
-      GRAPH: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/thes-obj-mob-data"
-      DATA_URL: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
-      FILE_FORMAT: ttl
-    cmds:
-      - task: _downloadFile
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
-
-  update-data-ulan:
-    desc: Update data for Getty ULAN
-    vars:
-      GRAPH: http://vocab.getty.edu/ulan/graph
-      DATA_DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/ulan-data"
-      DATA_URL: http://ulandownloads.getty.edu/VocabData/full.zip
-      GUNZIP: false
-      FILE_FORMAT: nt
-    cmds:
-      - task: _downloadAndUnzip
-        vars:
-          URL: "{{.DATA_URL}}"
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          GUNZIP: "{{.GUNZIP}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-      - task: _prepareForIndexing
-        vars:
-          DIRECTORY: "{{.DATA_DIRECTORY}}"
-          FILE_FORMAT: "{{.FILE_FORMAT}}"
-          GRAPH: "{{.GRAPH}}"
 
   verify-data:
-    desc: Verify the validity of the source data
+    desc: Verify the validity of the ingest data or any data in a specified directory passed as CLI argument
     vars:
-      DATA_DIRECTORY: /data
+      DATA_DIRECTORY:
+        sh: '[ -d "{{.CLI_ARGS}}" ] && echo "{{.CLI_ARGS}}" || echo "/data/ingest"'
     cmds:
       - |
         DATA_DIR="{{.DATA_DIRECTORY}}"
@@ -567,7 +270,7 @@ tasks:
         FILES_ERROR=0
         ERROR_REPORT=""
 
-        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\)"); do
+        for file in $(find "$DATA_DIR" -type f -regex ".*\.\(ttl\|rdf\|rdfs\|nt\|nq\)"); do
           echo "Verifying $file,..."
 
           if out=$(rapper -g -c "$file" 2>&1); then
