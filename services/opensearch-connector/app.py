@@ -47,6 +47,7 @@ class SearchRequest(BaseModel):
 
 def build_query(q: str) -> Dict[str, Any]:
     return {
+        "size": 100,
         "query": {
             "function_score": {
                 "query": {
