@@ -54,7 +54,7 @@ def build_query(q: str) -> Dict[str, Any]:
                         "filter": {
                             "multi_match": {
                                 "query": q,
-                                "fields": ["prefLabel", "labels"],
+                                "fields": ["prefLabels^3", "labels"],
                                 "operator": "and"
                             }
                         }
