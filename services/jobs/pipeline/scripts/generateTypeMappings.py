@@ -48,6 +48,7 @@ def generateTypeMappings(*, endpoint, output_directory, page_size=PAGE_SIZE, con
                             VALUES (?type) {{ 
                                 {typeValues}
                             }}
+                            FILTER(isIRI(?subject))
                         }}
                     }} ORDER BY DESC(?subject) OFFSET {offset} LIMIT {limit}"""
                 counter = counter + page_size
