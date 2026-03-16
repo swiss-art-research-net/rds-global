@@ -50,18 +50,23 @@ def build_query(q: str) -> Dict[str, Any]:
         "query": {
             "function_score": {
                 "query": {
+                "constant_score": {
+                    "filter": {
                     "multi_match": {
                         "query": q,
-                        "fields": ["prefLabel^3", "labels"],
+                        "fields": ["prefLabel", "labels"],
+                        "operator": "and"
                     }
+                    }
+                }
                 },
                 "field_value_factor": {
-                    "field": "numMatches",
-                    "factor": 3,
-                    "modifier": "sqrt",
-                    "missing": 0,
+                "field": "numMatches",
+                "factor": 3,
+                "modifier": "sqrt",
+                "missing": 0
                 },
-                "boost_mode": "sum",
+                "boost_mode": "sum"
             }
         }
     }
