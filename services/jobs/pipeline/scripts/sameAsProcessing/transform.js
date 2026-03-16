@@ -61,7 +61,7 @@ function mergeSetsAndSaveToDb(fetchedValues) {
         mergedSet.push(objectIri);
     } else {
         mergedSet = objectSet;
-        mergedSet.push(subjectSet);
+        mergedSet.push(subjectIri);
     }
     const stringSet = JSON.stringify(mergedSet);
     const tasks = mergedSet.map(iri => ({ type: 'put', key: iri, value: stringSet }));
