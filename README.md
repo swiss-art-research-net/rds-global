@@ -59,32 +59,22 @@ docker compose exec jobs task --list
 This will output a list of tasks:
 ```
 task: Available tasks for this project:
-* add-data-to-search-index:                  Add all data to OpenSearch index
-* default:                                   Run entire pipeline
-* fetch-all-sameas-statements:               Fetch data reuired for SameAs statements
-* fetch-sameas-statements-aat:               Fetch SameAs statements contained in AAT
-* fetch-sameas-statements-gnd:               Fetch SameAs statements contained in GND
-* fetch-sameas-statements-sikart:            Fetch SameAs statements contained in SIKART
-* fetch-sameas-statements-thesarchesp:       Fetch SameAs statements contained in Thesaurus Architecture/Espace
-* fetch-sameas-statements-thesobjmob:        Fetch SameAs statements contained in Thesaurus Object/Mobiliers
-* fetch-sameas-statements-ulan:              Fetch SameAs statements contained in ULAN
-* fetch-sameas-statements-wikidata:          Fetch SameAs statements from Wikidata
-* generate-labels:                           Generate labels for URIs
-* generate-sameas-statements:                Generates SameAs statements between entities
-* generate-type-mappings:                    Generate type mappings for RDS entities
-* index-data:                                Index all data in QLever
-* ingest-sameas-statements:                  Ingest SameAs statements
-* materialise-num-sameas-statements:         Materialise the count of SameAs statements per entity
-* prepare-metadata-for-indexing:             Prepare RDS metadata for indexing
-* process-sameas-statements:                 Process SameAs statements
-* update-data-aat:                           Update data for Getty AAT
-* update-data-geonames:                      Update data for GeoNames
-* update-data-gnd:                           Update data for GND
-* update-data-sikart:                        Update data for SIKART
-* update-data-thesarchesp:                   Update data for Thesaurus Architecture/Espace
-* update-data-thesobjmob:                    Update data for Thesaurus Object/Mobiliers
-* update-data-ulan:                          Update data for Getty ULAN
-* verify-data:                               Verify the validity of the source data or any data in a specified directory passed as CLI argument
+* add-data-to-search-index:                                Add all data to OpenSearch index
+* default:                                                 Run entire pipeline
+* fetch-all-sameas-statements:                             Fetch data reuired for SameAs statements
+* fetch-sameas-statements-for-dataset:                     Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
+* fetch-sameas-statements-for-dataset-from-wikidata:       Fetch SameAs statements from Wikidata for a specified dataset passed as DATASET variable or via CLI argument
+* generate-labels:                                         Generate labels for URIs
+* generate-sameas-statements:                              Generates SameAs statements between entities
+* generate-type-mappings:                                  Generate type mappings for RDS entities
+* index-data:                                              Index all data in QLever
+* ingest-data-from-folder:                                 Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
+* prepare-indexing:                                        Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
+* prepare-metadata-for-indexing:                           Prepare RDS metadata for indexing
+* process-sameas-statements:                               Process SameAs statements
+* update-data:                                             Update RDF datasets
+* update-individual-dataset:                               Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
+* verify-data:                                             Verify the validity of the source data or any data in a specified directory passed as CLI argument
 ```
 
 ### Troubleshooting
@@ -96,6 +86,12 @@ sudo chown -R 999:999 binds/qlever-index
 ```
 
 ### Data Verification
+
+To verify the validity of the generated data to be ingested, or any other data folder, the `verify-data` task can be used. This will check if the data is in valid NTriples format and if the IRIs are valid. To run the task, execute:
+
+```bash
+docker compose exec jobs task verify-data -- /path/to/data
+```
 
 If the GND data fails to be verified, it can help to split it into separate files:
 ```

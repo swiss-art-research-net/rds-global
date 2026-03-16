@@ -10,6 +10,7 @@ from tqdm import tqdm
 PAGE_SIZE = 1000
 PREDICATE_SAMEAS = "<http://www.w3.org/2002/07/owl#sameAs>"
 PREDICATE_DESCRIPTION = "<http://www.w3.org/2000/01/rdf-schema#comment>"
+DEFAULT_TYPES_QUERY = "?subject a ?value ."
 
 WIKIDATA_MATCHES_QUERY_TEMPLATE = """
     PREFIX wd: <http://www.wikidata.org/entity/>
@@ -53,19 +54,21 @@ def query_with_retry(
             _sleep_backoff(attempt)
     raise last_exc 
 
-def build_count_query(prefixes, named_graph, rdf_types):
+def build_count_query(prefixes, named_graph, rdf_types, types_query=DEFAULT_TYPES_QUERY):
+    types_query = types_query.replace("?value", "?type")
     return (
         prefixes
         + f"\nSELECT (COUNT(DISTINCT ?subject) AS ?total) WHERE {{ GRAPH <{named_graph}> "
-          f"{{ ?subject a ?type . VALUES ?type {{ {' '.join(rdf_types)} }} "
+          f"{{ {types_query} VALUES ?type {{ {' '.join(rdf_types)} }} "
           f"FILTER(isIri(?subject)) }} }}"
     )
 
-def build_entities_page_query(prefixes, named_graph, rdf_types, offset, limit):
+def build_entities_page_query(prefixes, named_graph, rdf_types, offset, limit, types_query=DEFAULT_TYPES_QUERY):
+    types_query = types_query.replace("?value", "?type")
     return prefixes + f"""
         SELECT DISTINCT ?subject WHERE {{
             GRAPH <{named_graph}> {{
-                ?subject a ?type .
+                {types_query}
                 VALUES ?type {{ {' '.join(rdf_types)} }}
                 FILTER(isIri(?subject))
             }}
@@ -153,7 +156,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
         rdfTypes = []
         for _, rdfType in datasetConfig.get("types", {}).items():
             rdfTypes.extend(rdfType)
-
+        typesQuery = datasetConfig.get("queries", {}).get("types", DEFAULT_TYPES_QUERY)
         # Load Configuration
         try:
             wikidataProperty = datasetConfig["wikidata_match_property"]
@@ -174,7 +177,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
         outputPath = f"{output_directory}/{datasetName}WikidataSameAs.ttl"
 
         # progress bar total
-        countQuery = build_count_query(prefixes, namedGraph, rdfTypes)
+        countQuery = build_count_query(prefixes, namedGraph, rdfTypes, types_query=typesQuery)
         totalEntities = int(
             query_with_retry(sparqlLocal, countQuery, label=f"{datasetName}:local count")[
                 "results"
@@ -188,7 +191,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
 
         with open(outputPath, "w") as f:
             while hasResults:
-                query = build_entities_page_query(prefixes, namedGraph, rdfTypes, counter, page_size)
+                query = build_entities_page_query(prefixes, namedGraph, rdfTypes, counter, page_size, types_query=typesQuery)
                 counter += page_size
 
                 results = query_with_retry(sparqlLocal, query, label=f"{datasetName}:local page")
@@ -238,7 +241,8 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                             propEntityLabel = r["propEntityLabel"]["value"]
                             if is_valid_turtle_iri(otherEntity):
                                 f.write(f"<{otherEntity}> {PREDICATE_SAMEAS} <{wdEntity}> .\n")
-                                f.write(f"<{otherEntity}> {PREDICATE_DESCRIPTION} \"{propEntityLabel}\" .\n")
+                                # TODO: find way of including labels that does not interfere with the sameas processing
+                                #f.write(f"<{otherEntity}> {PREDICATE_DESCRIPTION} \"{propEntityLabel}\" .\n")
                                 written_matches += 1
 
                     wdEquivalentsFound += written_matches
