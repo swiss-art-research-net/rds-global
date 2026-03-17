@@ -70,7 +70,7 @@ def build_query(q: str) -> Dict[str, Any]:
                                 "match_phrase": {
                                     "prefLabels": {
                                         "query": q,
-                                        "boost": 50
+                                        "boost": 10
                                     }
                                 }
                             }
@@ -81,7 +81,7 @@ def build_query(q: str) -> Dict[str, Any]:
                     {
                         "field_value_factor": {
                             "field": "numMatches",
-                            "factor": 5,
+                            "factor": 30,
                             "modifier": "sqrt",
                             "missing": 0
                         }
