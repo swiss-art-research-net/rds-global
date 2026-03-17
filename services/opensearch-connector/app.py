@@ -38,6 +38,7 @@ import json
 from typing import Any, Dict, Optional
 
 import httpx
+import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -47,6 +48,57 @@ DEBUG= True
 
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
+
+def build_msearch_query(q: str, limit_per_dataset: int = 10, config: Dict[str, Any] = None) -> str:
+    """
+    Constructs an ndjson string for the OpenSearch _msearch endpoint.
+    """
+    msearch_payload = ""
+    dataset_names = config['datasets'].keys()
+    for ds_name in dataset_names:
+        # 1. Header line
+        header = {"index": "rds-entities"}
+        
+        body = {
+            "size": limit_per_dataset,
+            "query": {
+                "function_score": {
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"term": {"dataset": ds_name}}, # Lock to this dataset
+                                {
+                                    "multi_match": {
+                                        "query": q,
+                                        "fields": ["prefLabels^3", "labels"],
+                                        "operator": "and",
+                                        "fuzziness": "AUTO"
+                                    }
+                                }
+                            ],
+                            "should": [
+                                {"match_phrase": {"prefLabels": {"query": q, "boost": 10}}}
+                            ]
+                        }
+                    },
+                    "field_value_factor": {
+                        "field": "numMatches",
+                        "factor": 2,
+                        "modifier": "sqrt",
+                        "missing": 0
+                    },
+                    "boost_mode": "sum"
+                }
+            }
+        }
+        
+        # OpenSearch _msearch requires newline-delimited JSON (ndjson)
+        import json
+        msearch_payload += json.dumps(header) + "\n"
+        msearch_payload += json.dumps(body) + "\n"
+        
+    return msearch_payload
+
 
 def build_query(q: str) -> Dict[str, Any]:
     return {
@@ -110,13 +162,13 @@ async def search(body: SearchRequest) -> Any:
     if not endpoint or not index:
         raise HTTPException(status_code=500, detail="OpenSearch not configured")
 
-    url = endpoint.rstrip("/") + f"/{index}/_search"
+    url = endpoint.rstrip("/") + f"/{index}/_msearch"
     try:
         clean_query = body.query.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         clean_query = body.query
     
-    payload = build_query(clean_query)
+    payload = build_msearch_query(clean_query, config=app.state.config)
     if DEBUG:
         print("Constructed OpenSearch query:")
         print(json.dumps(payload, indent=2))
@@ -127,15 +179,16 @@ async def search(body: SearchRequest) -> Any:
     if user is not None and password is not None:
         auth = (user, password)
 
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/x-ndjson"}
     api_key = getattr(app.state, "opensearch_api_key", None)
     if api_key:
         headers["Authorization"] = f"ApiKey {api_key}"
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            r = await client.post(url, json=payload, headers=headers, auth=auth)
+            r = await client.post(url, content=payload, headers=headers, auth=auth)
             if r.status_code >= 400:
+                if DEBUG: print(f"Error detail: {r.text}")
                 raise HTTPException(status_code=r.status_code, detail=r.text)
             if DEBUG:
                 print("OpenSearch response:")
@@ -151,6 +204,7 @@ def main() -> None:
     parser.add_argument("--user", default=os.getenv("OPENSEARCH_USER"))
     parser.add_argument("--password", default=os.getenv("OPENSEARCH_PASSWORD"))
     parser.add_argument("--api-key", default=os.getenv("OPENSEARCH_API_KEY"))
+    parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
@@ -160,6 +214,11 @@ def main() -> None:
     app.state.opensearch_user = args.user
     app.state.opensearch_password = args.password
     app.state.opensearch_api_key = args.api_key
+
+    # Load additional configuration from YAML file
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+    app.state.config = config
 
     import uvicorn
     uvicorn.run(app, host=args.host, port=args.port)
