@@ -53,10 +53,11 @@ logging.basicConfig(
 level = os.getenv("LOG_LEVEL", "INFO").upper()
 logger.setLevel(level)
 
+LIMIT_PER_DATASET = 10
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
 
-def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int = 10, index: str = "rds-entities") -> str:
+def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int = LIMIT_PER_DATASET, index: str = "rds-entities") -> str:
     """
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
     """
@@ -97,7 +98,7 @@ def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int =
                     },
                     "field_value_factor": {
                         "field": "numMatches",
-                        "factor": 30,
+                        "factor": 100,
                         "modifier": "sqrt",
                         "missing": 0
                     },
@@ -135,7 +136,7 @@ async def search(body: SearchRequest) -> Any:
         clean_query = body.query
     
     # Pass config as the second argument
-    payload = build_msearch_query(clean_query, app.state.config, limit_per_dataset=10, index=index)
+    payload = build_msearch_query(clean_query, app.state.config, limit_per_dataset=LIMIT_PER_DATASET, index=index)
     
     logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
