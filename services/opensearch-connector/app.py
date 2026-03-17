@@ -55,27 +55,50 @@ def build_query(q: str) -> Dict[str, Any]:
             "function_score": {
                 "query": {
                     "bool": {
-                        "must": {
-                            "multi_match": {
-                                "query": q,
-                                "fields": ["prefLabels^3", "labels"],
-                                "operator": "and",
-                                "fuzziness": "AUTO"
+                        "must": [
+                            {
+                                "multi_match": {
+                                    "query": q,
+                                    "fields": ["prefLabels^3", "labels"],
+                                    "operator": "and",
+                                    "fuzziness": "AUTO"
+                                }
                             }
-                        }
+                        ],
+                        "should": [
+                            {
+                                "match_phrase": {
+                                    "prefLabels": {
+                                        "query": q,
+                                        "boost": 50
+                                    }
+                                }
+                            }
+                        ]
                     }
                 },
-                "field_value_factor": {
-                    "field": "numMatches",
-                    "factor": 3,
-                    "modifier": "sqrt",
-                    "missing": 0
-                },
+                "functions": [
+                    {
+                        "field_value_factor": {
+                            "field": "numMatches",
+                            "factor": 5,
+                            "modifier": "sqrt",
+                            "missing": 0
+                        }
+                    }
+                ],
                 "boost_mode": "sum"
+            }
+        },
+        "collapse": {
+            "field": "dataset", 
+            "inner_hits": {
+                "name": "top_results_per_dataset",
+                "size": 10,
+                "sort": [{"_score": "desc"}]
             }
         }
     }
-
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
     return {"status": "ok"}
