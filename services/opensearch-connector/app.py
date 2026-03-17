@@ -49,15 +49,15 @@ DEBUG= True
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
 
-def build_msearch_query(q: str, limit_per_dataset: int = 10, config: Dict[str, Any] = None) -> str:
+def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int = 10, index: str = "rds-entities") -> str:
     """
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
     """
     msearch_payload = ""
-    dataset_names = config['datasets'].keys()
+    dataset_names = config.get('datasets', {}).keys()
+    
     for ds_name in dataset_names:
-        # 1. Header line
-        header = {"index": "rds-entities"}
+        header = {"index": index}
         
         body = {
             "size": limit_per_dataset,
@@ -66,7 +66,7 @@ def build_msearch_query(q: str, limit_per_dataset: int = 10, config: Dict[str, A
                     "query": {
                         "bool": {
                             "must": [
-                                {"term": {"dataset": ds_name}}, # Lock to this dataset
+                                {"term": {"dataset": ds_name}}, 
                                 {
                                     "multi_match": {
                                         "query": q,
@@ -83,7 +83,7 @@ def build_msearch_query(q: str, limit_per_dataset: int = 10, config: Dict[str, A
                     },
                     "field_value_factor": {
                         "field": "numMatches",
-                        "factor": 2,
+                        "factor": 30,
                         "modifier": "sqrt",
                         "missing": 0
                     },
@@ -92,8 +92,6 @@ def build_msearch_query(q: str, limit_per_dataset: int = 10, config: Dict[str, A
             }
         }
         
-        # OpenSearch _msearch requires newline-delimited JSON (ndjson)
-        import json
         msearch_payload += json.dumps(header) + "\n"
         msearch_payload += json.dumps(body) + "\n"
         
@@ -159,19 +157,24 @@ def healthz() -> Dict[str, str]:
 async def search(body: SearchRequest) -> Any:
     endpoint: Optional[str] = getattr(app.state, "opensearch_url", None)
     index: Optional[str] = getattr(app.state, "opensearch_index", None)
-    if not endpoint or not index:
+
+    if not endpoint:
         raise HTTPException(status_code=500, detail="OpenSearch not configured")
 
-    url = endpoint.rstrip("/") + f"/{index}/_msearch"
+    # Point to the global _msearch endpoint
+    url = endpoint.rstrip("/") + "/_msearch"
+    
     try:
         clean_query = body.query.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         clean_query = body.query
     
-    payload = build_msearch_query(clean_query, config=app.state.config)
+    # Pass config as the second argument
+    payload = build_msearch_query(clean_query, app.state.config, limit_per_dataset=10, index=index)
+    
     if DEBUG:
-        print("Constructed OpenSearch query:")
-        print(json.dumps(payload, indent=2))
+        print("Constructed OpenSearch query (NDJSON payload)")
+        print(payload)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
@@ -188,15 +191,33 @@ async def search(body: SearchRequest) -> Any:
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(url, content=payload, headers=headers, auth=auth)
             if r.status_code >= 400:
-                if DEBUG: print(f"Error detail: {r.text}")
+                if DEBUG: print(f"OpenSearch error response: {r.status_code} - {r.text}")
                 raise HTTPException(status_code=r.status_code, detail=r.text)
-            if DEBUG:
-                print("OpenSearch response:")
-                print(r.text)
-            return r.json()
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}") from e
+            
+            raw_response = r.json()
+            
+            # Flattening for ResearchSpace Ephedra compatibility
+            final_hits = []
+            total_value = 0
+            
+            for resp in raw_response.get("responses", []):
+                if "hits" in resp:
+                    hits_list = resp["hits"].get("hits", [])
+                    final_hits.extend(hits_list)
+                    total_value += resp["hits"].get("total", {}).get("value", 0)
+            
+            # Reconstruct into a standard flat search result
+            return {
+                "took": raw_response.get("took"),
+                "hits": {
+                    "total": {"value": total_value, "relation": "eq"},
+                    "hits": final_hits
+                }
+            }
 
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}")
+    
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--opensearch-url", required=True, help="e.g. http://opensearch:9200")
