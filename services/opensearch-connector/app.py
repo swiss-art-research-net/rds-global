@@ -54,7 +54,14 @@ def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int =
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
     """
     msearch_payload = ""
-    dataset_names = config.get('datasets', {}).keys()
+    datasets = config.get('datasets')
+    if not datasets:
+        # Misconfiguration: no datasets defined. Fail fast with a clear 5xx error
+        raise HTTPException(
+            status_code=500,
+            detail="OpenSearch connector misconfiguration: at least one dataset must be defined in 'datasets'.",
+        )
+    dataset_names = datasets.keys()
     
     for ds_name in dataset_names:
         header = {"index": index}
