@@ -109,6 +109,8 @@ async def search(body: SearchRequest) -> Any:
 
     if not endpoint:
         raise HTTPException(status_code=500, detail="OpenSearch not configured")
+    if not index:
+        raise HTTPException(status_code=500, detail="OpenSearch index not configured")
 
     # Point to the global _msearch endpoint
     url = endpoint.rstrip("/") + "/_msearch"
