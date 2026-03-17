@@ -57,7 +57,8 @@ def build_query(q: str) -> Dict[str, Any]:
                             "multi_match": {
                                 "query": q,
                                 "fields": ["prefLabels^3", "labels"],
-                                "operator": "and"
+                                "operator": "and",
+                                "fuzziness": "AUTO"
                             }
                         }
                     }
@@ -85,7 +86,12 @@ async def search(body: SearchRequest) -> Any:
         raise HTTPException(status_code=500, detail="OpenSearch not configured")
 
     url = endpoint.rstrip("/") + f"/{index}/_search"
-    payload = build_query(body.query)
+    try:
+        clean_query = body.query.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        clean_query = body.query
+    
+    payload = build_query(clean_query)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
