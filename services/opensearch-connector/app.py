@@ -34,6 +34,7 @@ Example request:
 
 import argparse
 import os
+import json
 from typing import Any, Dict, Optional
 
 import httpx
@@ -51,8 +52,8 @@ def build_query(q: str) -> Dict[str, Any]:
         "query": {
             "function_score": {
                 "query": {
-                    "constant_score": {
-                        "filter": {
+                    "bool": {
+                        "must": {
                             "multi_match": {
                                 "query": q,
                                 "fields": ["prefLabels^3", "labels"],
@@ -62,10 +63,10 @@ def build_query(q: str) -> Dict[str, Any]:
                     }
                 },
                 "field_value_factor": {
-                "field": "numMatches",
-                "factor": 3,
-                "modifier": "sqrt",
-                "missing": 0
+                    "field": "numMatches",
+                    "factor": 3,
+                    "modifier": "sqrt",
+                    "missing": 0
                 },
                 "boost_mode": "sum"
             }
