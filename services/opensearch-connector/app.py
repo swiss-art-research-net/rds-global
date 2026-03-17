@@ -43,6 +43,8 @@ from pydantic import BaseModel, Field
 
 app = FastAPI()
 
+DEBUG= True
+
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
 
@@ -92,6 +94,9 @@ async def search(body: SearchRequest) -> Any:
         clean_query = body.query
     
     payload = build_query(clean_query)
+    if DEBUG:
+        print("Constructed OpenSearch query:")
+        print(json.dumps(payload, indent=2))
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
@@ -109,6 +114,9 @@ async def search(body: SearchRequest) -> Any:
             r = await client.post(url, json=payload, headers=headers, auth=auth)
             if r.status_code >= 400:
                 raise HTTPException(status_code=r.status_code, detail=r.text)
+            if DEBUG:
+                print("OpenSearch response:")
+                print(r.text)
             return r.json()
     except httpx.RequestError as e:
         raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}") from e
