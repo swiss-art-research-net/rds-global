@@ -9,14 +9,14 @@ It is designed to be used as a connector for ResearchSpace Ephedra services that
 
 Run the service:
 
-    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yaml
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml
 
 Optional authentication flags:
 
-    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yaml \
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
         --user admin --password admin
 
-    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yaml \
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
         --api-key "<your_api_key>"
 
 You can also supply credentials via environment variables:
