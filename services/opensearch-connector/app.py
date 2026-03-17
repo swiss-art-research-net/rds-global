@@ -70,7 +70,7 @@ def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int =
         )
     dataset_names = datasets.keys()
     
-    for ds_name in dataset_names:
+    for dataset_name in dataset_names:
         header = {"index": index}
         
         body = {
@@ -80,7 +80,7 @@ def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int =
                     "query": {
                         "bool": {
                             "must": [
-                                {"term": {"dataset": ds_name}}, 
+                                {"term": {"dataset": dataset_name}}, 
                                 {
                                     "multi_match": {
                                         "query": q,
