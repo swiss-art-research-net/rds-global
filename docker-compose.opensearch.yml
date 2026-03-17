@@ -4,7 +4,9 @@ services:
   opensearch-connector:
     build: ./services/opensearch-connector
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-connector
-    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000"]
+    volumes:
+      - ./config:/config
+    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml"]
 
   opensearch-node:
     image: opensearchproject/opensearch:latest

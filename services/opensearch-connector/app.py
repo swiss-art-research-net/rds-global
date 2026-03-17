@@ -9,14 +9,14 @@ It is designed to be used as a connector for ResearchSpace Ephedra services that
 
 Run the service:
 
-    python app.py --opensearch-url http://localhost:9200 --index rds-entities
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml
 
 Optional authentication flags:
 
-    python app.py --opensearch-url http://localhost:9200 --index rds-entities \
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
         --user admin --password admin
 
-    python app.py --opensearch-url http://localhost:9200 --index rds-entities \
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
         --api-key "<your_api_key>"
 
 You can also supply credentials via environment variables:
@@ -34,37 +34,84 @@ Example request:
 
 import argparse
 import os
+import json
 from typing import Any, Dict, Optional
 
 import httpx
+import logging
+import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 app = FastAPI()
 
+logger = logging.getLogger("opensearch_connector")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+level = os.getenv("LOG_LEVEL", "INFO").upper()
+logger.setLevel(level)
+
+LIMIT_PER_DATASET = 10
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
 
-def build_query(q: str) -> Dict[str, Any]:
-    return {
-        "query": {
-            "function_score": {
-                "query": {
-                    "multi_match": {
-                        "query": q,
-                        "fields": ["prefLabel^3", "labels"],
-                    }
-                },
-                "field_value_factor": {
-                    "field": "numMatches",
-                    "factor": 10.0,
-                    "modifier": "log1p",
-                    "missing": 0,
-                },
-                "boost_mode": "sum",
+def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int = LIMIT_PER_DATASET, index: str = "rds-entities") -> str:
+    """
+    Constructs an ndjson string for the OpenSearch _msearch endpoint.
+    """
+    msearch_payload = ""
+    datasets = config.get('datasets')
+    if not datasets:
+        # Misconfiguration: no datasets defined. Fail fast with a clear 5xx error
+        raise HTTPException(
+            status_code=500,
+            detail="OpenSearch connector misconfiguration: at least one dataset must be defined in 'datasets'.",
+        )
+    dataset_names = datasets.keys()
+    
+    for dataset_name in dataset_names:
+        header = {"index": index}
+        
+        body = {
+            "size": limit_per_dataset,
+            "query": {
+                "function_score": {
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"term": {"dataset": dataset_name}}, 
+                                {
+                                    "multi_match": {
+                                        "query": q,
+                                        "fields": ["prefLabels^3", "labels"],
+                                        "operator": "and",
+                                        "fuzziness": "AUTO"
+                                    }
+                                }
+                            ],
+                            "should": [
+                                {"match_phrase": {"prefLabels": {"query": q, "boost": 10}}}
+                            ]
+                        }
+                    },
+                    "field_value_factor": {
+                        "field": "numMatches",
+                        "factor": 100,
+                        "modifier": "sqrt",
+                        "missing": 0
+                    },
+                    "boost_mode": "sum"
+                }
             }
         }
-    }
+        
+        msearch_payload += json.dumps(header) + "\n"
+        msearch_payload += json.dumps(body) + "\n"
+        
+    return msearch_payload
+
 
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
@@ -74,11 +121,24 @@ def healthz() -> Dict[str, str]:
 async def search(body: SearchRequest) -> Any:
     endpoint: Optional[str] = getattr(app.state, "opensearch_url", None)
     index: Optional[str] = getattr(app.state, "opensearch_index", None)
-    if not endpoint or not index:
-        raise HTTPException(status_code=500, detail="OpenSearch not configured")
 
-    url = endpoint.rstrip("/") + f"/{index}/_search"
-    payload = build_query(body.query)
+    if not endpoint:
+        raise HTTPException(status_code=500, detail="OpenSearch not configured")
+    if not index:
+        raise HTTPException(status_code=500, detail="OpenSearch index not configured")
+
+    # Point to the global _msearch endpoint
+    url = endpoint.rstrip("/") + "/_msearch"
+    
+    try:
+        clean_query = body.query.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        clean_query = body.query
+    
+    # Pass config as the second argument
+    payload = build_msearch_query(clean_query, app.state.config, limit_per_dataset=LIMIT_PER_DATASET, index=index)
+    
+    logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
@@ -86,20 +146,42 @@ async def search(body: SearchRequest) -> Any:
     if user is not None and password is not None:
         auth = (user, password)
 
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/x-ndjson"}
     api_key = getattr(app.state, "opensearch_api_key", None)
     if api_key:
         headers["Authorization"] = f"ApiKey {api_key}"
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            r = await client.post(url, json=payload, headers=headers, auth=auth)
+            r = await client.post(url, content=payload, headers=headers, auth=auth)
             if r.status_code >= 400:
+                logger.error("OpenSearch error response: %d - %s", r.status_code, r.text)
                 raise HTTPException(status_code=r.status_code, detail=r.text)
-            return r.json()
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}") from e
+            
+            raw_response = r.json()
+            
+            # Flattening for ResearchSpace Ephedra compatibility
+            final_hits = []
+            total_value = 0
+            
+            for resp in raw_response.get("responses", []):
+                if "hits" in resp:
+                    hits_list = resp["hits"].get("hits", [])
+                    final_hits.extend(hits_list)
+                    total_value += resp["hits"].get("total", {}).get("value", 0)
+            
+            # Reconstruct into a standard flat search result
+            return {
+                "took": raw_response.get("took"),
+                "hits": {
+                    "total": {"value": total_value, "relation": "eq"},
+                    "hits": final_hits
+                }
+            }
 
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}")
+    
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--opensearch-url", required=True, help="e.g. http://opensearch:9200")
@@ -107,6 +189,7 @@ def main() -> None:
     parser.add_argument("--user", default=os.getenv("OPENSEARCH_USER"))
     parser.add_argument("--password", default=os.getenv("OPENSEARCH_PASSWORD"))
     parser.add_argument("--api-key", default=os.getenv("OPENSEARCH_API_KEY"))
+    parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
@@ -117,7 +200,13 @@ def main() -> None:
     app.state.opensearch_password = args.password
     app.state.opensearch_api_key = args.api_key
 
+    # Load additional configuration from YAML file
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+    app.state.config = config
+
     import uvicorn
+    logger.info("Starting service with index=%s, url=%s", args.index, args.opensearch_url)
     uvicorn.run(app, host=args.host, port=args.port)
 
 if __name__ == "__main__":
