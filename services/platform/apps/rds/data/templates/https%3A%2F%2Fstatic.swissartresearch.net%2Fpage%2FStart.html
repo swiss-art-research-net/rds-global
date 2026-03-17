@@ -8,7 +8,7 @@
     <semantic-search-query-keyword 
         min-search-term-length='3' 
         debounce='600'
-        tokenize-lucene-query='true'
+        tokenize-lucene-query='false'
         query='SELECT DISTINCT ?subject WHERE {
                    SERVICE <http://platform:8080/sparql?repository=opensearch> {
                         ?query os:hasQuery ?__token__ ;
