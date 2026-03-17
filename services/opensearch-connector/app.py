@@ -38,13 +38,20 @@ import json
 from typing import Any, Dict, Optional
 
 import httpx
+import logging
 import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 app = FastAPI()
 
-DEBUG= True
+logger = logging.getLogger("opensearch_connector")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+level = os.getenv("LOG_LEVEL", "INFO").upper()
+logger.setLevel(level)
 
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
@@ -130,9 +137,7 @@ async def search(body: SearchRequest) -> Any:
     # Pass config as the second argument
     payload = build_msearch_query(clean_query, app.state.config, limit_per_dataset=10, index=index)
     
-    if DEBUG:
-        print("Constructed OpenSearch query (NDJSON payload)")
-        print(payload)
+    logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
@@ -149,7 +154,7 @@ async def search(body: SearchRequest) -> Any:
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(url, content=payload, headers=headers, auth=auth)
             if r.status_code >= 400:
-                if DEBUG: print(f"OpenSearch error response: {r.status_code} - {r.text}")
+                logger.error("OpenSearch error response: %d - %s", r.status_code, r.text)
                 raise HTTPException(status_code=r.status_code, detail=r.text)
             
             raw_response = r.json()
@@ -200,6 +205,7 @@ def main() -> None:
     app.state.config = config
 
     import uvicorn
+    logger.info("Starting service with index=%s, url=%s", args.index, args.opensearch_url)
     uvicorn.run(app, host=args.host, port=args.port)
 
 if __name__ == "__main__":
