@@ -6,7 +6,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-connector
     volumes:
       - ./config:/config
-    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml"]
+    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
 
   opensearch-node:
     image: opensearchproject/opensearch:latest
