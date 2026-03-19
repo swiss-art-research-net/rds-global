@@ -4,7 +4,7 @@ paginates via LIMIT/OFFSET against a common SPARQL endpoint, parses results, and
 documents into OpenSearch.
 
 Install:
-  pip install pyyaml requests opensearch-py
+  pip install pyyaml requests opensearch-py tqdm
 
 Example:
   python indexOpenSearchFromSparql.py \
@@ -27,6 +27,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import requests
 from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
+from tqdm.auto import tqdm
 
 from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
@@ -221,8 +222,8 @@ class SparqlClient:
                 last_error = e
                 if attempt < self.max_retries:
                     sleep_time = self.retry_sleep_s * attempt
-                    print(
-                        f"[SPARQL] attempt {attempt}/{self.max_retries} failed, retrying in {sleep_time:.1f}s…",
+                    tqdm.write(
+                        f"[SPARQL] attempt {attempt}/{self.max_retries} failed, retrying in {sleep_time:.1f}s...",
                         file=sys.stderr,
                     )
                     time.sleep(sleep_time)
@@ -413,8 +414,14 @@ def bulk_index(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]
         raise_on_exception=False,
     )
     if errors:
-        print(f"Bulk completed with {len(errors)} errors (showing first 3):", file=sys.stderr)
-        print(json.dumps(errors[:3], indent=2, ensure_ascii=False)[:4000], file=sys.stderr)
+        tqdm.write(
+            f"Bulk completed with {len(errors)} errors (showing first 3):",
+            file=sys.stderr,
+        )
+        tqdm.write(
+            json.dumps(errors[:3], indent=2, ensure_ascii=False)[:4000],
+            file=sys.stderr,
+        )
     return int(success)
 
 def bulk_update_matches(os_client: OpenSearch, index_name: str, rows: List[Dict[str, Any]], chunk_size: int) -> int:
@@ -427,8 +434,14 @@ def bulk_update_matches(os_client: OpenSearch, index_name: str, rows: List[Dict[
         raise_on_exception=False,
     )
     if errors:
-        print(f"Bulk update completed with {len(errors)} errors (showing first 3):", file=sys.stderr)
-        print(json.dumps(errors[:3], indent=2, ensure_ascii=False)[:4000], file=sys.stderr)
+        tqdm.write(
+            f"Bulk update completed with {len(errors)} errors (showing first 3):",
+            file=sys.stderr,
+        )
+        tqdm.write(
+            json.dumps(errors[:3], indent=2, ensure_ascii=False)[:4000],
+            file=sys.stderr,
+        )
     return int(success)
 
 
@@ -519,36 +532,59 @@ def index_dataset_to_opensearch(
     count_query = build_count_query(dataset_config)
     total_expected = parse_count(sparql_client.query(count_query))
 
-    print(
-        f"Indexing {total_expected} entities for the dataset {dataset_name}...",
-        file=sys.stderr,
-    )
-
     buffer: List[Dict[str, Any]] = []
     unique_done = 0
     seen_uris: set[str] = set()
     start_time = time.time()
 
-    for row in iter_dataset_rows(
-        sparql_client=sparql_client,
-        dataset_config=dataset_config,
-        page_size=page_size,
-        max_pages=max_pages,
-        sleep_s=sleep_s,
-    ):
-        uri = row.get("uri")
-        if not uri:
-            continue
+    with tqdm(
+        total=total_expected,
+        desc=f"Indexing {dataset_name}",
+        unit="entity",
+        dynamic_ncols=True,
+        file=sys.stderr,
+    ) as pbar:
+        for row in iter_dataset_rows(
+            sparql_client=sparql_client,
+            dataset_config=dataset_config,
+            page_size=page_size,
+            max_pages=max_pages,
+            sleep_s=sleep_s,
+        ):
+            uri = row.get("uri")
+            if not uri:
+                continue
 
-        if uri in seen_uris:
-            continue
-        seen_uris.add(uri)
-        unique_done += 1
+            if uri in seen_uris:
+                continue
 
-        row["dataset"] = dataset_name
-        buffer.append(row)
+            seen_uris.add(uri)
+            unique_done += 1
+            pbar.update(1)
 
-        if len(buffer) >= bulk_chunk_size:
+            row["dataset"] = dataset_name
+            buffer.append(row)
+
+            if len(buffer) >= bulk_chunk_size:
+                bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
+
+                uris = [r["uri"] for r in buffer]
+                update_matches_for_batch(
+                    sparql_client=sparql_client,
+                    os_client=os_client,
+                    dataset_config=dataset_config,
+                    index_name=index_name,
+                    uris=uris,
+                    bulk_chunk_size=bulk_chunk_size,
+                )
+
+                buffer.clear()
+
+                elapsed = time.time() - start_time
+                rate = (unique_done / elapsed) if elapsed > 0 else 0.0
+                pbar.set_postfix(rate=f"{rate:.1f}/s")
+
+        if buffer:
             bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
 
             uris = [r["uri"] for r in buffer]
@@ -565,37 +601,10 @@ def index_dataset_to_opensearch(
 
             elapsed = time.time() - start_time
             rate = (unique_done / elapsed) if elapsed > 0 else 0.0
-            pct = (unique_done / total_expected * 100.0) if total_expected > 0 else 0.0
-
-            print(
-                f"Indexing {dataset_name}: "
-                f"{pct:.1f}% "
-                f"({rate:.1f} entities/s)",
-                file=sys.stderr,
-            )
-
-    if buffer:
-        bulk_index(os_client, index_name, buffer, chunk_size=bulk_chunk_size)
-
-        uris = [r["uri"] for r in buffer]
-        update_matches_for_batch(
-            sparql_client=sparql_client,
-            os_client=os_client,
-            dataset_config=dataset_config,
-            index_name=index_name,
-            uris=uris,
-            bulk_chunk_size=bulk_chunk_size,
-        )
-
-        buffer.clear()
-
-        elapsed = time.time() - start_time
-        rate = (unique_done / elapsed) if elapsed > 0 else 0.0
-        pct = (unique_done / total_expected * 100.0) if total_expected > 0 else 0.0
-        print(f"{pct:.1f}% ({rate:.1f} entities/s)", file=sys.stderr)
+            pbar.set_postfix(rate=f"{rate:.1f}/s")
 
     os_client.indices.refresh(index=index_name)
-    print("Done!", file=sys.stderr)
+    tqdm.write("Done!", file=sys.stderr)
     return unique_done
 
 def main() -> int:
@@ -661,7 +670,7 @@ def main() -> int:
         bulk_chunk_size=args.bulk_chunk_size,
     )
 
-    print(f"Indexed {total} entities into '{args.os_index}'", file=sys.stderr)
+    tqdm.write(f"Indexed {total} entities into '{args.os_index}'", file=sys.stderr)
     return 0
 
 if __name__ == "__main__":
