@@ -114,8 +114,6 @@ WHERE {{
 
     GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {{
         {{ ?subject <http://schema.swissartresearch.net/ontology/rds#related> ?match . }}
-        UNION
-        {{ ?match <http://schema.swissartresearch.net/ontology/rds#related> ?subject . }}
     }}
 }}
 GROUP BY ?subject
