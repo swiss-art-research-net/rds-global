@@ -59,7 +59,6 @@ datasets:
       - type: http_file
         url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
         file_format: ttl
-    file_format: ttl
     graph: https://d-nb.info/gnd/authorities/graph
     namespace: https://d-nb.info/gnd/
     prefixes:
