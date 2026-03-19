@@ -202,8 +202,6 @@ tasks:
       - task: _prepareForIndexing
         vars:
           DIRECTORY: "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
-          FILE_FORMAT:
-            sh: yq -r ".datasets.{{.DATASET}}.file_format // \"nt\"" "{{.DATASETS_CONFIG_YML}}"
           GRAPH:
             sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
   
