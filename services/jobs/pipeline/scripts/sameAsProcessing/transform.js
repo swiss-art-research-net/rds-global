@@ -200,7 +200,7 @@ function storeToTtl() {
             return;
         }
 
-        // Clique logicL
+        // Clique logic
         // For a set [A, B, C], this creates: A-B, A-C, B-A, B-C, C-A, C-B
         for (let i = 0; i < sortedSet.length; i++) {
             for (let j = 0; j < sortedSet.length; j++) {
