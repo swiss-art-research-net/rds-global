@@ -242,43 +242,74 @@ tasks:
     desc: Prepare data for ingestion
     internal: True
     requires:
-      vars: [DIRECTORY, FILE_FORMAT, GRAPH]
+      vars: [DIRECTORY, GRAPH]
     vars:
       DIRECTORY_FOR_INGEST:
         sh: echo "{{.DIRECTORY_INGEST_DATA}}/$(basename {{.DIRECTORY}})_ingest"
-      FILE_TYPE:
-        sh: |
-            case "{{.FILE_FORMAT}}" in
-              rdf|owl)    echo rdfxml ;;
-              nt)         echo ntriples ;;
-              ttl)        echo turtle ;;
-              trig)       echo trig ;;
-              nq)         echo nquads ;;
-              json|rj)    echo json ;;
-              html|xhtml) echo rdfa ;;
-              xml)        echo grddl ;;
-              rss)        echo rss-tag-soup ;;
-              *)          echo guess ;;
-            esac
       LINE_LIMIT_FOR_SPLIT: 1000000
     cmds:
       - # Remove directory if it exists
       - rm -rf "{{.DIRECTORY_FOR_INGEST}}"
       - # Create directory
       - mkdir -p "{{.DIRECTORY_FOR_INGEST}}"
-      - # use rapper to convert input files to nt format if necessary. If already in nt format, copy files to ingest directory
+      - # Copy .nt files directly; convert other supported RDF files to .nt
       - |
-        if [ "{{.FILE_FORMAT}}" != "nt" ]; then
-          echo "Converting files in {{.DIRECTORY}} to N-Triples format for ingestion..."
-          for file in {{.DIRECTORY}}/*.{{.FILE_FORMAT}}; do
-            [ -f "$file" ] || continue
-            base_filename=$(basename "$file")
+        echo "Preparing files in {{.DIRECTORY}} for ingestion..."
+
+        found_files=0
+
+        for file in "{{.DIRECTORY}}"/*; do
+          [ -f "$file" ] || continue
+          found_files=1
+
+          base_filename=$(basename "$file")
+          ext="${base_filename##*.}"
+          ext=$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')
+
+          case "$ext" in
+            nt)
+              echo "Copying N-Triples file: $base_filename"
+              cp "$file" "{{.DIRECTORY_FOR_INGEST}}/"
+              ;;
+            rdf|owl)
+              file_type="rdfxml"
+              ;;
+            ttl)
+              file_type="turtle"
+              ;;
+            trig)
+              file_type="trig"
+              ;;
+            nq)
+              file_type="nquads"
+              ;;
+            json|rj)
+              file_type="json"
+              ;;
+            html|xhtml)
+              file_type="rdfa"
+              ;;
+            xml)
+              file_type="grddl"
+              ;;
+            rss)
+              file_type="rss-tag-soup"
+              ;;
+            *)
+              echo "Skipping unsupported file: $base_filename"
+              continue
+              ;;
+          esac
+
+          if [ "$ext" != "nt" ]; then
+            echo "Converting $base_filename ($file_type) to N-Triples..."
             output_file="{{.DIRECTORY_FOR_INGEST}}/${base_filename%.*}.nt"
-            rapper -i "{{.FILE_TYPE}}" -o ntriples "$file" > "$output_file"
-          done
-        else
-          echo "Copying N-Triples files from {{.DIRECTORY}} to ingestion directory..."
-          cp {{.DIRECTORY}}/*.nt "{{.DIRECTORY_FOR_INGEST}}/"
+            rapper -i "$file_type" -o ntriples "$file" > "$output_file"
+          fi
+        done
+
+        if [ "$found_files" -eq 0 ]; then
+          echo "No files found in {{.DIRECTORY}}"
         fi
       - # Add the named graph to each triple in the nt files
       - |
@@ -286,12 +317,11 @@ tasks:
         for file in {{.DIRECTORY_FOR_INGEST}}/*.nt; do
           [ -f "$file" ] || continue
           nquad_file="${file%.nt}.nq"
-          # Insert the graph name before the final dot at the end of each triple
 
-          awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$file" > "$nquad_file"     
+          awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$file" > "$nquad_file"
           rm "$file"
         done
-      - # Split large files into smaller chunks of 100000 lines each
+      - # Split large files into smaller chunks
       - |
         echo "Splitting large files into smaller chunks for ingestion..."
         for file in {{.DIRECTORY_FOR_INGEST}}/*.nq; do
