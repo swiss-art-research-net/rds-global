@@ -19,6 +19,11 @@ Optional authentication flags:
     python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
         --api-key "<your_api_key>"
 
+Optional datasets argument to limit search to specific datasets defined in the config:
+
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
+        --datasets "aat,gnd"
+
 You can also supply credentials via environment variables:
 - OPENSEARCH_USER
 - OPENSEARCH_PASSWORD
@@ -70,6 +75,14 @@ def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int =
             detail="OpenSearch connector misconfiguration: at least one dataset must be defined in 'datasets'.",
         )
     dataset_names = datasets.keys()
+
+    if getattr(app.state, "datasets", None):
+        dataset_names = [ds for ds in dataset_names if ds in app.state.datasets]
+        if not dataset_names:
+            raise HTTPException(
+                status_code=400,
+                detail="None of the specified datasets are defined in the configuration.",
+            )
     
     for dataset_name in dataset_names:
         header = {"index": index}
@@ -190,6 +203,7 @@ def main() -> None:
     parser.add_argument("--password", default=os.getenv("OPENSEARCH_PASSWORD"))
     parser.add_argument("--api-key", default=os.getenv("OPENSEARCH_API_KEY"))
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
+    parser.add_argument("--datasets", help="Comma-separated list of dataset names to include in search (must be defined in config)")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
@@ -199,6 +213,7 @@ def main() -> None:
     app.state.opensearch_user = args.user
     app.state.opensearch_password = args.password
     app.state.opensearch_api_key = args.api_key
+    app.state.datasets = args.datasets.split(",") if args.datasets else None
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:

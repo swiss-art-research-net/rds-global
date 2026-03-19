@@ -157,7 +157,7 @@ function storeToTtl() {
                 schema: 'http://schema.org/',
                 wd: 'http://www.wikidata.org/entity/',
                 wdt: 'http://www.wikidata.org/prop/direct/',
-                rds: 'https://static.swissartresearch.net/',
+                rds: 'http://schema.swissartresearch.net/ontology/rds#',
                 crmdig: 'http://www.ics.forth.gr/isl/CRMdig/',
             }
         });
@@ -172,15 +172,15 @@ function storeToTtl() {
 
     // start reading map
     const readStream = db.createReadStream();
-        
+
     let resultIndex = 0;
     let fileId = `sameAsStatements_${resultIndex++}.ttl`;
-    let index = 0;
+    let quadCounter = 0;
     let writer = createWriter();
     console.log(`Preparing data for ${fileId}.`);
     readStream.on('data', data => {
-        if (index > WRITING_STRING_SIZE) {
-            index = 0;
+        if (quadCounter > WRITING_STRING_SIZE) {
+            quadCounter = 0;
             console.log(`Writing graph to file ${fileId}`);
             writer.end((error, result) => {
                 if (error) { console.log(error.message); }
@@ -190,23 +190,28 @@ function storeToTtl() {
             fileId = `sameAsStatements_${resultIndex++}.ttl`;
             console.log(`Preparing data for ${fileId}.`);
         }
-        const key = String.fromCharCode.apply(null, data.key);
+        const key = data.key.toString();
         const sameAsSet = JSON.parse(data.value);
-        // Here we get the first element of the list and put as a reference
-        // You can introduce ordering here
-        const reference = namedNode(sameAsSet[0]);
-        if (key !== sameAsSet[0]) {
+
+        // We pick the alphabetically first item as the "trigger" key to avoid 
+        // processing the same set 50 times
+        const sortedSet = sameAsSet.sort();
+        if (key !== sortedSet[0]) {
             return;
         }
-        index++;
-        for (let i = 1; i < sameAsSet.length; i++) {
-            const sameAsInstance = namedNode(sameAsSet[i]);
-            if (sameAsSet[0] !== sameAsSet[i]) {
-                writer.addQuad(
-                    reference,
-                    SAME_AS_PREDICATE,
-                    sameAsInstance,
-                );
+
+        // Clique logic
+        // For a set [A, B, C], this creates: A-B, A-C, B-A, B-C, C-A, C-B
+        for (let i = 0; i < sortedSet.length; i++) {
+            for (let j = 0; j < sortedSet.length; j++) {
+                if (i !== j) {
+                    writer.addQuad(
+                        namedNode(sortedSet[i]),
+                        SAME_AS_PREDICATE,
+                        namedNode(sortedSet[j])
+                    );
+                    quadCounter++;
+                }
             }
         }
     })

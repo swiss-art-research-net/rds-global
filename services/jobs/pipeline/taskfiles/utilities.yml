@@ -262,9 +262,9 @@ tasks:
             esac
       LINE_LIMIT_FOR_SPLIT: 1000000
     cmds:
-      - # Remove temporary directory if it exists
+      - # Remove directory if it exists
       - rm -rf "{{.DIRECTORY_FOR_INGEST}}"
-      - # Create temporary directory
+      - # Create directory
       - mkdir -p "{{.DIRECTORY_FOR_INGEST}}"
       - # use rapper to convert input files to nt format if necessary. If already in nt format, copy files to ingest directory
       - |
