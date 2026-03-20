@@ -294,7 +294,8 @@ async def search(body: SearchRequest) -> Any:
                 }
             }
             normalized_response = normalize_entity_hits(final_response)
-            logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
             return normalized_response
 
     except httpx.RequestError as e:
