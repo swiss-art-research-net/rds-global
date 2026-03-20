@@ -40,6 +40,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
+      sp:predicate os:hasReference ;
+      sp:object :_reference
+    ]
+
+    [
+      sp:subject :_hits ;
       sp:predicate os:hasScore ;
       sp:object :_score
     ]
@@ -81,6 +87,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     spl:valueType xsd:string;
     ephedra:jsonPath "$._source.prefLabels[0]"
   ]  ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "The reference" ;
+    spl:predicate :_reference ;
+    spl:valueType rdfs:Resource;
+    ephedra:jsonPath "$._reference"
+  ] ;
 
   spin:column [
     a spin:Column ;
