@@ -41,6 +41,7 @@ import argparse
 import os
 import json
 from typing import Any, Dict, Optional
+from copy import deepcopy
 
 import httpx
 import logging
@@ -125,6 +126,107 @@ def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int =
         
     return msearch_payload
 
+def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize OpenSearch entity hits by grouping records that mutually
+    reference each other via `_id` <-> `_source.matches`.
+
+    For each connected group of equivalent records:
+    - all members get the same `_score` = max score in the group
+    - all members get `_reference` = deterministic representative `_id`
+
+    Representative selection:
+    1. highest original `_score`
+    2. alphabetically smallest `_id`
+
+    The input structure is preserved. A deep-copied response is returned.
+
+    Rules for equivalence:
+    - If A._id appears in B._source.matches and B._id appears in A._source.matches,
+      then A and B are considered equivalent.
+    - Equivalence is transitively closed, so if A<->B and B<->C, all three are grouped.
+    """
+    result = deepcopy(response)
+
+    hits = result.get("hits", {}).get("hits", [])
+    if not isinstance(hits, list) or not hits:
+        return result
+
+    # Build lookup tables
+    id_to_index: Dict[str, int] = {}
+    id_to_matches: Dict[str, set] = {}
+    id_to_score: Dict[str, float] = {}
+
+    for i, hit in enumerate(hits):
+        hit_id = hit.get("_id")
+        if not hit_id:
+            continue
+
+        matches = hit.get("_source", {}).get("matches", []) or []
+        if not isinstance(matches, list):
+            matches = []
+
+        id_to_index[hit_id] = i
+        id_to_matches[hit_id] = set(matches)
+        id_to_score[hit_id] = float(hit.get("_score", 0.0) or 0.0)
+
+    # Build undirected graph of mutual references
+    adjacency: Dict[str, set] = {hit_id: set() for hit_id in id_to_index}
+
+    ids = set(id_to_index.keys())
+    for a in ids:
+        for b in id_to_matches[a]:
+            if b in ids and a != b:
+                if a in id_to_matches.get(b, set()):
+                    adjacency[a].add(b)
+                    adjacency[b].add(a)
+
+    # Find connected components
+    visited = set()
+    components: List[List[str]] = []
+
+    for hit_id in sorted(ids):
+        if hit_id in visited:
+            continue
+
+        stack = [hit_id]
+        component = []
+
+        while stack:
+            current = stack.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            component.append(current)
+            stack.extend(adjacency[current] - visited)
+
+        components.append(component)
+
+    # Normalize each component
+    for component in components:
+        if len(component) == 1:
+            # Still add _reference to singletons for consistency
+            ref_id = component[0]
+            idx = id_to_index[ref_id]
+            hits[idx]["_reference"] = ref_id
+            continue
+
+        max_score = max(id_to_score[hit_id] for hit_id in component)
+
+        # Deterministic representative:
+        # highest score desc, then _id asc
+        ref_id = sorted(
+            component,
+            key=lambda hit_id: (-id_to_score[hit_id], hit_id),
+        )[0]
+
+        for hit_id in component:
+            idx = id_to_index[hit_id]
+            hits[idx]["_score"] = max_score
+            hits[idx]["_reference"] = ref_id
+
+    return result
+
 
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
@@ -184,13 +286,16 @@ async def search(body: SearchRequest) -> Any:
                     total_value += resp["hits"].get("total", {}).get("value", 0)
             
             # Reconstruct into a standard flat search result
-            return {
+            final_response = {
                 "took": raw_response.get("took"),
                 "hits": {
                     "total": {"value": total_value, "relation": "eq"},
                     "hits": final_hits
                 }
             }
+            normalized_response = normalize_entity_hits(final_response)
+            logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
+            return normalized_response
 
     except httpx.RequestError as e:
         raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}")
