@@ -65,31 +65,10 @@
                 <template id="referencesTemplate">
                     <semantic-query
                         query='SELECT DISTINCT ?reference WHERE {
-                             BIND(<{{subject.value}}> AS ?subject)
-                             {
-                                {
-                                ?subject rds:related ?sameas .
-                                } UNION {
-                                ?sameas rds:related ?subject .
-                                }
-                                BIND(?sameas AS ?reference)
-                            }
-                            UNION
-                            {
-                                {
-                                ?subject rds:related ?sameas .
-                                } UNION {
-                                ?sameas rds:related ?subject .
-                                }
-
-                                {
-                                ?other rds:related ?sameas .
-                                } UNION {
-                                ?sameas rds:related ?other .
-                                }
-
-                                FILTER(?other != ?subject)
-                                BIND(?other AS ?reference)
+                            BIND(<{{subject.value}}> AS ?subject)
+                            ?subject rds:related ?reference .
+                            GRAPH ?g {
+                                ?reference a ?type .
                             }
                         }'
                     ></semantic-query>
