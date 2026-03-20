@@ -47,7 +47,7 @@ datasets:
       labels: |
         ?subject gn:alternateName ?value .
       matches: |
-        ?subject owl:sameAs ?value .
+        ?subject owl:sameAs|rdfs:seeAlso ?value .
     wikidata_match_property: P1566
 
   gnd:
