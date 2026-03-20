@@ -67,6 +67,9 @@
                         query='SELECT DISTINCT ?reference WHERE {
                             BIND(<{{subject.value}}> AS ?subject)
                             ?subject rds:related ?reference .
+                            GRAPH ?g {
+                                ?reference a ?type .
+                            }
                         }'
                     ></semantic-query>
                 </template>
