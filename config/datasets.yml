@@ -119,7 +119,7 @@ datasets:
       crm: http://www.cidoc-crm.org/cidoc-crm/
       crmdig: http://www.ics.forth.gr/isl/CRMdig/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
-      sik: https://recherche.sik-isea.ch
+      sik: https://recherche.sik-isea.ch/
     types:
       Artwork:
         - sik:SIK-WORK
