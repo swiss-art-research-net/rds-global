@@ -115,6 +115,7 @@ datasets:
           - unzip
     file_format: ttl
     graph: http://recherche.sik-isea.ch/graph
+    namespace: https://recherche.sik-isea.ch/en/sik:person-
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
       crmdig: http://www.ics.forth.gr/isl/CRMdig/
