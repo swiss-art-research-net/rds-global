@@ -147,6 +147,7 @@ datasets:
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       matches:
         ?subject crmdig:L54_same_as ?value .
+    wikidata_match_property: P781
 
 
   thesarchesp:
