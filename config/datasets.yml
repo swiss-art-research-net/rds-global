@@ -115,11 +115,12 @@ datasets:
           - unzip
     file_format: ttl
     graph: http://recherche.sik-isea.ch/graph
+    namespace: https://recherche.sik-isea.ch/en/sik:person-
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
       crmdig: http://www.ics.forth.gr/isl/CRMdig/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
-      sik: https://recherche.sik-isea.ch
+      sik: https://recherche.sik-isea.ch/
     types:
       Artwork:
         - sik:SIK-WORK
@@ -146,7 +147,8 @@ datasets:
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       matches:
-        ?subject crmdig:L54_is_same-as ?value .
+        ?subject crmdig:L54_same_as ?value .
+    wikidata_match_property: P781
 
 
   thesarchesp:
