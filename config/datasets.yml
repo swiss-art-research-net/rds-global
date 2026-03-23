@@ -146,7 +146,7 @@ datasets:
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       matches:
-        ?subject crmdig:L54_is_same-as ?value .
+        ?subject crmdig:L54_same_as ?value .
 
 
   thesarchesp:
