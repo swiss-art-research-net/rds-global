@@ -42,7 +42,21 @@ datasets:
         - gn:Feature
     queries:
       description: |
-        BIND("" AS ?value) .
+        ?subject gn:name ?self .
+        OPTIONAL { ?subject gn:parentADM4/gn:name ?adm4 }
+        OPTIONAL { ?subject gn:parentADM3/gn:name ?adm3 }
+        OPTIONAL { ?subject gn:parentADM2/gn:name ?adm2 }
+        OPTIONAL { ?subject gn:parentADM1/gn:name ?adm1 }
+        OPTIONAL { ?subject gn:parentCountry/gn:name ?country }
+        OPTIONAL { ?subject gn:parentFeature/gn:name ?feature }
+        BIND(CONCAT(
+          ?self,
+          IF(BOUND(?adm4), CONCAT(", ", ?adm4), ""),
+          IF(BOUND(?adm3), CONCAT(", ", ?adm3), ""),
+          IF(BOUND(?adm2), CONCAT(", ", ?adm2), ""),
+          IF(BOUND(?adm1), CONCAT(", ", ?adm1), ""),
+          IF(BOUND(?country), CONCAT(", ", ?country), "")
+        ) AS ?value)
       prefLabel: |
         ?subject gn:name ?value .
       labels: |
