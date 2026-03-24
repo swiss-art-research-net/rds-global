@@ -16,6 +16,7 @@
                             os:hasSubject ?subject ;
                             os:hasDataset ?dataset ;
                             os:hasDescription ?description ;
+                            os:hasReference ?reference ;
                             os:hasPrefLabel ?prefLabel .
                         }
                 }
@@ -25,10 +26,10 @@
         <semantic-search-result>
             <semantic-table 
                 id='grid-result'
-                query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset ?score WHERE {
+                query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset ?reference ?score WHERE {
                     
-                } GROUP BY ?subject ?description ?prefLabel ?dataset ?score
-                ORDER BY DESC(?score)'
+                } GROUP BY ?subject ?description ?prefLabel ?dataset ?reference ?score
+                ORDER BY DESC(?score) ?reference'
                 number-of-displayed-rows="50"
                 options='{
                     "showFilter": false
@@ -49,9 +50,13 @@
                         "displayName": "Dataset"
                     },
                     {
-                        "variableName": "references",
-                        "displayName": "References",
-                        "cellTemplate": "{{> referencesTemplate}}"
+                        "variableName": "reference",
+                        "displayName": "Reference"
+                    },
+                    {
+                        "variableName": "matches",
+                        "displayName": "Matches",
+                        "cellTemplate": "{{> matchesTemplate}}"
                     },
                     {
                         "variableName": "score",
@@ -62,13 +67,13 @@
                 <template id="prefLabelTemplate">
                     <semantic-link iri="{{subject.value}}">{{prefLabel.value}}</semantic-link>
                 </template>
-                <template id="referencesTemplate">
+                <template id="matchesTemplate">
                     <semantic-query
-                        query='SELECT DISTINCT ?reference WHERE {
+                        query='SELECT DISTINCT ?match WHERE {
                             BIND(<{{subject.value}}> AS ?subject)
-                            ?subject rds:related ?reference .
+                            ?subject rds:related ?match .
                             GRAPH ?g {
-                                ?reference a ?type .
+                                ?match a ?type .
                             }
                         }'
                     ></semantic-query>
