@@ -164,8 +164,6 @@ tasks:
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
     internal: True
-    status:
-      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     cmds:
       - echo "Fetching SameAs Statements for {{.DATASET}}"
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
