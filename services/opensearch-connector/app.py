@@ -41,7 +41,6 @@ import argparse
 import os
 import json
 from typing import Any, Dict, Optional
-from copy import deepcopy
 
 import httpx
 import logging
@@ -139,14 +138,12 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
     1. highest original `_score`
     2. alphabetically smallest `_id`
 
-    The input structure is preserved. A deep-copied response is returned.
-
     Rules for equivalence:
     - If A._id appears in B._source.matches and B._id appears in A._source.matches,
       then A and B are considered equivalent.
     - Equivalence is transitively closed, so if A<->B and B<->C, all three are grouped.
     """
-    result = deepcopy(response)
+    result = response
 
     hits = result.get("hits", {}).get("hits", [])
     if not isinstance(hits, list) or not hits:
