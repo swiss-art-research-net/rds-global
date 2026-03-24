@@ -127,13 +127,6 @@ datasets:
         - sik:SIK-WORK
         - sik:SIK-WORK_GROUP
         - sik:SIK-PARENT_WORK
-      BibliographicItem:
-        - sik:SIK-DOCUMENT
-        - sik:SIK-PUBLICATION
-        - sik:SIK-PARENT_DOCUMENT
-      Event:
-        - sik:SIK-EXHIBITION
-        - sik:SIK-AWARD_CEREMONY
       Person:
         - sik:SIK-ACTOR
       Place: 
