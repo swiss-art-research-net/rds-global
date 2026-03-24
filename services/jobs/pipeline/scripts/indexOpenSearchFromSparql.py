@@ -44,7 +44,7 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
-  (SAMPLE(?description_raw) AS ?description)
+  ?description
 WHERE {{
     {{
         SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
@@ -68,9 +68,13 @@ WHERE {{
         {pref_label_block}
     }}
     OPTIONAL {{
-        GRAPH <{dataset_graph}> {{
-            {description_block}
-        }}
+        {{
+            SELECT ?subject (GROUP_CONCAT(?description_raw) as ?description) WHERE {{
+                GRAPH <{dataset_graph}> {{
+                    {description_block}
+                }}
+            }} GROUP BY ?subject
+        }} 
     }}
 
     OPTIONAL {{
@@ -79,7 +83,7 @@ WHERE {{
         }}
     }}
 }}
-GROUP BY ?subject
+GROUP BY ?subject ?description
 ORDER BY ?subject
 """
 
