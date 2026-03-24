@@ -44,7 +44,7 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
-  (SAMPLE(?description_raw) AS ?description)
+  ?description
 WHERE {{
     {{
         SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
@@ -67,9 +67,12 @@ WHERE {{
     GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
+
+    # FLATTENED OPTIONAL: Removed the SELECT ... GROUP BY subquery
     OPTIONAL {{
         GRAPH <{dataset_graph}> {{
             {description_block}
+            BIND(?description_raw AS ?description)
         }}
     }}
 
@@ -79,9 +82,10 @@ WHERE {{
         }}
     }}
 }}
-GROUP BY ?subject
+GROUP BY ?subject ?description
 ORDER BY ?subject
 """
+
 
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
