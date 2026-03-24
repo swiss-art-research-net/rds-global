@@ -264,9 +264,9 @@ async def search(body: SearchRequest) -> Any:
     
     # Pass config as the second argument
     payload = build_msearch_query(
-        q=body.query, 
-        config=app.state.config, 
-        limit_per_dataset=LIMIT_PER_DATASET, 
+        q=clean_query,
+        config=app.state.config,
+        limit_per_dataset=LIMIT_PER_DATASET,
         index=index,
         typeclass_filter=body.typeclass,
         requested_datasets=body.datasets
