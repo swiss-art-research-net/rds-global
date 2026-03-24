@@ -129,8 +129,6 @@ datasets:
         - sik:SIK-PARENT_WORK
       Person:
         - sik:SIK-ACTOR
-      Place: 
-        - crm:E53_Place
       Type:
         - sik:SIK-TYPE
     queries:
