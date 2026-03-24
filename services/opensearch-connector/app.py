@@ -40,7 +40,7 @@ Example request:
 import argparse
 import os
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import httpx
 import logging
