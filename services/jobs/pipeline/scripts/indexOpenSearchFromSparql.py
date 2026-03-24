@@ -68,11 +68,9 @@ WHERE {{
         {pref_label_block}
     }}
 
-    # FLATTENED OPTIONAL: Removed the SELECT ... GROUP BY subquery
     OPTIONAL {{
         GRAPH <{dataset_graph}> {{
             {description_block}
-            BIND(?description_raw AS ?description)
         }}
     }}
 
@@ -156,7 +154,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
 
     pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ."
     labels_block = queries["labels"].replace("?value", "?label")
-    description_block = queries["description"].replace("?value", "?description_raw")
+    description_block = queries["description"].replace("?value", "?description")
     types_graph = RDS_GRAPH_NAMESPACE + "types"
     labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
