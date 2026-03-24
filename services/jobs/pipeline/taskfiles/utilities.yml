@@ -292,6 +292,26 @@ tasks:
         awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$nt_file" > "$nquad_file"     
         rm "$nt_file"
 
+
+  _removeDatasetFromSearchIndex:
+    desc: Remove dataset from OpenSearch index
+    internal: True
+    requires:
+      vars: [DATASET]
+    cmds:
+      - echo "Removing dataset {{.DATASET}} from OpenSearch index"
+      - |
+        curl -X POST "http://opensearch-node:9200/rds-entities/_delete_by_query?conflicts=proceed" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "query": {
+              "term": {
+                "dataset": "{{.DATASET}}"
+              }
+            }
+          }'
+        
+
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
     internal: True

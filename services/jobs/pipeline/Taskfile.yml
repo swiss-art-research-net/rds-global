@@ -220,6 +220,21 @@ tasks:
         fi
       - cd /pipeline/scripts/sameAsProcessing; npm run start
 
+  remove-dataset-from-search-index:
+    desc: Remove a dataset from OpenSearch index. Dataset name should be passed via DATASET variable or as CLI argument
+    vars:
+      DATASET:
+        sh: |
+          if [ -z "{{.DATASET}}" ]; then
+            echo "{{.CLI_ARGS}}"
+          else
+            echo "{{.DATASET}}"
+          fi
+    cmds:
+      - task: _removeDatasetFromSearchIndex
+        vars:
+          DATASET: "{{.DATASET}}"
+  
   update-data:
     desc: Update RDF datasets
     interactive: true
