@@ -28,6 +28,8 @@ tasks:
       vars: [INPUT_DIR, NAME]
     cmds:
       - echo "Building QLever index from data in {{.INPUT_DIR}}"
+      # Note: ommitting --text-words-from-literals argument for now to speed up
+      # indexing while we don't necessarily need full text search capabilities
       - |
         cd /index
         find {{.INPUT_DIR}} -type f -name "*.nq" -exec cat {} + | qlever-index \
@@ -35,96 +37,8 @@ tasks:
             -f - \
             --index-basename {{.NAME}} \
             --vocabulary-type on-disk-compressed \
-            --text-words-from-literals \
             -m 12G \
             --parse-parallel true | tee {{.NAME}}.index-log.txt
-            
-  _downloadFile:
-    internal: True
-    interactive: True
-    desc: Download data
-    requires:
-      vars: [URL, DIRECTORY, FILE_FORMAT]
-    cmds:
-      - if [ -d "{{.DIRECTORY }}" ]; then
-          read -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (y/n) " REPLY;
-          echo;
-          if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -r -d "{{.DIRECTORY}}";
-          fi;
-        fi
-        
-        if [ ! -d "{{.DIRECTORY }}" ]; then
-          mkdir -p "{{.DIRECTORY}}";
-          cd "{{.DIRECTORY}}";
-          echo "Fetching datasources...";
-          curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}};
-          echo "Fetching completed.";
-        fi
-
-  _downloadAndUnzip:
-    internal: True
-    interactive: True
-    desc: Download and unzip data
-    requires:
-      vars: [URL, DIRECTORY, GUNZIP, FILE_FORMAT]
-    cmds:
-      - # If the directory already exists, ask the user if they want to delete it
-      - |
-        bash -lc '
-        SKIP_ALL=false
-        if [ -d "{{.DIRECTORY}}" ]; then
-          read -t 10 -p "Do you want to remove previous data from {{.DIRECTORY}} and download new ones? (Y/n) (defaults to Y after 10s)" REPLY
-          [ -z "$REPLY" ] && REPLY="Y"
-          echo
-          if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -r -d "{{.DIRECTORY}}"
-          else
-            SKIP_ALL=true
-          fi
-        fi
-        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
-          mkdir -p "{{.DIRECTORY}}"
-          cd "{{.DIRECTORY}}"
-          echo "Fetching datasources..."
-          if [ "{{.GUNZIP}}" == true ]; then
-            curl -k "{{.URL}}" -o data.{{.FILE_FORMAT}}.gz
-          else
-            curl -k "{{.URL}}" -o data.zip
-          fi
-          echo "Fetching completed."
-        fi
-        if [ "{{.SKIP_UNZIPPING}}" != true ] && [ $SKIP_ALL != true ]; then
-            echo "Unzip datasources..."
-            cd "{{.DIRECTORY}}"
-            if [ "{{.GUNZIP}}" == true ]; then
-              gunzip data.{{.FILE_FORMAT}}.gz
-            elif [ -f "data.zip" ]; then
-                unzip data.zip
-            fi
-            echo "Unzipping completed."
-        fi'
-
-  _downloadFromGitHubAndUnzip:
-    internal: True
-    interactive: True
-    desc: Download and unzip data from GitHub
-    cmds:
-      - |
-        if [ -d "{{.DATA_DIRECTORY }}" ]; then
-          read -p "Do you want to remove previous data from {{.DATA_DIRECTORY}} and download new ones? (y/n) " REPLY
-          echo
-          if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -r -d "{{.DIRECTORY}}"
-          else
-            SKIP_ALL=true
-          fi
-        fi
-        if [ ! -d "{{.DIRECTORY }}" ] && [ $SKIP_ALL != true ]; then
-          mkdir -p "{{.DATA_DIRECTORY}}"
-          python /pipeline/scripts/getFileContentsFromGit.py --username "{{.GITHUB_USERNAME}}" --token "{{.GITHUB_TOKEN}}" --repo "{{.DATA_GIT_REPOSITORY}}" --path "{{.DATA_GIT_PATH}}" --localfile "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip"
-          unzip "{{.DATA_DIRECTORY}}/{{.FILE_NAME}}.zip" -d "{{.DATA_DIRECTORY}}"
-        fi
 
   _fetch-sameas-statements-for-dataset:
     internal: True
@@ -164,8 +78,6 @@ tasks:
   _fetch-sameas-statements-local:
     desc: Fetch SameAs Statements for different datasets
     internal: True
-    status:
-      - test -f "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
     cmds:
       - echo "Fetching SameAs Statements for {{.DATASET}}"
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
@@ -379,6 +291,26 @@ tasks:
         # Insert the graph name before the final dot at the end of each triple
         awk -v graph="<{{.GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "$nt_file" > "$nquad_file"     
         rm "$nt_file"
+
+
+  _removeDatasetFromSearchIndex:
+    desc: Remove dataset from OpenSearch index
+    internal: True
+    requires:
+      vars: [DATASET]
+    cmds:
+      - echo "Removing dataset {{.DATASET}} from OpenSearch index"
+      - |
+        curl -X POST "http://opensearch-node:9200/rds-entities/_delete_by_query?conflicts=proceed" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "query": {
+              "term": {
+                "dataset": "{{.DATASET}}"
+              }
+            }
+          }'
+        
 
   _removeGraphFromTripleStore:
     desc: Remove graph from triple store
