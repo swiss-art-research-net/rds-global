@@ -11,10 +11,12 @@
         tokenize-lucene-query='false'
         query='SELECT DISTINCT ?subject WHERE {
                    SERVICE <http://platform:8080/sparql?repository=opensearch> {
-                        ?query os:hasQuery ?__token__ ;
+                        ?query os:queryTerm ?__token__ ;
+                            # os:queryTypeClass "Person" ;
                             os:hasScore ?score ;
                             os:hasSubject ?subject ;
                             os:hasDataset ?dataset ;
+                            os:hasTypeClass ?typeClass ;
                             os:hasDescription ?description ;
                             os:hasReference ?reference ;
                             os:hasPrefLabel ?prefLabel .
@@ -26,9 +28,9 @@
         <semantic-search-result>
             <semantic-table 
                 id='grid-result'
-                query='SELECT DISTINCT ?prefLabel ?subject ?description ?dataset ?reference ?score WHERE {
+                query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
                     
-                } GROUP BY ?subject ?description ?prefLabel ?dataset ?reference ?score
+                } GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
                 ORDER BY DESC(?score) ?reference'
                 number-of-displayed-rows="50"
                 options='{
@@ -44,6 +46,10 @@
                     {
                         "variableName": "description",
                         "displayName": "Description"
+                    },
+                    {
+                        "variableName": "typeClass",
+                        "displayName": "Type Class"
                     },
                     {
                         "variableName": "dataset",
