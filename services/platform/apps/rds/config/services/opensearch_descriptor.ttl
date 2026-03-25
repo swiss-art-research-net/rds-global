@@ -16,8 +16,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
-      sp:predicate os:hasQuery ;
+      sp:predicate os:queryTerm ;
       sp:object :_query
+    ]
+
+    [
+      sp:subject :_hits ;
+      sp:predicate os:queryTypeClass ;
+      sp:object :_typeclass
     ]
 
     [
@@ -30,6 +36,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
       sp:subject :_hits ;
       sp:predicate os:hasDataset ;
       sp:object :_dataset
+    ]
+        
+    [
+      sp:subject :_hits ;
+      sp:predicate os:hasTypeClass ;
+      sp:object :_typeclasses
     ]
 
     [
@@ -64,6 +76,13 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     spl:valueType xsd:string ;
   ] ;
 
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "type class" ;
+    spl:predicate :_typeclass ;
+    spl:valueType xsd:string ;
+  ] ;
+
   spin:column [
     a spin:Column ;
     rdfs:comment "The search hits" ;
@@ -86,6 +105,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     spl:predicate :_prefLabel ;
     spl:valueType xsd:string;
     ephedra:jsonPath "$._source.prefLabels[0]"
+  ]  ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "The type class" ;
+    spl:predicate :_typeclasses ;
+    spl:valueType xsd:string;
+    ephedra:jsonPath "$._source.typeClasses[0]"
   ]  ;
 
   spin:column [

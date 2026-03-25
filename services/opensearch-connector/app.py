@@ -61,49 +61,64 @@ logger.setLevel(level)
 LIMIT_PER_DATASET = 10
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
+    typeclass: Optional[str] = None
+    datasets: Optional[List[str]] = None
 
-def build_msearch_query(q: str, config: Dict[str, Any], limit_per_dataset: int = LIMIT_PER_DATASET, index: str = "rds-entities") -> str:
+def build_msearch_query(
+    q: str, 
+    config: Dict[str, Any], 
+    limit_per_dataset: int = LIMIT_PER_DATASET, 
+    index: str = "rds-entities",
+    typeclass_filter: Optional[str] = None,
+    requested_datasets: Optional[List[str]] = None
+) -> str:
     """
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
     """
     msearch_payload = ""
-    datasets = config.get('datasets')
-    if not datasets:
-        # Misconfiguration: no datasets defined. Fail fast with a clear 5xx error
+    config_datasets = config.get('datasets', {})
+    if not config_datasets:
         raise HTTPException(
             status_code=500,
             detail="OpenSearch connector misconfiguration: at least one dataset must be defined in 'datasets'.",
         )
-    dataset_names = datasets.keys()
+    dataset_names = list(config_datasets.keys())
 
     if getattr(app.state, "datasets", None):
         dataset_names = [ds for ds in dataset_names if ds in app.state.datasets]
-        if not dataset_names:
-            raise HTTPException(
-                status_code=400,
-                detail="None of the specified datasets are defined in the configuration.",
-            )
+
+    if requested_datasets:
+        dataset_names = [ds for ds in dataset_names if ds in requested_datasets]
+
+    if not dataset_names:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid datasets found for the given criteria.",
+        )
     
     for dataset_name in dataset_names:
         header = {"index": index}
-        
+
+        must_conditions = [
+            {"term": {"dataset": dataset_name}},
+            {
+                "multi_match": {
+                    "query": q,
+                    "fields": ["prefLabels^3", "labels"],
+                    "operator": "and",
+                    "fuzziness": "AUTO"
+                }
+            }
+        ]
+        if typeclass_filter:
+            must_conditions.append({"term": {"typeClasses": typeclass_filter}})
         body = {
             "size": limit_per_dataset,
             "query": {
                 "function_score": {
                     "query": {
                         "bool": {
-                            "must": [
-                                {"term": {"dataset": dataset_name}}, 
-                                {
-                                    "multi_match": {
-                                        "query": q,
-                                        "fields": ["prefLabels^3", "labels"],
-                                        "operator": "and",
-                                        "fuzziness": "AUTO"
-                                    }
-                                }
-                            ],
+                            "must": must_conditions,
                             "should": [
                                 {"match_phrase": {"prefLabels": {"query": q, "boost": 10}}}
                             ]
@@ -248,7 +263,14 @@ async def search(body: SearchRequest) -> Any:
         clean_query = body.query
     
     # Pass config as the second argument
-    payload = build_msearch_query(clean_query, app.state.config, limit_per_dataset=LIMIT_PER_DATASET, index=index)
+    payload = build_msearch_query(
+        q=clean_query,
+        config=app.state.config,
+        limit_per_dataset=LIMIT_PER_DATASET,
+        index=index,
+        typeclass_filter=body.typeclass,
+        requested_datasets=body.datasets
+    )
     
     logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
