@@ -481,12 +481,20 @@ def iter_dataset_rows(
         if max_pages is not None and page >= max_pages:
             break
 
-        sparql = build_index_query(dataset_config, limit=page_size, offset=offset)
-        data = sparql_client.query(sparql)
-        rows = parse_rows(data)
+        subjects_sparql = build_subjects_query(dataset_config, limit=page_size, offset=offset)
+        subjects_data = sparql_client.query(subjects_sparql)
+        
+        subject_uris = [
+            b["subject"]["value"] 
+            for b in subjects_data.get("results", {}).get("bindings", [])
+        ]
 
-        if not rows:
+        if not subject_uris:
             break
+
+        index_sparql = build_index_query(dataset_config, subject_uris)
+        index_data = sparql_client.query(index_sparql)
+        rows = parse_rows(index_data)
 
         for r in rows:
             yield r
