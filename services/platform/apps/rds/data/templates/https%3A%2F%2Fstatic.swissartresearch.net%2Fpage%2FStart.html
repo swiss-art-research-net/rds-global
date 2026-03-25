@@ -12,7 +12,7 @@
         query='SELECT DISTINCT ?subject WHERE {
                    SERVICE <http://platform:8080/sparql?repository=opensearch> {
                         ?query os:searchTerm ?__token__ ;
-                            os:searchDataset "aat" ;
+                            #os:searchDataset "aat" ;
                             os:hasTypeClass ?typeClass ;
                             os:hasScore ?score ;
                             os:hasSubject ?subject ;

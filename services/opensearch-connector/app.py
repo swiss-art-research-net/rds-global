@@ -90,7 +90,7 @@ def build_msearch_query(
         dataset_names = [ds for ds in dataset_names if ds in app.state.datasets]
 
     if requested_dataset:
-        dataset_names = ['requested_dataset'] if requested_dataset in dataset_names else []
+        dataset_names = [requested_dataset] if requested_dataset in dataset_names else []
 
     if not dataset_names:
         raise HTTPException(
@@ -330,8 +330,18 @@ async def search(body: SearchRequest) -> Any:
                 }
             }
             normalized_response = normalize_entity_hits(final_response)
-            #if logger.isEnabledFor(logging.DEBUG):
-            #   logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
+            if logger.isEnabledFor(logging.DEBUG):
+                all_hits = normalized_response.get("hits", {}).get("hits", [])
+                log_hits_structure = {
+                    "total": normalized_response.get("hits", {}).get("total"),
+                    #"hits": all_hits[:0] + [f"... {len(all_hits) - 3} more hits omitted"] if len(all_hits) > 3 else all_hits
+                    "hits": "...{}  hits omitted...".format(len(all_hits))
+                }
+                log_display = {
+                "took": normalized_response.get("took"),
+                "hits": log_hits_structure
+                }
+                logger.debug("Response to client (truncated): %s", json.dumps(log_display, indent=2)) 
             return normalized_response
 
     except httpx.RequestError as e:
