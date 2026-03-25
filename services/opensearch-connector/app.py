@@ -45,7 +45,9 @@ from typing import Any, Dict, Optional, List
 import httpx
 import logging
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -62,7 +64,7 @@ LIMIT_PER_DATASET = 10
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
     typeclass: Optional[str] = None
-    datasets: Optional[List[str]] = None
+    dataset: Optional[str] = None
 
 def build_msearch_query(
     q: str, 
@@ -70,7 +72,7 @@ def build_msearch_query(
     limit_per_dataset: int = LIMIT_PER_DATASET, 
     index: str = "rds-entities",
     typeclass_filter: Optional[str] = None,
-    requested_datasets: Optional[List[str]] = None
+    requested_dataset: Optional[str] = None
 ) -> str:
     """
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
@@ -87,8 +89,8 @@ def build_msearch_query(
     if getattr(app.state, "datasets", None):
         dataset_names = [ds for ds in dataset_names if ds in app.state.datasets]
 
-    if requested_datasets:
-        dataset_names = [ds for ds in dataset_names if ds in requested_datasets]
+    if requested_dataset:
+        dataset_names = [requested_dataset] if requested_dataset in dataset_names else []
 
     if not dataset_names:
         raise HTTPException(
@@ -239,6 +241,17 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
 
     return result
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # This captures the raw body that caused the error
+    body = await request.body()
+    logger.error(f"422 Error: {exc}")
+    logger.error(f"Received Body: {body.decode()}")
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": body.decode()},
+    )
 
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
@@ -261,6 +274,10 @@ async def search(body: SearchRequest) -> Any:
         clean_query = body.query.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         clean_query = body.query
+
+    # Debug body to log
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Received search request: %s", body.json())
     
     # Pass config as the second argument
     payload = build_msearch_query(
@@ -269,10 +286,10 @@ async def search(body: SearchRequest) -> Any:
         limit_per_dataset=LIMIT_PER_DATASET,
         index=index,
         typeclass_filter=body.typeclass,
-        requested_datasets=body.datasets
+        requested_dataset=body.dataset
     )
     
-    logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
+    #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
@@ -314,7 +331,17 @@ async def search(body: SearchRequest) -> Any:
             }
             normalized_response = normalize_entity_hits(final_response)
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
+                all_hits = normalized_response.get("hits", {}).get("hits", [])
+                log_hits_structure = {
+                    "total": normalized_response.get("hits", {}).get("total"),
+                    #"hits": all_hits[:0] + [f"... {len(all_hits) - 3} more hits omitted"] if len(all_hits) > 3 else all_hits
+                    "hits": "...{}  hits omitted...".format(len(all_hits))
+                }
+                log_display = {
+                "took": normalized_response.get("took"),
+                "hits": log_hits_structure
+                }
+                logger.debug("Response to client (truncated): %s", json.dumps(log_display, indent=2)) 
             return normalized_response
 
     except httpx.RequestError as e:
