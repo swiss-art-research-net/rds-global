@@ -58,7 +58,7 @@ SELECT
   ?subject
   (GROUP_CONCAT(DISTINCT STR(?prefLabel); SEPARATOR="||") AS ?prefLabels)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
-  ?description
+  (GROUP_CONCAT(DISTINCT STR(?description_raw); SEPARATOR=" ") AS ?description)
 WHERE {{
     VALUES ?subject {{
         {subject_values}
@@ -80,7 +80,7 @@ WHERE {{
         }}
     }}
 }}
-GROUP BY ?subject ?description
+GROUP BY ?subject
 """
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
@@ -151,7 +151,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
 
     pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ."
     labels_block = queries["labels"].replace("?value", "?label")
-    description_block = queries["description"].replace("?value", "?description")
+    description_block = queries["description"].replace("?value", "?description_raw")
     types_graph = RDS_GRAPH_NAMESPACE + "types"
     labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
