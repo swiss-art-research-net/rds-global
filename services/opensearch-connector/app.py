@@ -62,7 +62,7 @@ LIMIT_PER_DATASET = 10
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
     typeclass: Optional[str] = None
-    datasets: Optional[List[str]] = None
+    dataset: Optional[List[str]] = None
 
 def build_msearch_query(
     q: str, 
@@ -70,7 +70,7 @@ def build_msearch_query(
     limit_per_dataset: int = LIMIT_PER_DATASET, 
     index: str = "rds-entities",
     typeclass_filter: Optional[str] = None,
-    requested_datasets: Optional[List[str]] = None
+    requested_dataset: Optional[str] = None
 ) -> str:
     """
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
@@ -87,8 +87,8 @@ def build_msearch_query(
     if getattr(app.state, "datasets", None):
         dataset_names = [ds for ds in dataset_names if ds in app.state.datasets]
 
-    if requested_datasets:
-        dataset_names = [ds for ds in dataset_names if ds in requested_datasets]
+    if requested_dataset:
+        dataset_names = ['requested_dataset'] if requested_dataset in dataset_names else []
 
     if not dataset_names:
         raise HTTPException(
@@ -267,7 +267,7 @@ async def search(body: SearchRequest) -> Any:
         debug_body = {
             "query": clean_query,
             "typeclass": body.typeclass,
-            "datasets": body.datasets
+            "dataset": body.dataset
         }
         logger.debug("Received search request: %s", json.dumps(debug_body, indent=2))
     
@@ -278,10 +278,10 @@ async def search(body: SearchRequest) -> Any:
         limit_per_dataset=LIMIT_PER_DATASET,
         index=index,
         typeclass_filter=body.typeclass,
-        requested_datasets=body.datasets
+        requested_dataset=body.dataset
     )
     
-    logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
+    #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
@@ -322,8 +322,8 @@ async def search(body: SearchRequest) -> Any:
                 }
             }
             normalized_response = normalize_entity_hits(final_response)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
+            #if logger.isEnabledFor(logging.DEBUG):
+            #   logger.debug("Response to client: %s", json.dumps(normalized_response, indent=2))
             return normalized_response
 
     except httpx.RequestError as e:
