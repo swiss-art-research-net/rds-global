@@ -16,8 +16,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
-      sp:predicate os:search ;
+      sp:predicate os:searchTerm ;
       sp:object :_query
+    ]
+
+    [
+      sp:subject :_hits ;
+      sp:predicate os:searchDataset ;
+      sp:object :_dataset
     ]
 
     [
@@ -29,7 +35,7 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     [
       sp:subject :_hits ;
       sp:predicate os:hasDataset ;
-      sp:object :_dataset
+      sp:object :_datasets
     ]
         
     [
@@ -95,7 +101,7 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
   spin:column [
     a spin:Column ;
     rdfs:comment "The dataset" ;
-    spl:predicate :_dataset ;
+    spl:predicate :_datasets ;
     spl:valueType xsd:string;
     ephedra:jsonPath "$._source.dataset"
   ] ;

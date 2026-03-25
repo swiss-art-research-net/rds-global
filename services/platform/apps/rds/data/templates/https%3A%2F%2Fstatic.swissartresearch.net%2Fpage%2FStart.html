@@ -11,11 +11,12 @@
         tokenize-lucene-query='false'
         query='SELECT DISTINCT ?subject WHERE {
                    SERVICE <http://platform:8080/sparql?repository=opensearch> {
-                        ?query os:search ?__token__ ;
+                        ?query os:searchTerm ?__token__ ;
+                            os:searchDataset "aat" ;
                             os:hasTypeClass ?typeClass ;
                             os:hasScore ?score ;
                             os:hasSubject ?subject ;
-                            os:hasDataset "aat" ;
+                            os:hasDataset ?dataset ;
                             os:hasDescription ?description ;
                             os:hasReference ?reference ;
                             os:hasPrefLabel ?prefLabel .

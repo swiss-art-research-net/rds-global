@@ -26,7 +26,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-platform
     environment:
       PLATFORM_OPTS: >-
-        -Dlog4j.configurationFile=classpath:org/researchspace/logging/log4j2.xml
+        -Dlog4j.configurationFile=classpath:org/researchspace/logging/log4j2-debug.xml
         ${RESEARCHSPACE_OPTS:-}
       JAVA_OPTS: -Xmx1g
     image: swissartresearx/researchspace:7fa27dd39c4a02d3cf39b02f50162faed3eab8dd

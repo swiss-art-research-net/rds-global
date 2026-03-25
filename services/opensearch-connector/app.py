@@ -45,7 +45,9 @@ from typing import Any, Dict, Optional, List
 import httpx
 import logging
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -62,7 +64,7 @@ LIMIT_PER_DATASET = 10
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
     typeclass: Optional[str] = None
-    dataset: Optional[List[str]] = None
+    dataset: Optional[str] = None
 
 def build_msearch_query(
     q: str, 
@@ -239,6 +241,17 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
 
     return result
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # This captures the raw body that caused the error
+    body = await request.body()
+    logger.error(f"422 Error: {exc}")
+    logger.error(f"Received Body: {body.decode()}")
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": body.decode()},
+    )
 
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
@@ -264,12 +277,7 @@ async def search(body: SearchRequest) -> Any:
 
     # Debug body to log
     if logger.isEnabledFor(logging.DEBUG):
-        debug_body = {
-            "query": clean_query,
-            "typeclass": body.typeclass,
-            "dataset": body.dataset
-        }
-        logger.debug("Received search request: %s", json.dumps(debug_body, indent=2))
+        logger.debug("Received search request: %s", body.json())
     
     # Pass config as the second argument
     payload = build_msearch_query(
