@@ -44,7 +44,7 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
   (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
-  (SAMPLE(?description_raw) AS ?description)
+  ?description
 WHERE {{
     {{
         SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
@@ -67,6 +67,7 @@ WHERE {{
     GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
+
     OPTIONAL {{
         GRAPH <{dataset_graph}> {{
             {description_block}
@@ -79,9 +80,10 @@ WHERE {{
         }}
     }}
 }}
-GROUP BY ?subject
+GROUP BY ?subject ?description
 ORDER BY ?subject
 """
+
 
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
@@ -152,7 +154,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
 
     pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ."
     labels_block = queries["labels"].replace("?value", "?label")
-    description_block = queries["description"].replace("?value", "?description_raw")
+    description_block = queries["description"].replace("?value", "?description")
     types_graph = RDS_GRAPH_NAMESPACE + "types"
     labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
