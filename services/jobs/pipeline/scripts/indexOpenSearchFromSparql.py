@@ -36,6 +36,27 @@ from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 # SPARQL generation
 # ----------------------------
 
+SUBJECT_QUERY_TEMPLATE = """\
+{prefixes}
+SELECT DISTINCT ?subject WHERE {{
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
+    }}
+
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
+
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
+    }}
+}}
+ORDER BY ?subject
+LIMIT {limit}
+OFFSET {offset}
+"""
+
 INDEX_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
@@ -46,24 +67,16 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
   ?description
 WHERE {{
-    {{
-        SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
-            GRAPH <{types_graph}> {{
-                {type_constraint_block}
-                ?subject a ?queryType .
-            }}
-            GRAPH <{dataset_graph}> {{
-                ?subject a ?type .
-            }}
-            GRAPH <{labels_graph}> {{
-                {pref_label_block}
-            }}
-        }}
-        ORDER BY ?subject
-        LIMIT {limit}
-        OFFSET {offset}
+    VALUES ?subject {{
+        {subject_values}
     }}
-
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
+    }}
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
     GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
@@ -81,9 +94,7 @@ WHERE {{
     }}
 }}
 GROUP BY ?subject ?description
-ORDER BY ?subject
 """
-
 
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
@@ -173,14 +184,19 @@ def build_count_query(dataset_config: Dict[str, Any]) -> str:
     parts = _prepare_query_parts(dataset_config)
     return COUNT_QUERY_TEMPLATE.format(**parts)
 
-def build_query(dataset_config: Dict[str, Any], limit: int, offset: int) -> str:
+def build_index_query(dataset_config: Dict[str, Any], subjects: List[str]) -> str:
     parts = _prepare_query_parts(dataset_config)
-    return INDEX_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
+    subject_values = "\n        ".join(f"<{subject}>" for subject in subjects)
+    return INDEX_QUERY_TEMPLATE.format(**parts, subject_values=subject_values)
 
 def build_matches_query(dataset_config: Dict[str, Any], subjects: List[str]) -> str:
     parts = _prepare_query_parts(dataset_config)
     subject_values = "\n        ".join(f"<{subject}>" for subject in subjects)
     return MATCHES_QUERY_TEMPLATE.format(**parts, subject_values=subject_values)
+
+def build_subjects_query(dataset_config: Dict[str, Any], limit: int, offset: int) -> str:
+    parts = _prepare_query_parts(dataset_config)
+    return SUBJECT_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
 
 
 # ----------------------------
@@ -465,7 +481,7 @@ def iter_dataset_rows(
         if max_pages is not None and page >= max_pages:
             break
 
-        sparql = build_query(dataset_config, limit=page_size, offset=offset)
+        sparql = build_index_query(dataset_config, limit=page_size, offset=offset)
         data = sparql_client.query(sparql)
         rows = parse_rows(data)
 
