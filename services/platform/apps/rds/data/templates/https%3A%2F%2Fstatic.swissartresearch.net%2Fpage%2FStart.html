@@ -12,11 +12,10 @@
         query='SELECT DISTINCT ?subject WHERE {
                    SERVICE <http://platform:8080/sparql?repository=opensearch> {
                         ?query os:search ?__token__ ;
-                         os:hasTypeClass "Person" ;
+                            os:hasTypeClass ?typeClass ;
                             os:hasScore ?score ;
                             os:hasSubject ?subject ;
                             os:hasDataset ?dataset ;
-                            os:hasTypeClass ?typeClass ;
                             os:hasDescription ?description ;
                             os:hasReference ?reference ;
                             os:hasPrefLabel ?prefLabel .
