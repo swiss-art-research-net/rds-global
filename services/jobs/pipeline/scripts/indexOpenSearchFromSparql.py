@@ -473,8 +473,9 @@ def iter_dataset_rows(
     page_size: int,
     max_pages: Optional[int],
     sleep_s: float,
+    start_offset: int = 0,
 ) -> Iterable[Dict[str, Any]]:
-    offset = 0
+    offset = start_offset
     page = 0
 
     while True:
@@ -552,6 +553,7 @@ def index_dataset_to_opensearch(
     max_pages: Optional[int],
     sleep_s: float,
     bulk_chunk_size: int,
+    start_offset: int = 0,
 ) -> int:
     ensure_index(os_client, index_name)
 
@@ -565,6 +567,7 @@ def index_dataset_to_opensearch(
 
     with tqdm(
         total=total_expected,
+        initial=start_offset,
         desc=f"Indexing {dataset_name}",
         unit="entity",
         dynamic_ncols=True,
@@ -576,6 +579,7 @@ def index_dataset_to_opensearch(
             page_size=page_size,
             max_pages=max_pages,
             sleep_s=sleep_s,
+            start_offset=start_offset,
         ):
             uri = row.get("uri")
             if not uri:
@@ -645,6 +649,7 @@ def main() -> int:
     ap.add_argument("--sparql-timeout", type=int, default=60, help="SPARQL HTTP timeout seconds")
     ap.add_argument("--sparql-retries", type=int, default=3, help="SPARQL retry attempts")
     ap.add_argument("--sparql-retry-sleep", type=float, default=2.0, help="Base sleep time between SPARQL retries (seconds)")
+    ap.add_argument("--offset", type=int, default=0, help="Starting offset for SPARQL pagination")
 
     ap.add_argument("--os-host", default="localhost", help="OpenSearch host")
     ap.add_argument("--os-port", type=int, default=9200, help="OpenSearch port")
@@ -694,6 +699,7 @@ def main() -> int:
         max_pages=args.max_pages,
         sleep_s=args.sleep,
         bulk_chunk_size=args.bulk_chunk_size,
+        start_offset=args.offset,
     )
 
     tqdm.write(f"Indexed {total} entities into '{args.os_index}'", file=sys.stderr)
