@@ -261,6 +261,15 @@ async def search(body: SearchRequest) -> Any:
         clean_query = body.query.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         clean_query = body.query
+
+    # Debug body to log
+    if logger.isEnabledFor(logging.DEBUG):
+        debug_body = {
+            "query": clean_query,
+            "typeclass": body.typeclass,
+            "datasets": body.datasets
+        }
+        logger.debug("Received search request: %s", json.dumps(debug_body, indent=2))
     
     # Pass config as the second argument
     payload = build_msearch_query(
