@@ -43,18 +43,11 @@ datasets:
     queries:
       description: |
         ?subject gn:name ?self .
-          OPTIONAL { ?subject gn:parentADM4/gn:name ?adm4 }
-          OPTIONAL { ?subject gn:parentADM3/gn:name ?adm3 }
-          OPTIONAL { ?subject gn:parentADM2/gn:name ?adm2 }
-          OPTIONAL { ?subject gn:parentADM1/gn:name ?adm1 }
-          OPTIONAL { ?subject gn:parentCountry/gn:name ?country }
-          BIND(CONCAT(?self, 
-                COALESCE(CONCAT(", ", ?adm4), ""),
-                COALESCE(CONCAT(", ", ?adm3), ""),
-                COALESCE(CONCAT(", ", ?adm2), ""),
-                COALESCE(CONCAT(", ", ?adm1), ""),
-                COALESCE(CONCAT(", ", ?country), "")) AS ?value)
-
+        OPTIONAL { ?subject gn:parentADM1 ?p1 . ?p1 gn:name ?adm1 }
+        OPTIONAL { ?subject gn:parentCountry ?pC . ?pC gn:name ?country }
+        BIND(CONCAT(?self, 
+              COALESCE(CONCAT(", ", ?adm1), ""),
+              COALESCE(CONCAT(", ", ?country), "")) AS ?value)
       prefLabel: |
         ?subject gn:name ?value .
       labels: |
