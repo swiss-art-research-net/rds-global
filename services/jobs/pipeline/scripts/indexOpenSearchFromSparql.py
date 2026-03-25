@@ -38,18 +38,13 @@ from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 SUBJECT_QUERY_TEMPLATE = """\
 {prefixes}
-SELECT DISTINCT ?subject WHERE {{
+SELECT ?subject ?type ?typeClass WHERE {{
     GRAPH <{types_graph}> {{
         {type_constraint_block}
         ?subject a ?queryType .
     }}
-
     GRAPH <{dataset_graph}> {{
         ?subject a ?type .
-    }}
-
-    GRAPH <{labels_graph}> {{
-        {pref_label_block}
     }}
 }}
 ORDER BY ?subject
@@ -62,21 +57,13 @@ INDEX_QUERY_TEMPLATE = """\
 SELECT
   ?subject
   (GROUP_CONCAT(DISTINCT STR(?prefLabel); SEPARATOR="||") AS ?prefLabels)
-  (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
-  (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
   ?description
 WHERE {{
     VALUES ?subject {{
         {subject_values}
     }}
-    GRAPH <{types_graph}> {{
-        {type_constraint_block}
-        ?subject a ?queryType .
-    }}
-    GRAPH <{dataset_graph}> {{
-        ?subject a ?type .
-    }}
+    
     GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
@@ -95,7 +82,6 @@ WHERE {{
 }}
 GROUP BY ?subject ?description
 """
-
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
@@ -485,10 +471,19 @@ def iter_dataset_rows(
         subjects_sparql = build_subjects_query(dataset_config, limit=page_size, offset=offset)
         subjects_data = sparql_client.query(subjects_sparql)
         
-        subject_uris = [
-            b["subject"]["value"] 
-            for b in subjects_data.get("results", {}).get("bindings", [])
-        ]
+        subject_map = {}
+        bindings = subjects_data.get("results", {}).get("bindings", [])
+        for b in bindings:
+            uri = b["subject"]["value"]
+            t = b["type"]["value"]
+            tc = b["typeClass"]["value"]
+            
+            if uri not in subject_map:
+                subject_map[uri] = {"types": set(), "typeClasses": set()}
+            subject_map[uri]["types"].add(t)
+            subject_map[uri]["typeClasses"].add(tc)
+
+        subject_uris = list(subject_map.keys())
 
         if not subject_uris:
             break
@@ -498,6 +493,10 @@ def iter_dataset_rows(
         rows = parse_rows(index_data)
 
         for r in rows:
+            uri = r["uri"]
+            if uri in subject_map:
+                r["types"] = list(subject_map[uri]["types"])
+                r["typeClasses"] = list(subject_map[uri]["typeClasses"])
             yield r
 
         page += 1
