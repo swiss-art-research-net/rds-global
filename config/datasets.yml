@@ -53,7 +53,7 @@ datasets:
                 COALESCE(CONCAT(", ", ?adm3), ""),
                 COALESCE(CONCAT(", ", ?adm2), ""),
                 COALESCE(CONCAT(", ", ?adm1), ""),
-                COALESCE(CONCAT(", ", ?country), "")) AS ?description_raw)
+                COALESCE(CONCAT(", ", ?country), "")) AS ?value)
 
       prefLabel: |
         ?subject gn:name ?value .
