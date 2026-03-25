@@ -36,45 +36,42 @@ from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 # SPARQL generation
 # ----------------------------
 
+SUBJECT_QUERY_TEMPLATE = """\
+{prefixes}
+SELECT ?subject ?type ?typeClass WHERE {{
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
+    }}
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
+}}
+ORDER BY ?subject
+LIMIT {limit}
+OFFSET {offset}
+"""
+
 INDEX_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
   ?subject
   (GROUP_CONCAT(DISTINCT STR(?prefLabel); SEPARATOR="||") AS ?prefLabels)
-  (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
-  (GROUP_CONCAT(DISTINCT ?typeClass; SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
-  ?description
+  (GROUP_CONCAT(DISTINCT STR(?description_raw); SEPARATOR=" ") AS ?description)
 WHERE {{
-    {{
-        SELECT DISTINCT ?subject ?type ?typeClass WHERE {{
-            GRAPH <{types_graph}> {{
-                {type_constraint_block}
-                ?subject a ?queryType .
-            }}
-            GRAPH <{dataset_graph}> {{
-                ?subject a ?type .
-            }}
-            GRAPH <{labels_graph}> {{
-                {pref_label_block}
-            }}
-        }}
-        ORDER BY ?subject
-        LIMIT {limit}
-        OFFSET {offset}
+    VALUES ?subject {{
+        {subject_values}
     }}
-
+    
     GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
+
     OPTIONAL {{
-        {{
-            SELECT ?subject (GROUP_CONCAT(?description_raw) as ?description) WHERE {{
-                GRAPH <{dataset_graph}> {{
-                    {description_block}
-                }}
-            }} GROUP BY ?subject
-        }} 
+        GRAPH <{dataset_graph}> {{
+            {description_block}
+        }}
     }}
 
     OPTIONAL {{
@@ -83,10 +80,8 @@ WHERE {{
         }}
     }}
 }}
-GROUP BY ?subject ?description
-ORDER BY ?subject
+GROUP BY ?subject
 """
-
 COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
@@ -175,14 +170,19 @@ def build_count_query(dataset_config: Dict[str, Any]) -> str:
     parts = _prepare_query_parts(dataset_config)
     return COUNT_QUERY_TEMPLATE.format(**parts)
 
-def build_query(dataset_config: Dict[str, Any], limit: int, offset: int) -> str:
+def build_index_query(dataset_config: Dict[str, Any], subjects: List[str]) -> str:
     parts = _prepare_query_parts(dataset_config)
-    return INDEX_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
+    subject_values = "\n        ".join(f"<{subject}>" for subject in subjects)
+    return INDEX_QUERY_TEMPLATE.format(**parts, subject_values=subject_values)
 
 def build_matches_query(dataset_config: Dict[str, Any], subjects: List[str]) -> str:
     parts = _prepare_query_parts(dataset_config)
     subject_values = "\n        ".join(f"<{subject}>" for subject in subjects)
     return MATCHES_QUERY_TEMPLATE.format(**parts, subject_values=subject_values)
+
+def build_subjects_query(dataset_config: Dict[str, Any], limit: int, offset: int) -> str:
+    parts = _prepare_query_parts(dataset_config)
+    return SUBJECT_QUERY_TEMPLATE.format(**parts, limit=limit, offset=offset)
 
 
 # ----------------------------
@@ -459,22 +459,44 @@ def iter_dataset_rows(
     page_size: int,
     max_pages: Optional[int],
     sleep_s: float,
+    start_offset: int = 0,
 ) -> Iterable[Dict[str, Any]]:
-    offset = 0
+    offset = start_offset
     page = 0
 
     while True:
         if max_pages is not None and page >= max_pages:
             break
 
-        sparql = build_query(dataset_config, limit=page_size, offset=offset)
-        data = sparql_client.query(sparql)
-        rows = parse_rows(data)
+        subjects_sparql = build_subjects_query(dataset_config, limit=page_size, offset=offset)
+        subjects_data = sparql_client.query(subjects_sparql)
+        
+        subject_map = {}
+        bindings = subjects_data.get("results", {}).get("bindings", [])
+        for b in bindings:
+            uri = b["subject"]["value"]
+            t = b["type"]["value"]
+            tc = b["typeClass"]["value"]
+            
+            if uri not in subject_map:
+                subject_map[uri] = {"types": set(), "typeClasses": set()}
+            subject_map[uri]["types"].add(t)
+            subject_map[uri]["typeClasses"].add(tc)
 
-        if not rows:
+        subject_uris = list(subject_map.keys())
+
+        if not subject_uris:
             break
 
+        index_sparql = build_index_query(dataset_config, subject_uris)
+        index_data = sparql_client.query(index_sparql)
+        rows = parse_rows(index_data)
+
         for r in rows:
+            uri = r["uri"]
+            if uri in subject_map:
+                r["types"] = list(subject_map[uri]["types"])
+                r["typeClasses"] = list(subject_map[uri]["typeClasses"])
             yield r
 
         page += 1
@@ -530,6 +552,7 @@ def index_dataset_to_opensearch(
     max_pages: Optional[int],
     sleep_s: float,
     bulk_chunk_size: int,
+    start_offset: int = 0,
 ) -> int:
     ensure_index(os_client, index_name)
 
@@ -543,6 +566,7 @@ def index_dataset_to_opensearch(
 
     with tqdm(
         total=total_expected,
+        initial=start_offset,
         desc=f"Indexing {dataset_name}",
         unit="entity",
         dynamic_ncols=True,
@@ -554,6 +578,7 @@ def index_dataset_to_opensearch(
             page_size=page_size,
             max_pages=max_pages,
             sleep_s=sleep_s,
+            start_offset=start_offset,
         ):
             uri = row.get("uri")
             if not uri:
@@ -623,6 +648,7 @@ def main() -> int:
     ap.add_argument("--sparql-timeout", type=int, default=60, help="SPARQL HTTP timeout seconds")
     ap.add_argument("--sparql-retries", type=int, default=3, help="SPARQL retry attempts")
     ap.add_argument("--sparql-retry-sleep", type=float, default=2.0, help="Base sleep time between SPARQL retries (seconds)")
+    ap.add_argument("--offset", type=int, default=0, help="Starting offset for SPARQL pagination")
 
     ap.add_argument("--os-host", default="localhost", help="OpenSearch host")
     ap.add_argument("--os-port", type=int, default=9200, help="OpenSearch port")
@@ -672,6 +698,7 @@ def main() -> int:
         max_pages=args.max_pages,
         sleep_s=args.sleep,
         bulk_chunk_size=args.bulk_chunk_size,
+        start_offset=args.offset,
     )
 
     tqdm.write(f"Indexed {total} entities into '{args.os_index}'", file=sys.stderr)

@@ -18,7 +18,7 @@ tasks:
           --endpoint "{{.QLEVER_ENDPOINT}}" \
           --os-host opensearch-node \
           --os-index rds-entities \
-          --page-size 100 \
+          --page-size 1000 \
           {{.CLI_ARGS}}
 
   _build_qlever_index:

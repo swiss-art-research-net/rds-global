@@ -43,20 +43,11 @@ datasets:
     queries:
       description: |
         ?subject gn:name ?self .
-        OPTIONAL { ?subject gn:parentADM4/gn:name ?adm4 }
-        OPTIONAL { ?subject gn:parentADM3/gn:name ?adm3 }
-        OPTIONAL { ?subject gn:parentADM2/gn:name ?adm2 }
-        OPTIONAL { ?subject gn:parentADM1/gn:name ?adm1 }
-        OPTIONAL { ?subject gn:parentCountry/gn:name ?country }
-        OPTIONAL { ?subject gn:parentFeature/gn:name ?feature }
-        BIND(CONCAT(
-          ?self,
-          IF(BOUND(?adm4), CONCAT(", ", ?adm4), ""),
-          IF(BOUND(?adm3), CONCAT(", ", ?adm3), ""),
-          IF(BOUND(?adm2), CONCAT(", ", ?adm2), ""),
-          IF(BOUND(?adm1), CONCAT(", ", ?adm1), ""),
-          IF(BOUND(?country), CONCAT(", ", ?country), "")
-        ) AS ?value)
+        OPTIONAL { ?subject gn:parentADM1 ?p1 . ?p1 gn:name ?adm1 }
+        OPTIONAL { ?subject gn:parentCountry ?pC . ?pC gn:name ?country }
+        BIND(CONCAT(?self, 
+              COALESCE(CONCAT(", ", ?adm1), ""),
+              COALESCE(CONCAT(", ", ?country), "")) AS ?value)
       prefLabel: |
         ?subject gn:name ?value .
       labels: |
@@ -97,27 +88,26 @@ datasets:
     queries:
       description: |
             OPTIONAL {
-              ?subject ?p ?bio .
-              VALUES ?p { gnd:definition gnd:note gnd:biographicalOrHistoricalInformation }
-              FILTER (STRLEN(STR(?bio)) > 0)
+              ?subject gnd:definition|gnd:note|gnd:biographicalOrHistoricalInformation ?bio .
             }
-            OPTIONAL {
-              ?subject gnd:professionOrOccupationAsLiteral ?profession .
-              FILTER (STRLEN(STR(?prof)) > 0)
-            }
-            OPTIONAL {
-              ?subject gnd:dateOfBirth ?birthDate
-            }
-            OPTIONAL {
-              ?subject gnd:dateOfDeath ?deathDate
-            }
-            OPTIONAL {
-              ?subject gnd:placeOfBirth/gnd:preferredNameForThePlaceOrGeographicName ?birthPlace
-            }
-            OPTIONAL {
-              ?subject gnd:placeOfDeath/gnd:preferredNameForThePlaceOrGeographicName ?deathPlace
-            }
-            BIND (CONCAT(COALESCE(?bio, ""), IF(STRLEN(COALESCE(?profession, "")) > 0,CONCAT(IF(STRLEN(COALESCE(?bio, "")) > 0," ",""), ?profession),""), IF(BOUND(?birthDate) || BOUND(?birthPlace) || BOUND(?deathDate) || BOUND(?deathPlace),CONCAT(IF(STRLEN(CONCAT(COALESCE(?bio, ""), COALESCE(?profession, ""))) > 0," ",""), "(", COALESCE(STR(?birthDate), ""), IF(BOUND(?birthPlace),CONCAT(", ", ?birthPlace),""), " – ", COALESCE(STR(?deathDate), ""), IF(BOUND(?deathPlace),CONCAT(", ", ?deathPlace),""), ")"),"")) AS ?value)
+            OPTIONAL { ?subject gnd:professionOrOccupationAsLiteral ?profession }
+            
+            OPTIONAL { ?subject gnd:dateOfBirth ?bDate }
+            OPTIONAL { ?subject gnd:placeOfBirth ?pb . ?pb gnd:preferredNameForThePlaceOrGeographicName ?bPlace }
+            OPTIONAL { ?subject gnd:dateOfDeath ?dDate }
+            OPTIONAL { ?subject gnd:placeOfDeath ?pd . ?pd gnd:preferredNameForThePlaceOrGeographicName ?dPlace }
+
+            BIND(CONCAT(
+              COALESCE(?bio, ""),
+              IF(BOUND(?profession), CONCAT(" ", ?profession), ""),
+              IF(BOUND(?bDate) || BOUND(?bPlace) || BOUND(?dDate) || BOUND(?dPlace),
+                CONCAT(" (", 
+                        COALESCE(STR(?bDate), ""), IF(BOUND(?bPlace), CONCAT(", ", ?bPlace), ""),
+                        " – ", 
+                        COALESCE(STR(?dDate), ""), IF(BOUND(?dPlace), CONCAT(", ", ?dPlace), ""),
+                        ")"),
+                "")
+            ) AS ?value)
       prefLabel: |
         ?subject ?predicatePrefLabel ?value .
         ?predicatePrefLabel rdfs:subPropertyOf gnd:preferredName .
