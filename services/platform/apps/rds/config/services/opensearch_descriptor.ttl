@@ -16,14 +16,8 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
-      sp:predicate os:queryTerm ;
+      sp:predicate os:search ;
       sp:object :_query
-    ]
-
-    [
-      sp:subject :_hits ;
-      sp:predicate os:queryTypeClass ;
-      sp:object :_typeclass
     ]
 
     [
@@ -78,8 +72,15 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
   spin:constraint [
     a spl:Argument ;
+    rdfs:comment "dataset" ;
+    spl:predicate :_dataset ;
+    spl:valueType xsd:string ;
+  ] ;
+
+  spin:constraint [
+    a spl:Argument ;
     rdfs:comment "type class" ;
-    spl:predicate :_typeclass ;
+    spl:predicate :_typeclasses ;
     spl:valueType xsd:string ;
   ] ;
 
