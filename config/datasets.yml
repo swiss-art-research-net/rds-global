@@ -42,14 +42,9 @@ datasets:
         - gn:Feature
     queries:
       description: |
-        ?subject gn:name ?self .
-        ?subject gn:parentADM1 ?p1 . 
-        ?p1 gn:name ?adm1 .
-        ?subject gn:parentCountry ?pC . 
-        ?pC gn:name ?country .
-        BIND(CONCAT(?self, 
-              COALESCE(CONCAT(", ", ?adm1), ""),
-              COALESCE(CONCAT(", ", ?country), "")) AS ?value)
+        ?subject gn:parentADM1/gn:name ?adm1 .
+        ?subject gn:parentCountry/gn:name ?country .
+        BIND(CONCAT(?adm1, ", ", ?country) as ?value )
       prefLabel: |
         ?subject gn:name ?value .
       labels: |
