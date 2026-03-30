@@ -43,8 +43,10 @@ datasets:
     queries:
       description: |
         ?subject gn:name ?self .
-        OPTIONAL { ?subject gn:parentADM1 ?p1 . ?p1 gn:name ?adm1 }
-        OPTIONAL { ?subject gn:parentCountry ?pC . ?pC gn:name ?country }
+        ?subject gn:parentADM1 ?p1 . 
+        ?p1 gn:name ?adm1 .
+        ?subject gn:parentCountry ?pC . 
+        ?pC gn:name ?country .
         BIND(CONCAT(?self, 
               COALESCE(CONCAT(", ", ?adm1), ""),
               COALESCE(CONCAT(", ", ?country), "")) AS ?value)
