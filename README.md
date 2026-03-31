@@ -102,3 +102,40 @@ And then rename the files to have the `.nt` extension:
 ```
 for f in data.temp.*; do mv "$f" "$f.nt"; done
 ```
+
+## OpenSearch Connector
+
+The OpenSearch integration is exposed to ResearchSpace via a service descriptor at [services/platform/apps/rds/config/services/opensearch_descriptor.ttl](https://github.com/swiss-art-research-net/rds-global/blob/main/services/platform/apps/rds/config/services/opensearch_descriptor.ttl) and backed by the FastAPI proxy at [services/opensearch-connector/app.py](https://github.com/swiss-art-research-net/rds-global/blob/main/services/opensearch-connector/app.py).
+
+When querying the `opensearch` repository through `SERVICE`, use the dedicated search predicates for input parameters:
+
+- `os:searchTerm` for the search string
+- `os:searchDataset` to restrict the search to one or more datasets as a comma-separated string, for example `"gnd"` or `"aat,aat"`
+- `os:searchLimit` to control the total number of results requested from the connector
+- `os:hasTypeClass` to filter by type class
+
+Note that the outer SPARQL `LIMIT` is not passed through to the OpenSearch. If you need to control how many results the connector fetches, use `os:searchLimit` explicitly.
+
+Example:
+
+```sparql
+PREFIX os: <http://www.researchspace.com/resource/assets/Ontologies/opensearch#>
+
+SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
+  SERVICE <http://platform:8080/sparql?repository=opensearch> {
+    ?query os:searchTerm "newton" ;
+      os:searchDataset "gnd" ;
+      os:searchLimit 100 ;
+      os:hasTypeClass "Person", ?typeClass ;
+      os:hasScore ?score ;
+      os:hasSubject ?subject ;
+      os:hasDataset ?dataset ;
+      os:hasDescription ?description ;
+      os:hasReference ?reference ;
+      os:hasPrefLabel ?prefLabel .
+  }
+}
+GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
+ORDER BY DESC(?score) (?reference)
+LIMIT 100
+```
