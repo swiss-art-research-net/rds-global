@@ -24,6 +24,11 @@ Optional datasets argument to limit search to specific datasets defined in the c
     python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
         --datasets "aat,gnd"
 
+Optional maximum result limit to cap client requests:
+
+    python app.py --opensearch-url http://localhost:9200 --index rds-entities --config config.yml \
+        --max-limit 1000
+
 You can also supply credentials via environment variables:
 - OPENSEARCH_USER
 - OPENSEARCH_PASSWORD
@@ -61,6 +66,7 @@ level = os.getenv("LOG_LEVEL", "INFO").upper()
 logger.setLevel(level)
 
 DEFAULT_TOTAL_LIMIT = 100
+DEFAULT_MAX_LIMIT = 1000
 
 
 class SearchRequest(BaseModel):
@@ -68,6 +74,24 @@ class SearchRequest(BaseModel):
     typeclass: Optional[str] = None
     dataset: Optional[str] = None
     limit: int = Field(default=DEFAULT_TOTAL_LIMIT, ge=1)
+
+
+def sanitize_optional_text(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+
+    sanitized = value.strip()
+    return sanitized or None
+
+
+def sanitize_query(value: str) -> str:
+    sanitized = value.strip()
+    if not sanitized:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Query must not be blank.",
+        )
+    return sanitized
 
 
 def resolve_dataset_names(
@@ -275,6 +299,7 @@ def healthz() -> Dict[str, str]:
 async def search(body: SearchRequest) -> Any:
     endpoint: Optional[str] = getattr(app.state, "opensearch_url", None)
     index: Optional[str] = getattr(app.state, "opensearch_index", None)
+    max_limit: int = getattr(app.state, "max_limit", DEFAULT_MAX_LIMIT)
 
     if not endpoint:
         raise HTTPException(status_code=500, detail="OpenSearch not configured")
@@ -284,10 +309,23 @@ async def search(body: SearchRequest) -> Any:
     # Point to the global _msearch endpoint
     url = endpoint.rstrip("/") + "/_msearch"
     
+    query = sanitize_query(body.query)
+    dataset = sanitize_optional_text(body.dataset)
+    typeclass = sanitize_optional_text(body.typeclass)
+    requested_limit = body.limit
+    effective_limit = min(requested_limit, max_limit)
+
+    if requested_limit > max_limit:
+        logger.warning(
+            "Requested limit %s exceeds configured maximum %s; clamping request.",
+            requested_limit,
+            max_limit,
+        )
+
     try:
-        clean_query = body.query.encode('latin-1').decode('utf-8')
+        clean_query = query.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
-        clean_query = body.query
+        clean_query = query
 
     # Debug body to log
     if logger.isEnabledFor(logging.DEBUG):
@@ -297,10 +335,10 @@ async def search(body: SearchRequest) -> Any:
     payload = build_msearch_query(
         q=clean_query,
         config=app.state.config,
-        total_limit=body.limit,
+        total_limit=effective_limit,
         index=index,
-        typeclass_filter=body.typeclass,
-        requested_dataset=body.dataset
+        typeclass_filter=typeclass,
+        requested_dataset=dataset
     )
     
     #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
@@ -370,16 +408,21 @@ def main() -> None:
     parser.add_argument("--api-key", default=os.getenv("OPENSEARCH_API_KEY"))
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--datasets", help="Comma-separated list of dataset names to include in search (must be defined in config)")
+    parser.add_argument("--max-limit", type=int, default=DEFAULT_MAX_LIMIT, help="Maximum total result limit accepted from client requests")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
+
+    if args.max_limit < 1:
+        parser.error("--max-limit must be greater than 0")
 
     app.state.opensearch_url = args.opensearch_url
     app.state.opensearch_index = args.index
     app.state.opensearch_user = args.user
     app.state.opensearch_password = args.password
     app.state.opensearch_api_key = args.api_key
-    app.state.datasets = args.datasets.split(",") if args.datasets else None
+    app.state.datasets = [dataset.strip() for dataset in args.datasets.split(",") if dataset.strip()] if args.datasets else None
+    app.state.max_limit = args.max_limit
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:
@@ -387,7 +430,12 @@ def main() -> None:
     app.state.config = config
 
     import uvicorn
-    logger.info("Starting service with index=%s, url=%s", args.index, args.opensearch_url)
+    logger.info(
+        "Starting service with index=%s, url=%s, max_limit=%s",
+        args.index,
+        args.opensearch_url,
+        args.max_limit,
+    )
     uvicorn.run(app, host=args.host, port=args.port)
 
 if __name__ == "__main__":
