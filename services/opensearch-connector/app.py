@@ -60,30 +60,27 @@ logging.basicConfig(
 level = os.getenv("LOG_LEVEL", "INFO").upper()
 logger.setLevel(level)
 
-LIMIT_PER_DATASET = 10
+DEFAULT_TOTAL_LIMIT = 100
+
+
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
     typeclass: Optional[str] = None
     dataset: Optional[str] = None
+    limit: int = Field(default=DEFAULT_TOTAL_LIMIT, ge=1)
 
-def build_msearch_query(
-    q: str, 
-    config: Dict[str, Any], 
-    limit_per_dataset: int = LIMIT_PER_DATASET, 
-    index: str = "rds-entities",
-    typeclass_filter: Optional[str] = None,
-    requested_dataset: Optional[str] = None
-) -> str:
-    """
-    Constructs an ndjson string for the OpenSearch _msearch endpoint.
-    """
-    msearch_payload = ""
-    config_datasets = config.get('datasets', {})
+
+def resolve_dataset_names(
+    config: Dict[str, Any],
+    requested_dataset: Optional[str] = None,
+) -> List[str]:
+    config_datasets = config.get("datasets", {})
     if not config_datasets:
         raise HTTPException(
             status_code=500,
             detail="OpenSearch connector misconfiguration: at least one dataset must be defined in 'datasets'.",
         )
+
     dataset_names = list(config_datasets.keys())
 
     if getattr(app.state, "datasets", None):
@@ -97,6 +94,23 @@ def build_msearch_query(
             status_code=400,
             detail="No valid datasets found for the given criteria.",
         )
+
+    return dataset_names
+
+def build_msearch_query(
+    q: str, 
+    config: Dict[str, Any], 
+    total_limit: int = DEFAULT_TOTAL_LIMIT,
+    index: str = "rds-entities",
+    typeclass_filter: Optional[str] = None,
+    requested_dataset: Optional[str] = None
+) -> str:
+    """
+    Constructs an ndjson string for the OpenSearch _msearch endpoint.
+    """
+    msearch_payload = ""
+    dataset_names = resolve_dataset_names(config=config, requested_dataset=requested_dataset)
+    limit_per_dataset = max(1, total_limit // len(dataset_names))
     
     for dataset_name in dataset_names:
         header = {"index": index}
@@ -283,7 +297,7 @@ async def search(body: SearchRequest) -> Any:
     payload = build_msearch_query(
         q=clean_query,
         config=app.state.config,
-        limit_per_dataset=LIMIT_PER_DATASET,
+        total_limit=body.limit,
         index=index,
         typeclass_filter=body.typeclass,
         requested_dataset=body.dataset
