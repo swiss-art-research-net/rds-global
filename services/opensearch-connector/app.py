@@ -70,13 +70,13 @@ DEFAULT_MAX_LIMIT = 1000
 
 
 class SearchRequest(BaseModel):
-    query: str = Field(..., min_length=1)
-    typeclass: Optional[str] = None
-    dataset: Optional[str] = None
+    query: str = Field(..., min_length=1, max_length=512)
+    typeclass: Optional[str] = Field(default=None, max_length=128)
+    dataset: Optional[str] = Field(default=None, max_length=128)
     limit: int = Field(default=DEFAULT_TOTAL_LIMIT, ge=1)
 
 
-def sanitize_optional_text(value: Optional[str]) -> Optional[str]:
+def sanitize_text(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
 
@@ -310,8 +310,8 @@ async def search(body: SearchRequest) -> Any:
     url = endpoint.rstrip("/") + "/_msearch"
     
     query = sanitize_query(body.query)
-    dataset = sanitize_optional_text(body.dataset)
-    typeclass = sanitize_optional_text(body.typeclass)
+    dataset = sanitize_text(body.dataset)
+    typeclass = sanitize_text(body.typeclass)
     requested_limit = body.limit
     effective_limit = min(requested_limit, max_limit)
 
@@ -329,7 +329,13 @@ async def search(body: SearchRequest) -> Any:
 
     # Debug body to log
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Received search request: %s", body.json())
+        log_body = {
+            "query": query,
+            "typeclass": typeclass,
+            "dataset": dataset,
+            "limit": effective_limit,
+        }
+        logger.debug("Received search request: %s", json.dumps(log_body))
     
     # Pass config as the second argument
     payload = build_msearch_query(
