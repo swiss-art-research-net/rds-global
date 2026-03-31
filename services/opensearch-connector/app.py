@@ -84,6 +84,15 @@ def sanitize_text(value: Optional[str]) -> Optional[str]:
     return sanitized or None
 
 
+def parse_requested_datasets(value: Optional[str]) -> Optional[List[str]]:
+    sanitized = sanitize_text(value)
+    if sanitized is None:
+        return None
+
+    datasets = [dataset.strip() for dataset in sanitized.split(",") if dataset.strip()]
+    return datasets or None
+
+
 def sanitize_query(value: str) -> str:
     sanitized = value.strip()
     if not sanitized:
@@ -96,7 +105,7 @@ def sanitize_query(value: str) -> str:
 
 def resolve_dataset_names(
     config: Dict[str, Any],
-    requested_dataset: Optional[str] = None,
+    requested_datasets: Optional[List[str]] = None,
 ) -> List[str]:
     config_datasets = config.get("datasets", {})
     if not config_datasets:
@@ -110,8 +119,12 @@ def resolve_dataset_names(
     if getattr(app.state, "datasets", None):
         dataset_names = [ds for ds in dataset_names if ds in app.state.datasets]
 
-    if requested_dataset:
-        dataset_names = [requested_dataset] if requested_dataset in dataset_names else []
+    if requested_datasets:
+        allowed_datasets = set(dataset_names)
+        dataset_names = []
+        for dataset in requested_datasets:
+            if dataset in allowed_datasets and dataset not in dataset_names:
+                dataset_names.append(dataset)
 
     if not dataset_names:
         raise HTTPException(
@@ -127,13 +140,13 @@ def build_msearch_query(
     total_limit: int = DEFAULT_TOTAL_LIMIT,
     index: str = "rds-entities",
     typeclass_filter: Optional[str] = None,
-    requested_dataset: Optional[str] = None
+    requested_datasets: Optional[List[str]] = None
 ) -> str:
     """
     Constructs an ndjson string for the OpenSearch _msearch endpoint.
     """
     msearch_payload = ""
-    dataset_names = resolve_dataset_names(config=config, requested_dataset=requested_dataset)
+    dataset_names = resolve_dataset_names(config=config, requested_datasets=requested_datasets)
     limit_per_dataset = max(1, total_limit // len(dataset_names))
     
     for dataset_name in dataset_names:
@@ -311,6 +324,7 @@ async def search(body: SearchRequest) -> Any:
     
     query = sanitize_query(body.query)
     dataset = sanitize_text(body.dataset)
+    requested_datasets = parse_requested_datasets(dataset)
     typeclass = sanitize_text(body.typeclass)
     requested_limit = body.limit
     effective_limit = min(requested_limit, max_limit)
@@ -344,7 +358,7 @@ async def search(body: SearchRequest) -> Any:
         total_limit=effective_limit,
         index=index,
         typeclass_filter=typeclass,
-        requested_dataset=dataset
+        requested_datasets=requested_datasets
     )
     
     #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
