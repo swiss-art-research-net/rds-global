@@ -28,6 +28,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
+      sp:predicate os:searchLimit ;
+      sp:object :_limit
+    ]
+
+    [
+      sp:subject :_hits ;
       sp:predicate os:hasDescription ;
       sp:object :_description
     ]
@@ -88,6 +94,13 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     rdfs:comment "type class" ;
     spl:predicate :_typeclass ;
     spl:valueType xsd:string ;
+  ] ;
+
+  spin:constraint [
+    a spl:Argument ;
+    rdfs:comment "result limit" ;
+    spl:predicate :_limit ;
+    spl:valueType xsd:integer ;
   ] ;
 
   spin:column [
