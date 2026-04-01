@@ -226,12 +226,7 @@ datasets:
         - gvp:UnknownPersonConcept
     queries:
       description: |
-        ?subject gvp:parentStringAbbrev ?parent .
-        OPTIONAL {
-          ?subject gvp:agentTypePreferred/gvp:prefLabelGVP/xl:literalForm ?agentType .
-          BIND(CONCAT(" (", ?agentType, ")") AS ?agentTypeSuffix)
-        }
-        BIND(CONCAT(?parent, COALESCE(?agentTypeSuffix, "")) AS ?value)
+        ?subject gvp:parentStringAbbrev ?value .
       prefLabel: |
         ?subject gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
