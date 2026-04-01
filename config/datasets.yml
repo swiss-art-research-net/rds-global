@@ -150,8 +150,12 @@ datasets:
     queries:
       description: |
         ?subject crm:P67i_is_referred_to_by ?statement .
-        ?statement crm:P2_has_type sik:type-BIOGRAPHICAL_DATA ;
-          rdfs:label ?value .
+        ?statement crm:P2_has_type ?type ;
+                  rdfs:label ?value .
+        VALUES ?type {
+          sik:type-BIOGRAPHICAL_DATA
+          sik:type-BRIEF_BIOGRAPHY
+        }
       prefLabel: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       labels: |
