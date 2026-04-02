@@ -38,7 +38,11 @@ from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 SUBJECT_QUERY_TEMPLATE = """\
 {prefixes}
-SELECT ?subject ?type ?typeClass WHERE {{
+SELECT
+  ?subject
+  (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
+  (GROUP_CONCAT(DISTINCT STR(?typeClass); SEPARATOR="||") AS ?typeClasses)
+WHERE {{
     GRAPH <{types_graph}> {{
         {type_constraint_block}
         ?subject a ?queryType .
@@ -47,6 +51,7 @@ SELECT ?subject ?type ?typeClass WHERE {{
         ?subject a ?type .
     }}
 }}
+GROUP BY ?subject
 ORDER BY ?subject
 LIMIT {limit}
 OFFSET {offset}
@@ -293,6 +298,26 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
+def parse_subject_rows(results_json: Dict[str, Any]) -> Dict[str, Dict[str, List[str]]]:
+    rows_by_subject: Dict[str, Dict[str, List[str]]] = {}
+    bindings = results_json.get("results", {}).get("bindings", [])
+
+    for b in bindings:
+        subject = _get_binding_value(b, "subject")
+        if not subject:
+            continue
+
+        types_concat = _get_binding_value(b, "types") or ""
+        type_classes_concat = _get_binding_value(b, "typeClasses") or ""
+
+        rows_by_subject[subject] = {
+            "types": [t for t in types_concat.split("||") if t],
+            "typeClasses": [tc for tc in type_classes_concat.split("||") if tc],
+        }
+
+    return rows_by_subject
+
+
 def parse_match_rows(results_json: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     rows_by_subject: Dict[str, Dict[str, Any]] = {}
     bindings = results_json.get("results", {}).get("bindings", [])
@@ -470,18 +495,8 @@ def iter_dataset_rows(
 
         subjects_sparql = build_subjects_query(dataset_config, limit=page_size, offset=offset)
         subjects_data = sparql_client.query(subjects_sparql)
-        
-        subject_map = {}
-        bindings = subjects_data.get("results", {}).get("bindings", [])
-        for b in bindings:
-            uri = b["subject"]["value"]
-            t = b["type"]["value"]
-            tc = b["typeClass"]["value"]
-            
-            if uri not in subject_map:
-                subject_map[uri] = {"types": set(), "typeClasses": set()}
-            subject_map[uri]["types"].add(t)
-            subject_map[uri]["typeClasses"].add(tc)
+
+        subject_map = parse_subject_rows(subjects_data)
 
         subject_uris = list(subject_map.keys())
 
@@ -495,8 +510,8 @@ def iter_dataset_rows(
         for r in rows:
             uri = r["uri"]
             if uri in subject_map:
-                r["types"] = list(subject_map[uri]["types"])
-                r["typeClasses"] = list(subject_map[uri]["typeClasses"])
+                r["types"] = subject_map[uri]["types"]
+                r["typeClasses"] = subject_map[uri]["typeClasses"]
             yield r
 
         page += 1
