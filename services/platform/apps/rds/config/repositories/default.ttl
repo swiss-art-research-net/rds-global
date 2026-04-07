@@ -13,7 +13,7 @@
   rdfs:label "Main repository";
   rep:repositoryImpl [
       rep:repositoryType "researchspace:QLeverRepository";
-      sparql:query-endpoint <http://qlever:7001/api>;
+      sparql:query-endpoint <http://86.119.44.32:7001/api>;
       mph:quadMode true;
       mph:writable true;
       mph:silentMode false
