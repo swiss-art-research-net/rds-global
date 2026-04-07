@@ -18,8 +18,6 @@ Copy and edit the provided `.env.example` file to `.env` and customise as requir
 
 For acccess to the SIKART data it is necessary to provide a GitHub Username and Personal Access Token that has access to the [sikart-data](https://github.com/swiss-art-research-net/sikart-data) repository via the `GITHUB_USERNAME_SIKART` and `GITHUB_TOKEN_SIKART` environment variables.
 
-~~For local development, set the `COMPOSE_FILE` environment variable to `docker-compose.dev.yml`. This setup does not require a reverse Proxy and exposes the services on the ports specified (default to 8080 for RDS and 8081 for Blazegraph).~~
-
 ### Running the service
 
 To start the service run:
@@ -104,6 +102,13 @@ for f in data.temp.*; do mv "$f" "$f.nt"; done
 ```
 
 ## OpenSearch Connector
+
+The setup includes a small FastAPI service at `services/opensearch-connector/app.py` with:
+
+- `POST /search`: accepts a plain search request (`query`, optional `dataset`, optional `typeclass`, and `limit`), fans it out across configured datasets, and translates it into an OpenSearch `_msearch` request.
+- result normalisation: flattens per-dataset responses and groups mutually linked records so equivalent entities share a reference id and score.
+
+This connector exists because ResearchSpace’s REST integration can call a simple JSON API more easily than it can build complex OpenSearch queries directly
 
 The OpenSearch integration is exposed to ResearchSpace via a service descriptor at [services/platform/apps/rds/config/services/opensearch_descriptor.ttl](https://github.com/swiss-art-research-net/rds-global/blob/main/services/platform/apps/rds/config/services/opensearch_descriptor.ttl) and backed by the FastAPI proxy at [services/opensearch-connector/app.py](https://github.com/swiss-art-research-net/rds-global/blob/main/services/opensearch-connector/app.py).
 
