@@ -25,3 +25,4 @@ services/jobs/pipeline/scripts/sameAsProcessing/processing_db
 services/jobs/pipeline/tmp
 services/jobs/pipeline/.task
 services/qlever-datasets/scripts/endpoints.csv
+.DS_Store
