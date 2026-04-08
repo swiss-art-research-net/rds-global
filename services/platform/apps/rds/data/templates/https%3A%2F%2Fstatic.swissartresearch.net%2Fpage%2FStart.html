@@ -136,7 +136,7 @@
                 </semantic-search-query-keyword>
                 <semantic-search-result-holder>
                     <semantic-search-result>
-                        <semantic-table 
+                        <semantic-data-table 
                             id='grid-result'
                             query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
                                 
@@ -144,7 +144,12 @@
                             ORDER BY DESC(?score) ?reference'
                             number-of-displayed-rows="50"
                             options='{
-                                "showFilter": false
+                                "showFilter": false,
+                                "enableGrouping": true,
+                                "groupingOptions": {
+                                    "groupedBy": ["reference"],
+                                    "expandByDefault": false
+                                    }
                             }'
                             no-result-template="Nothing found"
                             column-configuration='[
@@ -170,11 +175,6 @@
                                     "displayName": "Reference"
                                 },
                                 {
-                                    "variableName": "matches",
-                                    "displayName": "Matches",
-                                    "cellTemplate": "{{> matchesTemplate}}"
-                                },
-                                {
                                     "variableName": "score",
                                     "displayName": "Score"
                                 }
@@ -194,7 +194,7 @@
                                     }'
                                 ></semantic-query>
                             </template>
-                        </semantic-table>
+                        </semantic-data-table>
                     </semantic-search-result>
                 </semantic-search-result-holder>
             </semantic-search>  

@@ -29,7 +29,7 @@ services:
         -Dlog4j.configurationFile=classpath:org/researchspace/logging/log4j2.xml
         ${RESEARCHSPACE_OPTS:-}
       JAVA_OPTS: -Xmx1g
-    image: swissartresearx/researchspace:7fa27dd39c4a02d3cf39b02f50162faed3eab8dd
+    image: swissartresearx/researchspace:535745857b7ca29f7bb21d121b0fad518dfc1d76
     logging:
       driver: json-file
       options:
