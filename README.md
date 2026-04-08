@@ -115,7 +115,7 @@ The OpenSearch integration is exposed to ResearchSpace via a service descriptor 
 When querying the `opensearch` repository through `SERVICE`, use the dedicated search predicates for input parameters:
 
 - `os:searchTerm` for the search string
-- `os:searchDataset` to restrict the search to one or more datasets as a comma-separated string, for example `"gnd"` or `"aat,aat"`
+- `os:searchDataset` to restrict the search to one or more datasets as a comma-separated string, for example `"gnd"` or `"aat,gnd"`
 - `os:searchLimit` to control the total number of results requested from the connector
 - `os:hasTypeClass` to filter by type class
 
