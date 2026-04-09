@@ -223,7 +223,10 @@ def normalize_entity_hits(
     if not isinstance(hits, list) or not hits:
         return result
 
-    min_shared_matches = max(1, int(min_shared_matches or 1))
+    if min_shared_matches is None:
+        min_shared_matches = 0
+    else:
+        min_shared_matches = max(0, int(min_shared_matches))
 
     # Build lookup tables
     id_to_index: Dict[str, int] = {}
