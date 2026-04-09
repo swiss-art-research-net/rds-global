@@ -103,14 +103,6 @@ def sanitize_query(value: str) -> str:
     return sanitized
 
 
-def get_min_shared_matches(config: Dict[str, Any]) -> int:
-    raw_value = config.get("entity_equivalence", {}).get("min_shared_matches", 1)
-    try:
-        return max(1, int(raw_value))
-    except (TypeError, ValueError):
-        return 1
-
-
 def resolve_dataset_names(
     config: Dict[str, Any],
     requested_datasets: Optional[List[str]] = None,
@@ -432,7 +424,7 @@ async def search(body: SearchRequest) -> Any:
             }
             normalized_response = normalize_entity_hits(
                 final_response,
-                min_shared_matches=get_min_shared_matches(app.state.config),
+                min_shared_matches=getattr(app.state, "min_shared_matches", 1),
             )
             if logger.isEnabledFor(logging.DEBUG):
                 all_hits = normalized_response.get("hits", {}).get("hits", [])
@@ -461,12 +453,15 @@ def main() -> None:
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--datasets", help="Comma-separated list of dataset names to include in search (must be defined in config)")
     parser.add_argument("--max-limit", type=int, default=DEFAULT_MAX_LIMIT, help="Maximum total result limit accepted from client requests")
+    parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
     if args.max_limit < 1:
         parser.error("--max-limit must be greater than 0")
+    if args.min_shared_matches < 1:
+        parser.error("--min-shared-matches must be greater than 0")
 
     app.state.opensearch_url = args.opensearch_url
     app.state.opensearch_index = args.index
@@ -475,6 +470,7 @@ def main() -> None:
     app.state.opensearch_api_key = args.api_key
     app.state.datasets = [dataset.strip() for dataset in args.datasets.split(",") if dataset.strip()] if args.datasets else None
     app.state.max_limit = args.max_limit
+    app.state.min_shared_matches = args.min_shared_matches
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:
@@ -483,10 +479,11 @@ def main() -> None:
 
     import uvicorn
     logger.info(
-        "Starting service with index=%s, url=%s, max_limit=%s",
+        "Starting service with index=%s, url=%s, max_limit=%s, min_shared_matches=%s",
         args.index,
         args.opensearch_url,
         args.max_limit,
+        args.min_shared_matches,
     )
     uvicorn.run(app, host=args.host, port=args.port)
 
