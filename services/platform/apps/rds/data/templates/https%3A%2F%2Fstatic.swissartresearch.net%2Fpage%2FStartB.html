@@ -1,0 +1,155 @@
+
+
+<div class="page">
+  <div class="scope-container">
+    <div>
+      <span>Datasets:</span>
+      <semantic-query
+        query='SELECT ?key ?selectedDataset WHERE {
+          BIND("[[urlParam "dataset"]]" AS ?selectedDataset)
+          VALUES (?key) { ("") ("gnd") ("ulan") ("wikidata") ("sikart") ("geonames") }
+        }'
+        template="{{> tmpl}}"
+      >
+        <template id="tmpl">
+          {{#each bindings}}
+            <semantic-link iri="page:StartB"
+              urlqueryparam-dataset="{{key.value}}"
+              urlqueryparam-type="[[urlParam 'type']]">
+              <button class="filter-button{{#ifCond key.value '==' selectedDataset.value}} active{{/ifCond}}">
+                {{#if key.value}}{{key.value}}{{else}}All{{/if}}
+              </button>
+            </semantic-link>
+          {{/each}}
+        </template>
+      </semantic-query>
+    </div>
+
+    <div>
+      <span>Types:</span>
+      <semantic-query
+        query='SELECT ?key ?selectedType WHERE {
+          BIND("[[urlParam "type"]]" AS ?selectedType)
+          VALUES (?key) { ("") ("Person") ("Place") ("Group") ("Built Work") ("Event") }
+        }'
+        template="{{> tmpl}}"
+      >
+        <template id="tmpl">
+          {{#each bindings}}
+            <semantic-link iri="page:StartB"
+              urlqueryparam-type="{{key.value}}"
+              urlqueryparam-dataset="[[urlParam 'dataset']]">
+              <button class="filter-button{{#ifCond key.value '==' selectedType.value}} active{{/ifCond}}">
+                {{#if key.value}}{{key.value}}{{else}}All{{/if}}
+              </button>
+            </semantic-link>
+          {{/each}}
+        </template>
+      </semantic-query>
+    </div>
+
+  </div>
+
+  <semantic-search limit='100' id='search-browse'
+    search-profile='[[> partial:searchProfile]]'
+    categories='[[> partial:searchCategories]]'
+    relations='[[> partial:searchRelations]]'
+  >
+    <semantic-search-query-keyword min-search-term-length='3' debounce='600' tokenize-lucene-query='false'
+      domain='<http://schema.swissartresearch.net/ontology/rds#Entity>'
+      placeholder="Search for [[#if (urlParam 'type')]][[urlParam 'type']][[else]]all[[/if]] entities [[#if (urlParam 'dataset')]]in [[urlParam 'dataset']][[/if]]..."
+      query='SELECT DISTINCT ?subject WHERE {
+        SERVICE <http://platform:8080/sparql?repository=opensearch> {
+          ?query os:searchTerm ?__token__ ;
+              #os:searchDataset "aat" ;
+              [[#if (urlParam "type")]]os:hasTypeClass "[[urlParam "type"]]", ?typeClass ;[[else]]os:hasTypeClass ?typeClass ;[[/if]]
+              [[#if (urlParam "dataset")]]os:searchDataset "[[urlParam "dataset"]]" ;[[/if]]
+              os:hasScore ?score ;
+              os:hasSubject ?subject ;
+              os:hasDataset ?dataset ;
+              os:hasDescription ?description ;
+              os:hasReference ?reference ;
+              os:hasPrefLabel ?prefLabel .
+          }
+        }
+    '>
+    </semantic-search-query-keyword>
+
+    <semantic-search-facet open-by-default="true"></semantic-search-facet>
+
+    <semantic-search-result-holder>
+      <semantic-search-result>
+        <semantic-data-table 
+            id='grid-result'
+            query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
+                
+            } GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
+            ORDER BY DESC(?score) ?reference'
+            number-of-displayed-rows="50"
+            options='{
+                "showFilter": false,
+                "enableGrouping": true,
+                "groupingOptions": {
+                    "groupedBy": ["reference"],
+                    "expandByDefault": false
+                    }
+            }'
+            no-result-template="Nothing found"
+            column-configuration='[
+                {
+                    "variableName": "prefLabel",
+                    "displayName": "Label",
+                    "cellTemplate": "{{> prefLabelTemplate}}",
+                    "aggregationCellTemplate": "{{> groupHeaderTemplate}}"
+                },
+                {
+                    "variableName": "description",
+                    "displayName": "Description"
+                },
+                {
+                    "variableName": "typeClass",
+                    "displayName": "Type Class"
+                },
+                {
+                    "variableName": "dataset",
+                    "displayName": "Dataset"
+                },
+                {
+                    "variableName": "reference",
+                    "displayName": "Reference"
+                },
+                {
+                    "variableName": "score",
+                    "displayName": "Score"
+                }
+            ]'
+        >    
+            <template id="prefLabelTemplate">
+                <semantic-link iri="{{subject.value}}">{{prefLabel.value}}</semantic-link>
+            </template>
+            <template id="groupHeaderTemplate">
+              <div>
+                  <strong>{{rows.0.prefLabel.value}}</strong>
+                  — {{rows.length}} records
+                  {{#each rows}}
+                      <span>[{{dataset.value}}]</span>
+                  {{/each}}
+              </div>
+          </template>
+
+            <template id="matchesTemplate">
+                <semantic-query
+                    query='SELECT DISTINCT ?match WHERE {
+                        BIND(<{{subject.value}}> AS ?subject)
+                        ?subject rds:related ?match .
+                        GRAPH ?g {
+                            ?match a ?type .
+                        }
+                    }'
+                ></semantic-query>
+            </template>
+        </semantic-data-table>
+      </semantic-search-result>
+    </semantic-search-result-holder>
+  </semantic-search>
+</div>
