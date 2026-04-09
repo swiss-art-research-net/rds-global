@@ -12,7 +12,7 @@
     repo:repositoryType "openrdf:SailRepository" ;
     sr:sailImpl [
       sail:sailType "researchspace:RESTSail" ;
-      ephedra:serviceURL "http://opensearch-connector:8000/search" ;
+      ephedra:serviceURL "http://86.119.44.32:8000/search" ;
       ephedra:httpMethod "POST" ;
       ephedra:implementsService :OpenSearchService
     ]
