@@ -103,6 +103,14 @@ def sanitize_query(value: str) -> str:
     return sanitized
 
 
+def get_min_shared_matches(config: Dict[str, Any]) -> int:
+    raw_value = config.get("entity_equivalence", {}).get("min_shared_matches", 1)
+    try:
+        return max(1, int(raw_value))
+    except (TypeError, ValueError):
+        return 1
+
+
 def resolve_dataset_names(
     config: Dict[str, Any],
     requested_datasets: Optional[List[str]] = None,
@@ -193,10 +201,14 @@ def build_msearch_query(
         
     return msearch_payload
 
-def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_entity_hits(
+    response: Dict[str, Any],
+    min_shared_matches: int = 1,
+) -> Dict[str, Any]:
     """
     Normalize OpenSearch entity hits by grouping records that mutually
-    reference each other via `_id` <-> `_source.matches`.
+    reference each other via `_id` <-> `_source.matches`, or that share
+    a configurable number of common values in `_source.matches`.
 
     For each connected group of equivalent records:
     - all members get the same `_score` = max score in the group
@@ -209,6 +221,8 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
     Rules for equivalence:
     - If A._id appears in B._source.matches and B._id appears in A._source.matches,
       then A and B are considered equivalent.
+    - If A and B share at least `min_shared_matches` values in their
+      `_source.matches`, they are considered equivalent.
     - Equivalence is transitively closed, so if A<->B and B<->C, all three are grouped.
     """
     result = response
@@ -216,6 +230,8 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
     hits = result.get("hits", {}).get("hits", [])
     if not isinstance(hits, list) or not hits:
         return result
+
+    min_shared_matches = max(1, int(min_shared_matches or 1))
 
     # Build lookup tables
     id_to_index: Dict[str, int] = {}
@@ -235,22 +251,35 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
         id_to_matches[hit_id] = set(matches)
         id_to_score[hit_id] = float(hit.get("_score", 0.0) or 0.0)
 
-    # Build undirected graph of mutual references
+    # Build undirected graph of equivalent records.
+    # Two hits are linked if they explicitly reference each other, or if
+    # they share enough common matches.
     adjacency: Dict[str, set] = {hit_id: set() for hit_id in id_to_index}
 
-    ids = set(id_to_index.keys())
-    for a in ids:
-        for b in id_to_matches[a]:
-            if b in ids and a != b:
-                if a in id_to_matches.get(b, set()):
-                    adjacency[a].add(b)
-                    adjacency[b].add(a)
+    ids = sorted(id_to_index.keys())
+    for i, a in enumerate(ids):
+        matches_a = id_to_matches[a]
+
+        for b in ids[i + 1:]:
+            matches_b = id_to_matches[b]
+
+            has_mutual_reference = (
+                a in matches_b and
+                b in matches_a
+            )
+            has_shared_matches = (
+                len(matches_a & matches_b) >= min_shared_matches
+            )
+
+            if has_mutual_reference or has_shared_matches:
+                adjacency[a].add(b)
+                adjacency[b].add(a)
 
     # Find connected components
     visited = set()
     components: List[List[str]] = []
 
-    for hit_id in sorted(ids):
+    for hit_id in ids:
         if hit_id in visited:
             continue
 
@@ -401,7 +430,10 @@ async def search(body: SearchRequest) -> Any:
                     "hits": final_hits
                 }
             }
-            normalized_response = normalize_entity_hits(final_response)
+            normalized_response = normalize_entity_hits(
+                final_response,
+                min_shared_matches=get_min_shared_matches(app.state.config),
+            )
             if logger.isEnabledFor(logging.DEBUG):
                 all_hits = normalized_response.get("hits", {}).get("hits", [])
                 log_hits_structure = {
