@@ -1,7 +1,13 @@
 body {
   font-family: Arial, sans-serif;
 }
-
+.active {
+  color: #ff0000;
+}
+.filter-button {
+  margin: 1rem 0;
+  border: 0;
+}
 .page {
   padding: 20px;
 }
