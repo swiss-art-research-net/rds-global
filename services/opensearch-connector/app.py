@@ -468,15 +468,15 @@ def main() -> None:
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--datasets", help="Comma-separated list of dataset names to include in search (must be defined in config)")
     parser.add_argument("--max-limit", type=int, default=DEFAULT_MAX_LIMIT, help="Maximum total result limit accepted from client requests")
-    parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits")
+    parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits; use 0 to disable shared-match grouping")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
     if args.max_limit < 1:
         parser.error("--max-limit must be greater than 0")
-    if args.min_shared_matches < 1:
-        parser.error("--min-shared-matches must be greater than 0")
+    if args.min_shared_matches < 0:
+        parser.error("--min-shared-matches must be greater than or equal to 0")
 
     app.state.opensearch_url = args.opensearch_url
     app.state.opensearch_index = args.index
