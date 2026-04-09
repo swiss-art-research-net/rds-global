@@ -251,21 +251,33 @@ def normalize_entity_hits(
     ids = sorted(id_to_index.keys())
     for i, a in enumerate(ids):
         matches_a = id_to_matches[a]
-
         for b in ids[i + 1:]:
             matches_b = id_to_matches[b]
-
-            has_mutual_reference = (
-                a in matches_b and
-                b in matches_a
-            )
-            has_shared_matches = (
-                len(matches_a & matches_b) >= min_shared_matches
-            )
-
-            if has_mutual_reference or has_shared_matches:
+            if a in matches_b and b in matches_a:
                 adjacency[a].add(b)
                 adjacency[b].add(a)
+
+    match_to_ids: Dict[str, List[str]] = {}
+    for hit_id in ids:
+        for match in id_to_matches[hit_id]:
+            match_to_ids.setdefault(match, []).append(hit_id)
+
+    pair_shared_counts: Dict[tuple, int] = {}
+    for shared_ids in match_to_ids.values():
+        if len(shared_ids) < 2:
+            continue
+
+        shared_ids.sort()
+        for i, a in enumerate(shared_ids):
+            for b in shared_ids[i + 1:]:
+                pair = (a, b)
+                new_count = pair_shared_counts.get(pair, 0) + 1
+                if new_count >= min_shared_matches:
+                    adjacency[a].add(b)
+                    adjacency[b].add(a)
+                    pair_shared_counts.pop(pair, None)
+                else:
+                    pair_shared_counts[pair] = new_count
 
     # Find connected components
     visited = set()
