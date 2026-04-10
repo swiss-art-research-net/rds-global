@@ -378,7 +378,7 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
         "settings": {
             "index": {
                 "number_of_shards": 1,
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
             }
         },
         "mappings": {
