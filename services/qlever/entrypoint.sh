@@ -3,67 +3,69 @@ set -eu
 
 RESTART_FLAG="/index/.restart-qlever"
 INDEX_READY_FILE="/index/rds.meta-data.json"
-QLEVER_PID=""
+DATASET_NAME="rds"
+PORT="7001"
+START_ARGS="
+  --name ${DATASET_NAME}
+  --description RDS Qlever instance
+  --system native
+  --port ${PORT}
+  --access-token ${QLEVER_ACCESS_TOKEN}
+"
 
-start_qlever() {
-  if [ ! -f "$INDEX_READY_FILE" ]; then
-    return 1
-  fi
-
-  qlever start \
-    --name rds \
-    --description "RDS Qlever instance" \
-    --system native \
-    --port 7001 \
-    --run-in-foreground \
-    --access-token "$QLEVER_ACCESS_TOKEN" &
-  QLEVER_PID=$!
+is_index_ready() {
+  [ -f "$INDEX_READY_FILE" ]
 }
 
-stop_qlever() {
-  qlever stop --name rds --port 7001 --no-containers || true
-
-  if [ -n "$QLEVER_PID" ] && kill -0 "$QLEVER_PID" 2>/dev/null; then
-    wait "$QLEVER_PID" || true
-  fi
-
-  QLEVER_PID=""
+is_server_running() {
+  qlever status 2>/dev/null | grep -q " ${DATASET_NAME} "
 }
 
-ensure_qlever_running() {
-  if [ -n "$QLEVER_PID" ] && kill -0 "$QLEVER_PID" 2>/dev/null; then
+start_server() {
+  if ! is_index_ready; then
     return 0
   fi
 
-  QLEVER_PID=""
-
-  if [ -f "$INDEX_READY_FILE" ]; then
-    start_qlever || true
+  if is_server_running; then
+    return 0
   fi
+
+  qlever start $START_ARGS --no-warmup
+}
+
+stop_server() {
+  qlever stop --name "$DATASET_NAME" --port "$PORT" --no-containers || true
+}
+
+restart_server() {
+  stop_server
+
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if ! is_server_running; then
+      break
+    fi
+    sleep 1
+  done
+
+  start_server
 }
 
 handle_term() {
-  stop_qlever
+  stop_server
   exit 0
 }
 
 trap handle_term INT TERM
 
 rm -f "$RESTART_FLAG"
-ensure_qlever_running
 
 while true; do
   if [ -f "$RESTART_FLAG" ]; then
     rm -f "$RESTART_FLAG"
-    stop_qlever
-    ensure_qlever_running
+    restart_server
+  else
+    start_server
   fi
 
-  if [ -n "$QLEVER_PID" ] && ! kill -0 "$QLEVER_PID" 2>/dev/null; then
-    wait "$QLEVER_PID" || true
-    QLEVER_PID=""
-  fi
-
-  ensure_qlever_running
-  sleep 1
+  sleep 2
 done
