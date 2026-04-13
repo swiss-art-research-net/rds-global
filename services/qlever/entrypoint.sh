@@ -3,6 +3,7 @@ set -eu
 
 RESTART_FLAG="/index/.restart-qlever"
 INDEX_READY_FILE="/index/rds.meta-data.json"
+STARTING_FLAG="/tmp/qlever-starting"
 DATASET_NAME="rds"
 PORT="7001"
 START_ARGS="
@@ -18,7 +19,7 @@ is_index_ready() {
 }
 
 is_server_running() {
-  qlever status 2>/dev/null | grep -q " ${DATASET_NAME} "
+  pgrep -f "qlever-server -i ${DATASET_NAME}( |$)" >/dev/null 2>&1
 }
 
 start_server() {
@@ -26,14 +27,19 @@ start_server() {
     return 0
   fi
 
-  if is_server_running; then
+  if is_server_running || [ -f "$STARTING_FLAG" ]; then
     return 0
   fi
 
-  qlever start $START_ARGS --no-warmup
+  touch "$STARTING_FLAG"
+  (
+    qlever start $START_ARGS --no-warmup || true
+    rm -f "$STARTING_FLAG"
+  ) &
 }
 
 stop_server() {
+  rm -f "$STARTING_FLAG"
   qlever stop --name "$DATASET_NAME" --port "$PORT" --no-containers || true
 }
 
@@ -58,9 +64,11 @@ handle_term() {
 trap handle_term INT TERM
 
 rm -f "$RESTART_FLAG"
+rm -f "$STARTING_FLAG"
 
 while true; do
   if [ -f "$RESTART_FLAG" ]; then
+    echo "Restart flag detected, restarting QLever server..."
     rm -f "$RESTART_FLAG"
     restart_server
   else
