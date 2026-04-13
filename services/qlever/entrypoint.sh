@@ -8,7 +8,7 @@ DATASET_NAME="rds"
 PORT="7001"
 START_ARGS="
   --name ${DATASET_NAME}
-  --description RDS Qlever instance
+  --description \"RDS Qlever instance\"
   --system native
   --port ${PORT}
   --access-token ${QLEVER_ACCESS_TOKEN}
