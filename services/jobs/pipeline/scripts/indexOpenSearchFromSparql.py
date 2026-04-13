@@ -49,7 +49,6 @@ WHERE {{
         ?subject a ?queryType .
     }}
 }}
-GROUP BY ?subject
 ORDER BY ?subject
 LIMIT {limit}
 OFFSET {offset}
@@ -107,6 +106,10 @@ WHERE {{
     GRAPH <{types_graph}> {{
         {type_constraint_block}
         ?subject a ?queryType .
+    }}
+    
+    GRAPH <{labels_graph}> {{
+        {pref_label_block}
     }}
 }}
 """
@@ -500,8 +503,6 @@ def iter_dataset_rows(
 
         subjects_sparql = build_subjects_query(dataset_config, limit=page_size, offset=offset)
         subjects_data = sparql_client.query(subjects_sparql)
-
-        # Create a list of subject URIs, subject data has results[][bindings][{subject: {value: ...}}]
         subject_uris =  [_get_binding_value(b, "subject") for b in subjects_data.get("results", {}).get("bindings", [])]
 
         if not subject_uris:
@@ -512,7 +513,6 @@ def iter_dataset_rows(
         rows = parse_rows(index_data)
 
         for r in rows:
-            print(r)
             yield r
 
         page += 1
