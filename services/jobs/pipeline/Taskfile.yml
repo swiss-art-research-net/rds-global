@@ -26,10 +26,12 @@ tasks:
       - task: update-data
       - task: prepare-metadata-for-indexing
       - task: index-data
+      - task: restart-qlever
       - task: generate-type-mappings
       - task: generate-labels
       - task: generate-sameas-statements
-      - task: index-data # Re-index after data generation
+      - task: index-data
+      - task: restart-qlever
       - task: add-data-to-search-index
 
   add-data-to-search-index:
@@ -249,6 +251,12 @@ tasks:
         task: update-individual-dataset
         vars:
           DATASET: "{{.DATASET}}"
+
+  restart-qlever:
+    desc: Request a restart of the QLever service
+    cmds:
+      - echo "Requesting QLever restart"
+      - touch /index/.restart-qlever
 
   update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
