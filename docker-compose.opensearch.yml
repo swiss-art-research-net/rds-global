@@ -4,6 +4,8 @@ services:
   opensearch-connector:
     build: ./services/opensearch-connector
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-connector
+    depends_on:
+      - opensearch-node
     volumes:
       - ./config:/config
     command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
@@ -15,8 +17,7 @@ services:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
       - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
-      - "DISABLE_INSTALL_DEMO_CONFIG=true" # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
-      - "DISABLE_SECURITY_PLUGIN=true" # Disables Security plugin
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
     ulimits:
       memlock:
         soft: -1 # Set memlock to unlimited (no soft or hard limit)
@@ -26,14 +27,11 @@ services:
         hard: 65536
     volumes:
       - ./binds/opensearch-data:/usr/share/opensearch/data:rw
-    ports:
-      - 9200:9200
-      - 9600:9600  # required for Performance Analyzer
   opensearch-dashboard:
     image: opensearchproject/opensearch-dashboards:latest
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-dashboard
     ports:
-      - 5601:5601
+      - 127.0.0.1:5601:5601
     expose:
       - '5601'
     environment:
