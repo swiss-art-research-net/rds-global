@@ -257,7 +257,7 @@ tasks:
     cmds:
       - echo "Requesting QLever restart"
       - touch /index/.restart-qlever
-      - sleep 5s
+      - sleep 10s
 
   update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
