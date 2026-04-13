@@ -15,6 +15,7 @@ start_qlever() {
     --description "RDS Qlever instance" \
     --system native \
     --port 7001 \
+    --run-in-foreground \
     --access-token "$QLEVER_ACCESS_TOKEN" &
   QLEVER_PID=$!
 }
