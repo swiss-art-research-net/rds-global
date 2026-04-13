@@ -11,7 +11,7 @@ services:
     command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
 
   opensearch-node:
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:3.6.0
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-node
     environment:
       - discovery.type=single-node
@@ -28,7 +28,7 @@ services:
     volumes:
       - ./binds/opensearch-data:/usr/share/opensearch/data:rw
   opensearch-dashboard:
-    image: opensearchproject/opensearch-dashboards:latest
+    image: opensearchproject/opensearch-dashboards:3.6.0
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-dashboard
     ports:
       - 127.0.0.1:5601:5601
