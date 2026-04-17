@@ -10,6 +10,7 @@ The RDS Global service is a reference data service that provides unified access 
 
 - Docker
 - Docker Compose
+- Sufficient memory for local indexing and search services. The current setup allocates 2 GB heap to OpenSearch and up to 12 GB for QLever indexing, so a machine with at least 16 GB RAM is recommended for running the full pipeline locally.
 - (for production) A reverse proxy (e.g. Nginx) running on Docker
 
 ### Configuration
@@ -17,6 +18,13 @@ The RDS Global service is a reference data service that provides unified access 
 Copy and edit the provided `.env.example` file to `.env` and customise as required. The default values can be used for development. For production it is recommended to change at least the `HOST_NAME` and `LETSENCRYPT_EMAIL` values.
 
 For acccess to the SIKART data it is necessary to provide a GitHub Username and Personal Access Token that has access to the [sikart-data](https://github.com/swiss-art-research-net/sikart-data) repository via the `GITHUB_USERNAME_SIKART` and `GITHUB_TOKEN_SIKART` environment variables.
+
+Important environment variables:
+
+- `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets.yml`.
+- `QLEVER_ACCESS_TOKEN`: access token used by the QLever API for authenticated update operations.
+
+The pipeline downloads source data from external services and repositories listed in `config/datasets.yml`, and the SameAs generation queries Wikidata. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
 
 ### Running the service
 
@@ -26,7 +34,13 @@ To start the service run:
 docker compose up -d
 ```
 
-In Development mode, RDS is then available at `http://localhost:8080`, using the default port numbers.
+With the default `.env.example`, this starts:
+
+- RDS / ResearchSpace at `http://localhost:8080`
+- QLever at `http://localhost:7001`
+- OpenSearch Dashboards at `http://localhost:5601`
+
+The OpenSearch connector is also started as part of the compose stack and is used internally by the ResearchSpace OpenSearch integration.
 
 ### Data Pipeline
 
@@ -80,7 +94,7 @@ task: Available tasks for this project:
 If QLever index failes due to write permission issues, set the permission of the bind mount directory to user 999 and group 999:
 
 ```bash
-sudo chown -R 999:999 binds/qlever-index
+sudo chown -R 999:999 binds/qlever
 ```
 
 ### Data Verification
