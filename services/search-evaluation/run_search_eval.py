@@ -696,15 +696,6 @@ def evaluate_row(
     row["top_1_correct"] = top_1_correct
     row["top_5_contains_expected"] = top_5_contains_expected
 
-    for field in (
-        "type_ranking_ok",
-        "grouping_ok",
-        "normalization_ok",
-        "noise_control_ok",
-    ):
-        if not row.get(field):
-            row[field] = ""
-
     if top_1_correct == "TRUE" and top_5_contains_expected == "TRUE":
         row["overall_pass"] = row.get("overall_pass") or "TRUE"
     elif not row.get("overall_pass"):

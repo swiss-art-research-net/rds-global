@@ -1,4 +1,4 @@
-query,scope,entity_type_filter,expected_top_1,acceptable_alternatives,expected_in_top_5,what_this_tests,observed_top_1,observed_top_5,top_1_correct,top_5_contains_expected,type_ranking_ok,grouping_ok,normalization_ok,noise_control_ok,overall_pass,notes
+query,scope,entity_type_filter,expected_top_1,acceptable_alternatives,expected_in_top_5,what_this_tests,observed_top_1,observed_top_5,top_1_correct,top_5_contains_expected,overall_pass,notes
 "newton","global","All","Isaac Newton (Person)","Helmut Newton (Person)","Isaac Newton (Person) | Helmut Newton (Person)","Ambiguous person name across datasets","","","","","","","","","",""
 "london","global","All","London (Place)","Jack London (Person)","London (Place) | Jack London (Person)","Mixed place/person ambiguity","","","","","","","","","",""
 "paris","global","All","Paris (Place)","Paris Hilton (Person)","Paris (Place) | Paris Hilton (Person)","Mixed place/person ambiguity","","","","","","","","","",""
