@@ -51,8 +51,6 @@ services:
   opensearch-dashboard:
     image: opensearchproject/opensearch-dashboards:3.6.0
     container_name: ${COMPOSE_PROJECT_NAME}-opensearch-dashboard
-    ports:
-      - 127.0.0.1:5601:5601
     expose:
       - '5601'
     environment:
@@ -72,8 +70,6 @@ services:
       options:
         max-file: '10'
         max-size: 200k
-    ports:
-      - ${PORT_RDS}:8080
     volumes:
      - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
      - ./services/platform/apps:/apps
@@ -88,8 +84,6 @@ services:
       options:
         max-file: '10'
         max-size: 200k
-    ports:
-      - ${PORT_QLEVER_RDS}:7001
     volumes:
       - ./binds/qlever:/index:rw
       - ./data:/data
