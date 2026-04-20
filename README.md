@@ -169,3 +169,28 @@ GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
 ORDER BY DESC(?score) (?reference)
 LIMIT 100
 ```
+
+## Search Evaluation
+
+The repository includes a small search evaluation runner that executes a CSV query set against the `opensearch-connector` API and writes both a CSV result file and an HTML inspection report.
+
+The query template lives at [services/search-evaluation/tests/search-evaluation-template.csv](./services/search-evaluation/tests/search-evaluation-template.csv).
+
+Run the evaluation with:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm search-evaluation
+```
+
+This uses the connector API directly via `POST /search` and requests a larger hit set before ranking results by `_score`.
+
+By default, the run writes:
+
+- [services/search-evaluation/output/search-evaluation-results.csv](/Users/fkraeutli/Sites/rds-global/services/search-evaluation/output/search-evaluation-results.csv)
+- [services/search-evaluation/output/search-evaluation-results.html](/Users/fkraeutli/Sites/rds-global/services/search-evaluation/output/search-evaluation-results.html)
+
+Useful environment overrides:
+
+- `SEARCH_EVAL_LIMIT=100` to control how many hits are requested from the connector before top results are evaluated
+- `SEARCH_EVAL_DATASET=gnd` to restrict the test run to a single dataset, or for example `SEARCH_EVAL_DATASET=aat,gnd`
+- `SEARCH_EVAL_TIMEOUT=30` to adjust the request timeout in seconds
