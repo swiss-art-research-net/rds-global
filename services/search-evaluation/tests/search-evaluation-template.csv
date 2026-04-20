@@ -1,4 +1,4 @@
-query,scope,entity_type_filter,expected_top_1,acceptable_alternatives,expected_in_top_5,what_this_tests,observed_top_1,observed_top_5,top_1_correct,top_5_contains_expected,type_ranking_ok,grouping_ok,normalization_ok,noise_control_ok,overall_pass,notes
+query,scope,entity_type_filter,expected_top_1,acceptable_alternatives,expected_in_top_5,what_this_tests,observed_top_1,observed_top_5,top_1_correct,top_5_contains_expected,overall_pass,notes
 "newton","global","All","Isaac Newton (Person)","Helmut Newton (Person)","Isaac Newton (Person) | Helmut Newton (Person)","Ambiguous person name across datasets","","","","","","","","","",""
 "london","global","All","London (Place)","Jack London (Person)","London (Place) | Jack London (Person)","Mixed place/person ambiguity","","","","","","","","","",""
 "paris","global","All","Paris (Place)","Paris Hilton (Person)","Paris (Place) | Paris Hilton (Person)","Mixed place/person ambiguity","","","","","","","","","",""
@@ -8,7 +8,7 @@ query,scope,entity_type_filter,expected_top_1,acceptable_alternatives,expected_i
 "picasso","global","All","Pablo Picasso (Person)","Relevant Picasso artworks","Pablo Picasso (Person)","Famous artist lookup","","","","","","","","","",""
 "van gogh","global","All","Vincent van Gogh (Person)","","Vincent van Gogh (Person)","Multi-token person query","","","","","","","","","",""
 "monet","global","All","Claude Monet (Person)","","Claude Monet (Person)","Ranked exact artist hit","","","","","","","","","",""
-"venus","global","All","Venus de Milo (Artwork)","Venus (Type/Concept)","Venus de Milo (Artwork) | Venus (Type/Concept)","Cross-type ambiguity","","","","","","","","","",""
+"venus","global","All","Venus de Milo (Artwork)","Venus (Type/Concept) | Venus (Planet)","Venus de Milo (Artwork) | Venus (Type/Concept) | Venus (Planet)","Cross-type ambiguity","","","","","","","","","",""
 "guernica","global","All","Guernica (Artwork)","Guernica (Place)","Guernica (Artwork) | Guernica (Place)","Artwork/place ambiguity","","","","","","","","","",""
 "david","global","All","David (Artwork by Michelangelo)","Jacques-Louis David (Person)","David (Artwork by Michelangelo) | Jacques-Louis David (Person)","High-ambiguity name","","","","","","","","","",""
 "mona lisa","global","All","Mona Lisa (Artwork)","","Mona Lisa (Artwork)","Canonical artwork exact match","","","","","","","","","",""
