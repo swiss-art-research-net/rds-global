@@ -721,6 +721,8 @@ def main() -> int:
 
     evaluated_rows: List[Dict[str, str]] = []
     for row in rows:
+        # Drop overflow columns from malformed CSV rows so exports stay robust.
+        row.pop(None, None)
         print(f"Running query: {row.get('query', '')}", file=sys.stderr)
         try:
             evaluated_rows.append(
