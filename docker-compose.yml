@@ -81,8 +81,8 @@ services:
     networks:
       - internal
     volumes:
-     - ${DIRECTORY_PLATFORM_RUNTIME:-./binds/runtime-data}:/runtime-data:rw
-     - ./services/platform/apps:/apps
+      - ${DIRECTORY_PLATFORM_RUNTIME:-./binds/runtime-data}:/runtime-data:rw
+      - ./services/platform/apps:/apps
 
   qlever:
     container_name: ${COMPOSE_PROJECT_NAME:-rds}-qlever
