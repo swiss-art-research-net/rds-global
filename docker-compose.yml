@@ -1,6 +1,6 @@
 services:
   jobs:
-    container_name: ${COMPOSE_PROJECT_NAME}-jobs
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-jobs
     build: ./services/jobs
     environment:
       DATASETS: ${DATASETS}
@@ -24,7 +24,7 @@ services:
 
   opensearch-connector:
     build: ./services/opensearch-connector
-    container_name: ${COMPOSE_PROJECT_NAME}-opensearch-connector
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-connector
     depends_on:
       - opensearch-node
     volumes:
@@ -33,7 +33,7 @@ services:
 
   opensearch-node:
     image: opensearchproject/opensearch:3.6.0
-    container_name: ${COMPOSE_PROJECT_NAME}-opensearch-node
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-node
     environment:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
@@ -50,7 +50,7 @@ services:
       - ./binds/opensearch-data:/usr/share/opensearch/data:rw
   opensearch-dashboard:
     image: opensearchproject/opensearch-dashboards:3.6.0
-    container_name: ${COMPOSE_PROJECT_NAME}-opensearch-dashboard
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-dashboard
     expose:
       - '5601'
     environment:
@@ -58,7 +58,7 @@ services:
       DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
 
   platform:
-    container_name: ${COMPOSE_PROJECT_NAME}-platform
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-platform
     environment:
       PLATFORM_OPTS: >-
         -Dlog4j.configurationFile=classpath:org/researchspace/logging/log4j2.xml
@@ -71,11 +71,11 @@ services:
         max-file: '10'
         max-size: 200k
     volumes:
-     - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
+     - ${DIRECTORY_PLATFORM_RUNTIME:-./binds/runtime-data}:/runtime-data:rw
      - ./services/platform/apps:/apps
 
   qlever:
-    container_name: ${COMPOSE_PROJECT_NAME}-qlever
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-qlever
     build: ./services/qlever
     environment:
       QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
@@ -85,5 +85,5 @@ services:
         max-file: '10'
         max-size: 200k
     volumes:
-      - ./binds/qlever:/index:rw
-      - ./data:/data
+      - ${DIRECTORY_QLEVER_INDEX:-./binds/qlever}:/index:rw
+      - ${DIRECTORY_QLEVER_DATA:-./data}:/data
