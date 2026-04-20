@@ -54,6 +54,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
+from fastapi import Body
 
 app = FastAPI()
 
@@ -67,6 +68,38 @@ logger.setLevel(level)
 
 DEFAULT_TOTAL_LIMIT = 100
 DEFAULT_MAX_LIMIT = 1000
+
+
+
+# --- Dynamic manifest generator
+def get_manifest():
+    config = getattr(app.state, "config", None)
+    datasets = []
+    if config and "datasets" in config:
+        for ds_id, ds in config["datasets"].items():
+            label = ds_id
+            datasets.append({"id": ds_id, "name": label})
+    else:
+        # fallback to static list if config not loaded
+        datasets = [
+            {"id": "aat", "name": "AAT"},
+            {"id": "geonames", "name": "GeoNames"},
+            {"id": "gnd", "name": "GND"},
+            {"id": "sikart", "name": "SIKART"},
+            {"id": "thesarchesp", "name": "Thesaurus Archaeology"},
+            {"id": "thesobjmob", "name": "Object Mobility"},
+            {"id": "ulan", "name": "ULAN"},
+        ]
+    return {
+        "versions": ["0.2", "1.0"],
+        "name": "RDS OpenSearch Reconciliation Service",
+        "identifierSpace": "http://example.org/entity/",
+        "schemaSpace": "http://example.org/schema/",
+        "defaultTypes": datasets,
+        "view": {
+            "url": "http://example.org/entity/{{id}}"
+        }
+    }
 
 
 class SearchRequest(BaseModel):
@@ -304,9 +337,136 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": body.decode()},
     )
 
+
+
+# --- Reconciliation API: Service Manifest at root (/)
+
+@app.get("/")
+async def root_manifest():
+    """Reconciliation API: GET / MUST return the service manifest."""
+    return JSONResponse(content=get_manifest())
+
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+async def run_search(query: str, datasets: Optional[List[str]], limit: int, typeclass_filter: Optional[str] = None):
+    endpoint = app.state.opensearch_url
+    index = app.state.opensearch_index
+
+    url = endpoint.rstrip("/") + "/_msearch"
+
+    payload = build_msearch_query(
+        q=query,
+        config=app.state.config,
+        total_limit=limit,
+        index=index,
+        typeclass_filter=typeclass_filter,
+        requested_datasets=datasets
+    )
+
+    headers = {"Content-Type": "application/x-ndjson"}
+
+    auth = None
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        r = await client.post(url, content=payload, headers=headers, auth=auth)
+        r.raise_for_status()
+        raw = r.json()
+
+    # flatten results (same as /search)
+    hits = []
+    for resp in raw.get("responses", []):
+        hits.extend(resp.get("hits", {}).get("hits", []))
+
+    return hits
+
+
+
+@app.post("/match")
+async def match(payload: Dict[str, Any] = Body(...)):
+    # expects { "queries": [ { conditions: [...] ... }, ... ] }
+    queries = payload.get("queries")
+    if not isinstance(queries, list):
+        raise HTTPException(status_code=400, detail="'queries' must be an array")
+    results = []
+    for q in queries:
+        # Each q is a dict with at least 'conditions' (required)
+        conditions = q.get("conditions")
+        if not isinstance(conditions, list) or not conditions:
+            results.append({"candidates": []})
+            continue
+        # Only support matchType: name for now
+        name_conditions = [c for c in conditions if c.get("matchType") == "name" and c.get("propertyValue")]
+        if not name_conditions:
+            results.append({"candidates": []})
+            continue
+        # Use the first name condition for now
+        name_value = name_conditions[0]["propertyValue"]
+        # Support limit and entity type
+        limit = q.get("limit", 5)
+        entity_type = q.get("type") or q.get("entityType") or q.get("typeclass")
+        # Query OpenSearch using the same logic as /search
+        hits = await run_search(
+            query=name_value,
+            datasets=None,
+            limit=limit,
+            typeclass_filter=entity_type
+        )
+        # Transform OpenSearch hits to reconciliation candidates per spec
+        candidates = []
+        for hit in hits[:limit]:
+            source = hit.get("_source", {})
+            # id
+            candidate_id = hit.get("_id")
+            # name
+            label = None
+            if source.get("prefLabels"):
+                label = source["prefLabels"][0]
+            elif source.get("labels"):
+                label = source["labels"][0]
+            # description
+            description = source.get("description")
+            if not description and source.get("descriptions"):
+                description = source["descriptions"][0] if isinstance(source["descriptions"], list) else source["descriptions"]
+            # type (array of {id, name})
+            type_classes = []
+            if source.get("typeClasses"):
+                for t in source["typeClasses"]:
+                    if isinstance(t, dict):
+                        type_classes.append({"id": t.get("id", t.get("name", str(t))), "name": t.get("name", t.get("id", str(t)))})
+                    else:
+                        type_classes.append({"id": t, "name": t})
+            if not type_classes and source.get("dataset"):
+                type_classes.append({"id": source["dataset"], "name": source["dataset"]})
+            # score
+            score = float(hit.get("_score", 0.0))
+            # match
+            match = label.lower() == name_value.lower() if label else False
+            # features (optional)
+            features = source.get("features")
+            if features and isinstance(features, dict):
+                features = [
+                    {"id": k, "name": k.replace("_", " ").title(), "value": v}
+                    for k, v in features.items()
+                ]
+            elif not isinstance(features, list):
+                features = None
+            candidate = {
+                "id": candidate_id,
+                "name": label,
+                "type": type_classes,
+                "score": score,
+                "match": match,
+            }
+            if description:
+                candidate["description"] = description
+            if features:
+                candidate["features"] = features
+            candidates.append(candidate)
+        results.append({"candidates": candidates})
+    return {"results": results}
 
 @app.post("/search")
 async def search(body: SearchRequest) -> Any:
