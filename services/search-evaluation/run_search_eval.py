@@ -5,13 +5,14 @@ import json
 import os
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
-DEFAULT_LIMIT = 10
+DEFAULT_LIMIT = 100
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_RETRIES = 5
 RETRY_SLEEP_SECONDS = 3.0
@@ -68,7 +69,40 @@ def parse_args() -> argparse.Namespace:
 
 
 def normalize_text(value: str) -> str:
-    return " ".join(value.strip().casefold().split())
+    normalized = unicodedata.normalize("NFKD", value)
+    without_marks = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    cleaned = []
+    for ch in without_marks.casefold():
+        cleaned.append(ch if ch.isalnum() else " ")
+    return " ".join("".join(cleaned).split())
+
+
+def normalize_label_variants(value: str) -> List[str]:
+    stripped = value.strip()
+    if not stripped:
+        return [""]
+
+    variants = {normalize_text(stripped)}
+
+    if "," in stripped:
+        parts = [part.strip() for part in stripped.split(",") if part.strip()]
+        if len(parts) >= 2:
+            reordered = " ".join(parts[1:] + [parts[0]])
+            variants.add(normalize_text(reordered))
+
+    if "(" in stripped and stripped.endswith(")"):
+        base = stripped.split("(", 1)[0].strip()
+        if base:
+            variants.add(normalize_text(base))
+
+    return [variant for variant in variants if variant]
+
+
+def split_type_variants(value: Optional[str]) -> List[str]:
+    if not value:
+        return []
+    parts = [normalize_text(part) for part in value.split("/") if normalize_text(part)]
+    return parts or [normalize_text(value)]
 
 
 def split_candidates(value: str) -> List[str]:
@@ -469,8 +503,12 @@ def matches_expected(hit: Dict[str, Any], expected: str) -> bool:
     for key in ("prefLabels", "prefLabel", "labels", "label"):
         label_values.extend(as_list(source.get(key)))
 
-    expected_label_normalized = normalize_text(expected_label)
-    label_match = any(normalize_text(label) == expected_label_normalized for label in label_values)
+    expected_label_variants = set(normalize_label_variants(expected_label))
+    observed_label_variants = set()
+    for label in label_values:
+        observed_label_variants.update(normalize_label_variants(label))
+
+    label_match = bool(expected_label_variants & observed_label_variants)
     if not label_match:
         return False
 
@@ -478,8 +516,11 @@ def matches_expected(hit: Dict[str, Any], expected: str) -> bool:
         type_values = []
         for key in ("typeClasses", "typeClass", "types"):
             type_values.extend(as_list(source.get(key)))
-        expected_type_normalized = normalize_text(expected_type)
-        if not any(normalize_text(value) == expected_type_normalized for value in type_values):
+        expected_type_variants = set(split_type_variants(expected_type))
+        observed_type_variants = set()
+        for value in type_values:
+            observed_type_variants.update(split_type_variants(value))
+        if not expected_type_variants & observed_type_variants:
             return False
 
     return True

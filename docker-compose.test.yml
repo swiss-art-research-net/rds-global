@@ -16,7 +16,7 @@ services:
       SEARCH_EVAL_INPUT: /tests/search-evaluation-template.csv
       SEARCH_EVAL_OUTPUT: /output/search-evaluation-results.csv
       SEARCH_EVAL_HTML_OUTPUT: /output/search-evaluation-results.html
-      SEARCH_EVAL_LIMIT: ${SEARCH_EVAL_LIMIT:-10}
+      SEARCH_EVAL_LIMIT: ${SEARCH_EVAL_LIMIT:-100}
       SEARCH_EVAL_TIMEOUT: ${SEARCH_EVAL_TIMEOUT:-30}
       SEARCH_EVAL_RETRIES: ${SEARCH_EVAL_RETRIES:-5}
       SEARCH_EVAL_DATASET: ${SEARCH_EVAL_DATASET:-}
