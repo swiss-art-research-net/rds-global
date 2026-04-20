@@ -16,11 +16,13 @@ services:
       nofile:
         soft: 1048576
         hard: 1048576
+    networks:
+      - internal
     volumes:
-      - ./binds/qlever:/index:rw
+      -  ${DIRECTORY_QLEVER_INDEX:-./binds/qlever}:/index:rw
+      - ${DIRECTORY_QLEVER_DATA:-./data}:/data:delegated
       - ./services/jobs/pipeline:/pipeline
       - ./config:/config
-      - ./data:/data:delegated
 
   opensearch-connector:
     build: ./services/opensearch-connector
@@ -29,6 +31,8 @@ services:
       - opensearch-node
     volumes:
       - ./config:/config
+    networks:
+      - internal
     command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
 
   opensearch-node:
@@ -46,6 +50,8 @@ services:
       nofile:
         soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
         hard: 65536
+    networks:
+      - internal
     volumes:
       - ./binds/opensearch-data:/usr/share/opensearch/data:rw
   opensearch-dashboard:
@@ -53,6 +59,8 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-dashboard
     expose:
       - '5601'
+    networks:
+      - internal
     environment:
       OPENSEARCH_HOSTS: '["http://opensearch-node:9200"]'
       DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
@@ -70,6 +78,8 @@ services:
       options:
         max-file: '10'
         max-size: 200k
+    networks:
+      - internal
     volumes:
      - ${DIRECTORY_PLATFORM_RUNTIME:-./binds/runtime-data}:/runtime-data:rw
      - ./services/platform/apps:/apps
@@ -84,6 +94,11 @@ services:
       options:
         max-file: '10'
         max-size: 200k
+    networks:
+      - internal
     volumes:
       - ${DIRECTORY_QLEVER_INDEX:-./binds/qlever}:/index:rw
       - ${DIRECTORY_QLEVER_DATA:-./data}:/data
+
+networks:
+  internal:
