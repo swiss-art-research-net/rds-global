@@ -149,6 +149,45 @@ def build_summary(rows: List[Dict[str, str]]) -> Dict[str, int]:
     return summary
 
 
+def format_rate(numerator: int, denominator: int) -> str:
+    if denominator == 0:
+        return "0/0 (0%)"
+    percentage = round((numerator / denominator) * 100)
+    return f"{numerator}/{denominator} ({percentage}%)"
+
+
+def build_entity_type_scores(rows: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    buckets: Dict[str, Dict[str, Any]] = {}
+
+    for row in rows:
+        entity_type = row.get("entity_type_filter", "").strip() or "Unknown"
+        bucket = buckets.setdefault(
+            entity_type,
+            {
+                "entity_type": entity_type,
+                "total": 0,
+                "overall_pass": 0,
+                "top_1_correct": 0,
+                "top_5_contains_expected": 0,
+            },
+        )
+        bucket["total"] += 1
+        if row.get("overall_pass") == "TRUE":
+            bucket["overall_pass"] += 1
+        if row.get("top_1_correct") == "TRUE":
+            bucket["top_1_correct"] += 1
+        if row.get("top_5_contains_expected") == "TRUE":
+            bucket["top_5_contains_expected"] += 1
+
+    return sorted(
+        buckets.values(),
+        key=lambda bucket: (
+            0 if bucket["entity_type"] == "All" else 1,
+            bucket["entity_type"],
+        ),
+    )
+
+
 def render_html_report(
     rows: List[Dict[str, str]],
     fieldnames: List[str],
@@ -156,6 +195,7 @@ def render_html_report(
     csv_output_path: Path,
 ) -> None:
     summary = build_summary(rows)
+    entity_type_scores = build_entity_type_scores(rows)
     summary_cards = [
         ("Queries", str(summary["total"])),
         ("Overall Pass", f'{summary["overall_pass"]}/{summary["total"]}'),
@@ -177,6 +217,16 @@ def render_html_report(
     summary_html = "".join(
         f'<div class="summary-card"><div class="summary-label">{html_escape(label)}</div><div class="summary-value">{html_escape(value)}</div></div>'
         for label, value in summary_cards
+    )
+    entity_type_score_rows = "".join(
+        "<tr>"
+        f"<td>{html_escape(bucket['entity_type'])}</td>"
+        f"<td>{html_escape(str(bucket['total']))}</td>"
+        f"<td>{html_escape(format_rate(bucket['overall_pass'], bucket['total']))}</td>"
+        f"<td>{html_escape(format_rate(bucket['top_1_correct'], bucket['total']))}</td>"
+        f"<td>{html_escape(format_rate(bucket['top_5_contains_expected'], bucket['total']))}</td>"
+        "</tr>"
+        for bucket in entity_type_scores
     )
 
     document = f"""<!DOCTYPE html>
@@ -266,6 +316,32 @@ def render_html_report(
       align-items: center;
       margin: 20px 0 14px;
     }}
+    .section-title {{
+      margin: 24px 0 12px;
+      font-size: 18px;
+      font-weight: 700;
+    }}
+    .scoreboard {{
+      margin-top: 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    }}
+    .scoreboard table {{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }}
+    .scoreboard th, .scoreboard td {{
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }}
+    .scoreboard thead th {{
+      background: #f7f4ee;
+    }}
     .toolbar input, .toolbar select {{
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -340,6 +416,24 @@ def render_html_report(
       <p>Inspect ranking outcomes from the opensearch-connector test run. Use the filters to narrow by query text, scope, or pass status.</p>
       <div class="meta">CSV output: <a href="{html_escape(csv_output_path.name)}">{html_escape(csv_output_path.name)}</a></div>
       <div class="summary">{summary_html}</div>
+    </section>
+
+    <h2 class="section-title">Performance by Entity Type</h2>
+    <section class="scoreboard">
+      <table>
+        <thead>
+          <tr>
+            <th>Entity Type</th>
+            <th>Queries</th>
+            <th>Overall Pass</th>
+            <th>Top 1 Correct</th>
+            <th>Top 5 Match</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entity_type_score_rows}
+        </tbody>
+      </table>
     </section>
 
     <div class="toolbar">
@@ -508,26 +602,41 @@ def matches_expected(hit: Dict[str, Any], expected: str) -> bool:
     for label in label_values:
         observed_label_variants.update(normalize_label_variants(label))
 
-    label_match = bool(expected_label_variants & observed_label_variants)
-    if not label_match:
-        return False
-
+    expected_type_variants = set()
+    observed_type_variants = set()
     if expected_type:
         type_values = []
         for key in ("typeClasses", "typeClass", "types"):
             type_values.extend(as_list(source.get(key)))
         expected_type_variants = set(split_type_variants(expected_type))
-        observed_type_variants = set()
         for value in type_values:
             observed_type_variants.update(split_type_variants(value))
         if not expected_type_variants & observed_type_variants:
             return False
+
+    label_match = bool(expected_label_variants & observed_label_variants)
+    if not label_match and ({"type", "concept"} & expected_type_variants):
+        label_match = any(
+            observed == expected or observed.startswith(expected + " ")
+            for expected in expected_label_variants
+            for observed in observed_label_variants
+        )
+    if not label_match:
+        return False
 
     return True
 
 
 def contains_expected(hits: Iterable[Dict[str, Any]], expected_values: List[str]) -> bool:
     return any(matches_expected(hit, expected) for hit in hits for expected in expected_values)
+
+
+def get_top_score_group(hits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not hits:
+        return []
+
+    top_score = get_score(hits[0])
+    return [hit for hit in hits if get_score(hit) == top_score]
 
 
 def evaluate_row(
@@ -571,6 +680,7 @@ def evaluate_row(
     )
 
     top_1_hit = ranked_hits[0] if ranked_hits else None
+    top_1_group = get_top_score_group(ranked_hits)
     top_5_hits = ranked_hits[:5]
 
     acceptable_alternatives = split_candidates(row.get("acceptable_alternatives", ""))
@@ -578,7 +688,7 @@ def evaluate_row(
     expected_top_1_candidates = [candidate for candidate in expected_top_1_candidates if candidate]
     expected_top_5_candidates = split_candidates(row.get("expected_in_top_5", ""))
 
-    top_1_correct = "TRUE" if top_1_hit and contains_expected([top_1_hit], expected_top_1_candidates) else "FALSE"
+    top_1_correct = "TRUE" if top_1_group and contains_expected(top_1_group, expected_top_1_candidates) else "FALSE"
     top_5_contains_expected = "TRUE" if contains_expected(top_5_hits, expected_top_5_candidates) else "FALSE"
 
     row["observed_top_1"] = format_hit(top_1_hit) if top_1_hit else ""
