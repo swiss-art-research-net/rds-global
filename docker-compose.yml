@@ -22,6 +22,43 @@ services:
       - ./config:/config
       - ./data:/data:delegated
 
+  opensearch-connector:
+    build: ./services/opensearch-connector
+    container_name: ${COMPOSE_PROJECT_NAME}-opensearch-connector
+    depends_on:
+      - opensearch-node
+    volumes:
+      - ./config:/config
+    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
+
+  opensearch-node:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME}-opensearch-node
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    volumes:
+      - ./binds/opensearch-data:/usr/share/opensearch/data:rw
+  opensearch-dashboard:
+    image: opensearchproject/opensearch-dashboards:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME}-opensearch-dashboard
+    ports:
+      - 127.0.0.1:5601:5601
+    expose:
+      - '5601'
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch-node:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
+
   platform:
     container_name: ${COMPOSE_PROJECT_NAME}-platform
     environment:
