@@ -3,6 +3,10 @@ services:
     ports:
       - 127.0.0.1:${PORT_OPENSEARCH_DASHBOARD:-5601}:5601
 
+  opensearch-node:
+    ports:
+      - ${PORT_OPENSEARCH:-9200}:9200
+  
   platform:
     ports:
       - ${PORT_RDS:-8080}:8080
