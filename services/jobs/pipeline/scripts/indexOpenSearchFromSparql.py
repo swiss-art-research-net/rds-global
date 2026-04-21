@@ -38,20 +38,17 @@ from lib.utils import load_config, RDS_GRAPH_NAMESPACE, RDS_ONTOLOGY_NAMESPACE
 
 SUBJECT_QUERY_TEMPLATE = """\
 {prefixes}
-SELECT
+SELECT DISTINCT
   ?subject
-  (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
-  (GROUP_CONCAT(DISTINCT STR(?typeClass); SEPARATOR="||") AS ?typeClasses)
 WHERE {{
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
     GRAPH <{types_graph}> {{
         {type_constraint_block}
         ?subject a ?queryType .
     }}
-    GRAPH <{dataset_graph}> {{
-        ?subject a ?type .
-    }}
 }}
-GROUP BY ?subject
 ORDER BY ?subject
 LIMIT {limit}
 OFFSET {offset}
@@ -61,12 +58,23 @@ INDEX_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT
   ?subject
+  (GROUP_CONCAT(DISTINCT STR(?type); SEPARATOR="||") AS ?types)
+  (GROUP_CONCAT(DISTINCT STR(?typeClass); SEPARATOR="||") AS ?typeClasses)
   (GROUP_CONCAT(DISTINCT STR(?prefLabel); SEPARATOR="||") AS ?prefLabels)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
   (GROUP_CONCAT(DISTINCT STR(?description_raw); SEPARATOR=" ") AS ?description)
 WHERE {{
     VALUES ?subject {{
         {subject_values}
+    }}
+
+    GRAPH <{dataset_graph}> {{
+        ?subject a ?type .
+    }}
+
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
     }}
     
     GRAPH <{labels_graph}> {{
@@ -91,15 +99,15 @@ COUNT_QUERY_TEMPLATE = """\
 {prefixes}
 SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
-    GRAPH <{types_graph}> {{
-        {type_constraint_block}
-        ?subject a ?queryType .
-    }}
-
     GRAPH <{dataset_graph}> {{
         ?subject a ?type .
     }}
 
+    GRAPH <{types_graph}> {{
+        {type_constraint_block}
+        ?subject a ?queryType .
+    }}
+    
     GRAPH <{labels_graph}> {{
         {pref_label_block}
     }}
@@ -378,7 +386,7 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
         "settings": {
             "index": {
                 "number_of_shards": 1,
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
             }
         },
         "mappings": {
@@ -495,10 +503,7 @@ def iter_dataset_rows(
 
         subjects_sparql = build_subjects_query(dataset_config, limit=page_size, offset=offset)
         subjects_data = sparql_client.query(subjects_sparql)
-
-        subject_map = parse_subject_rows(subjects_data)
-
-        subject_uris = list(subject_map.keys())
+        subject_uris =  [_get_binding_value(b, "subject") for b in subjects_data.get("results", {}).get("bindings", [])]
 
         if not subject_uris:
             break
@@ -508,10 +513,6 @@ def iter_dataset_rows(
         rows = parse_rows(index_data)
 
         for r in rows:
-            uri = r["uri"]
-            if uri in subject_map:
-                r["types"] = subject_map[uri]["types"]
-                r["typeClasses"] = subject_map[uri]["typeClasses"]
             yield r
 
         page += 1

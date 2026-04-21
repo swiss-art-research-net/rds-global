@@ -1,6 +1,6 @@
 services:
   jobs:
-    container_name: ${COMPOSE_PROJECT_NAME}-jobs
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-jobs
     build: ./services/jobs
     environment:
       DATASETS: ${DATASETS}
@@ -16,33 +16,76 @@ services:
       nofile:
         soft: 1048576
         hard: 1048576
+    networks:
+      - internal
     volumes:
-      - ./binds/qlever:/index:rw
+      - ${DIRECTORY_QLEVER_INDEX:-./binds/qlever}:/index:rw
+      - ${DIRECTORY_QLEVER_DATA:-./data}:/data:delegated
       - ./services/jobs/pipeline:/pipeline
       - ./config:/config
-      - ./data:/data:delegated
+
+  opensearch-connector:
+    build: ./services/opensearch-connector
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-connector
+    depends_on:
+      - opensearch-node
+    volumes:
+      - ./config:/config
+    networks:
+      - internal
+    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
+
+  opensearch-node:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-node
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    networks:
+      - internal
+    volumes:
+      - ./binds/opensearch-data:/usr/share/opensearch/data:rw
+  opensearch-dashboard:
+    image: opensearchproject/opensearch-dashboards:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-dashboard
+    expose:
+      - '5601'
+    networks:
+      - internal
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch-node:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
 
   platform:
-    container_name: ${COMPOSE_PROJECT_NAME}-platform
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-platform
     environment:
       PLATFORM_OPTS: >-
         -Dlog4j.configurationFile=classpath:org/researchspace/logging/log4j2.xml
         ${RESEARCHSPACE_OPTS:-}
       JAVA_OPTS: -Xmx1g
-    image: swissartresearx/researchspace:7fa27dd39c4a02d3cf39b02f50162faed3eab8dd
+    image: swissartresearx/researchspace:61fc6380afe8036e6f0b1091646fd46199a43cc0
     logging:
       driver: json-file
       options:
         max-file: '10'
         max-size: 200k
-    ports:
-      - ${PORT_RDS}:8080
+    networks:
+      - internal
     volumes:
-     - ${DIRECTORY_PLATFORM_RUNTIME}:/runtime-data:rw
-     - ./services/platform/apps:/apps
+      - ${DIRECTORY_PLATFORM_RUNTIME:-./binds/runtime-data}:/runtime-data:rw
+      - ./services/platform/apps:/apps
 
   qlever:
-    container_name: ${COMPOSE_PROJECT_NAME}-qlever
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-qlever
     build: ./services/qlever
     environment:
       QLEVER_ACCESS_TOKEN: ${QLEVER_ACCESS_TOKEN}
@@ -51,8 +94,11 @@ services:
       options:
         max-file: '10'
         max-size: 200k
-    ports:
-      - ${PORT_QLEVER_RDS}:7001
+    networks:
+      - internal
     volumes:
-      - ./binds/qlever:/index:rw
-      - ./data:/data
+      - ${DIRECTORY_QLEVER_INDEX:-./binds/qlever}:/index:rw
+      - ${DIRECTORY_QLEVER_DATA:-./data}:/data
+
+networks:
+  internal:

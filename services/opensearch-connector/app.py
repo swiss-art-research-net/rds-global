@@ -226,10 +226,14 @@ def build_msearch_query(
         
     return msearch_payload
 
-def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_entity_hits(
+    response: Dict[str, Any],
+    min_shared_matches: int = 1,
+) -> Dict[str, Any]:
     """
     Normalize OpenSearch entity hits by grouping records that mutually
-    reference each other via `_id` <-> `_source.matches`.
+    reference each other via `_id` <-> `_source.matches`, or that share
+    a configurable number of common values in `_source.matches`.
 
     For each connected group of equivalent records:
     - all members get the same `_score` = max score in the group
@@ -242,6 +246,8 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
     Rules for equivalence:
     - If A._id appears in B._source.matches and B._id appears in A._source.matches,
       then A and B are considered equivalent.
+    - If A and B share at least `min_shared_matches` values in their
+      `_source.matches`, they are considered equivalent.
     - Equivalence is transitively closed, so if A<->B and B<->C, all three are grouped.
     """
     result = response
@@ -249,6 +255,11 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
     hits = result.get("hits", {}).get("hits", [])
     if not isinstance(hits, list) or not hits:
         return result
+
+    if min_shared_matches is None:
+        min_shared_matches = 0
+    else:
+        min_shared_matches = max(0, int(min_shared_matches))
 
     # Build lookup tables
     id_to_index: Dict[str, int] = {}
@@ -268,22 +279,47 @@ def normalize_entity_hits(response: Dict[str, Any]) -> Dict[str, Any]:
         id_to_matches[hit_id] = set(matches)
         id_to_score[hit_id] = float(hit.get("_score", 0.0) or 0.0)
 
-    # Build undirected graph of mutual references
+    # Build undirected graph of equivalent records.
+    # Two hits are linked if they explicitly reference each other, or if
+    # they share enough common matches.
     adjacency: Dict[str, set] = {hit_id: set() for hit_id in id_to_index}
 
-    ids = set(id_to_index.keys())
-    for a in ids:
-        for b in id_to_matches[a]:
-            if b in ids and a != b:
-                if a in id_to_matches.get(b, set()):
+    ids = sorted(id_to_index.keys())
+    for i, a in enumerate(ids):
+        matches_a = id_to_matches[a]
+        for b in ids[i + 1:]:
+            matches_b = id_to_matches[b]
+            if a in matches_b and b in matches_a:
+                adjacency[a].add(b)
+                adjacency[b].add(a)
+
+    match_to_ids: Dict[str, List[str]] = {}
+    for hit_id in ids:
+        for match in id_to_matches[hit_id]:
+            match_to_ids.setdefault(match, []).append(hit_id)
+
+    pair_shared_counts: Dict[tuple, int] = {}
+    for shared_ids in match_to_ids.values():
+        if len(shared_ids) < 2:
+            continue
+
+        shared_ids.sort()
+        for i, a in enumerate(shared_ids):
+            for b in shared_ids[i + 1:]:
+                pair = (a, b)
+                new_count = pair_shared_counts.get(pair, 0) + 1
+                if new_count >= min_shared_matches:
                     adjacency[a].add(b)
                     adjacency[b].add(a)
+                    pair_shared_counts.pop(pair, None)
+                else:
+                    pair_shared_counts[pair] = new_count
 
     # Find connected components
     visited = set()
     components: List[List[str]] = []
 
-    for hit_id in sorted(ids):
+    for hit_id in ids:
         if hit_id in visited:
             continue
 
@@ -561,7 +597,10 @@ async def search(body: SearchRequest) -> Any:
                     "hits": final_hits
                 }
             }
-            normalized_response = normalize_entity_hits(final_response)
+            normalized_response = normalize_entity_hits(
+                final_response,
+                min_shared_matches=getattr(app.state, "min_shared_matches", 1),
+            )
             if logger.isEnabledFor(logging.DEBUG):
                 all_hits = normalized_response.get("hits", {}).get("hits", [])
                 log_hits_structure = {
@@ -589,12 +628,15 @@ def main() -> None:
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--datasets", help="Comma-separated list of dataset names to include in search (must be defined in config)")
     parser.add_argument("--max-limit", type=int, default=DEFAULT_MAX_LIMIT, help="Maximum total result limit accepted from client requests")
+    parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits; use 0 to disable shared-match grouping")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
     if args.max_limit < 1:
         parser.error("--max-limit must be greater than 0")
+    if args.min_shared_matches < 0:
+        parser.error("--min-shared-matches must be greater than or equal to 0")
 
     app.state.opensearch_url = args.opensearch_url
     app.state.opensearch_index = args.index
@@ -603,6 +645,7 @@ def main() -> None:
     app.state.opensearch_api_key = args.api_key
     app.state.datasets = [dataset.strip() for dataset in args.datasets.split(",") if dataset.strip()] if args.datasets else None
     app.state.max_limit = args.max_limit
+    app.state.min_shared_matches = args.min_shared_matches
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:
@@ -611,10 +654,11 @@ def main() -> None:
 
     import uvicorn
     logger.info(
-        "Starting service with index=%s, url=%s, max_limit=%s",
+        "Starting service with index=%s, url=%s, max_limit=%s, min_shared_matches=%s",
         args.index,
         args.opensearch_url,
         args.max_limit,
+        args.min_shared_matches,
     )
     uvicorn.run(app, host=args.host, port=args.port)
 

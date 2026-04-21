@@ -10,23 +10,48 @@ The RDS Global service is a reference data service that provides unified access 
 
 - Docker
 - Docker Compose
+- Sufficient memory for local indexing and search services. The current setup allocates 2 GB heap to OpenSearch and up to 12 GB for QLever indexing, so a machine with at least 16 GB RAM is recommended for running the full pipeline locally.
 - (for production) A reverse proxy (e.g. Nginx) running on Docker
 
 ### Configuration
 
-Copy and edit the provided `.env.example` file to `.env` and customise as required. The default values can be used for development. For production it is recommended to change at least the `HOST_NAME` and `LETSENCRYPT_EMAIL` values.
+Copy and edit the provided `.env.example` file to `.env` and customise as required.
+
+This repository is designed to be run with the base compose file plus either the development or production overlay, selected via `COMPOSE_FILE` in `.env`:
+
+- Development: `COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml`
+- Production: `COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml`
+
+For development, the default values in `.env.example` can be used as a starting point. For production it is recommended to change at least `HOST_NAME`, `LETSENCRYPT_EMAIL`, and `PROXY_NETWORK_NAME`.
 
 For acccess to the SIKART data it is necessary to provide a GitHub Username and Personal Access Token that has access to the [sikart-data](https://github.com/swiss-art-research-net/sikart-data) repository via the `GITHUB_USERNAME_SIKART` and `GITHUB_TOKEN_SIKART` environment variables.
 
+Important environment variables:
+
+- `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets.yml`.
+- `QLEVER_ACCESS_TOKEN`: access token used by the QLever API for authenticated update operations.
+- `COMPOSE_FILE`: selects which compose file assembly to use for the stack.
+- `PROXY_NETWORK_NAME`: name of the external reverse-proxy network used by the production overlay.
+
+The pipeline downloads source data from external services and repositories listed in `config/datasets.yml`, and the SameAs generation queries Wikidata. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
+
 ### Running the service
 
-To start the service run:
+After choosing the desired `COMPOSE_FILE` assembly in `.env`, start the service with:
 
 ```bash
 docker compose up -d
 ```
 
-In Development mode, RDS is then available at `http://localhost:8080`, using the default port numbers.
+With the development assembly (`docker-compose.yml:docker-compose.dev.yml`), this starts:
+
+- RDS / ResearchSpace at `http://localhost:8080`
+- QLever at `http://localhost:7001`
+- OpenSearch Dashboards at `http://localhost:5601`
+
+With the production assembly (`docker-compose.yml:docker-compose.prod.yml`), the stack is attached to the configured external proxy network and the `platform` service is advertised to the reverse proxy via `VIRTUAL_HOST`, `LETSENCRYPT_HOST`, `LETSENCRYPT_EMAIL`, and `VIRTUAL_PORT`. In this mode, the application is expected to be reached through `HOST_NAME` rather than localhost port mappings.
+
+The OpenSearch connector is started as part of both compose assemblies and is used internally by the ResearchSpace OpenSearch integration.
 
 ### Data Pipeline
 
@@ -80,7 +105,7 @@ task: Available tasks for this project:
 If QLever index failes due to write permission issues, set the permission of the bind mount directory to user 999 and group 999:
 
 ```bash
-sudo chown -R 999:999 binds/qlever-index
+sudo chown -R 999:999 binds/qlever
 ```
 
 ### Data Verification
@@ -144,3 +169,28 @@ GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
 ORDER BY DESC(?score) (?reference)
 LIMIT 100
 ```
+
+## Search Evaluation
+
+The repository includes a small search evaluation runner that executes a CSV query set against the `opensearch-connector` API and writes both a CSV result file and an HTML inspection report.
+
+The query template lives at [services/search-evaluation/tests/search-evaluation-template.csv](./services/search-evaluation/tests/search-evaluation-template.csv).
+
+Run the evaluation with:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm search-evaluation
+```
+
+This uses the connector API directly via `POST /search` and requests a larger hit set before ranking results by `_score`.
+
+By default, the run writes:
+
+- [services/search-evaluation/output/search-evaluation-results.csv](/Users/fkraeutli/Sites/rds-global/services/search-evaluation/output/search-evaluation-results.csv)
+- [services/search-evaluation/output/search-evaluation-results.html](/Users/fkraeutli/Sites/rds-global/services/search-evaluation/output/search-evaluation-results.html)
+
+Useful environment overrides:
+
+- `SEARCH_EVAL_LIMIT=100` to control how many hits are requested from the connector before top results are evaluated
+- `SEARCH_EVAL_DATASET=gnd` to restrict the test run to a single dataset, or for example `SEARCH_EVAL_DATASET=aat,gnd`
+- `SEARCH_EVAL_TIMEOUT=30` to adjust the request timeout in seconds

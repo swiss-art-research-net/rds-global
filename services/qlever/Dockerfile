@@ -6,6 +6,8 @@ RUN mkdir /index
 WORKDIR /index
 VOLUME ["/index"]
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 7001
-# Run idling
-ENTRYPOINT [ "sh", "-c", "qlever start --name rds --description 'RDS Qlever instance' --system native --port 7001 --access-token $QLEVER_ACCESS_TOKEN & tail -f /dev/null" ]
+ENTRYPOINT ["/entrypoint.sh"]
