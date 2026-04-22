@@ -234,3 +234,46 @@ datasets:
       matches: |
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
     wikidata_match_property: P245
+
+  wikidata:
+    source:
+      - endpoint: https://qlever.dev/api/wikidata
+        type: construct_query
+        page_size: 1000000
+        count-query: |
+          SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
+            ?s wdt:P31 wd:Q5 .
+          }
+        query: |
+          CONSTRUCT {
+            ?s wdt:P31 wd:Q5 ;
+              rdf:type wd:Q5 ;
+              rdfs:label ?label ;
+              schema:description ?description .
+          } WHERE {
+            ?s wdt:P31 wd:Q5 ;
+              rdfs:label ?label ;
+              schema:description ?description .
+          }
+    graph: http://www.wikidata.org/graph
+    namespace: http://www.wikidata.org/entity/
+    prefixes:
+      wd: http://www.wikidata.org/entity/
+      wdt: http://www.wikidata.org/prop/direct/
+      rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      Person:
+        - wd:Q5
+    queries:
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+        FILTER(LANG(?value) = "en" )
+      labels: |
+        ?subject rdfs:label ?value .
+      description: |
+        ?subject schema:description ?value .
+        FILTER(LANG(?value) = "en")
+      

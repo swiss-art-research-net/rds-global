@@ -53,7 +53,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./binds/opensearch-data:/usr/share/opensearch/data:rw
+      - ${DIRECTORY_OPENSEARCH_DATA:-./binds/opensearch-data}:/usr/share/opensearch/data:rw
   opensearch-dashboard:
     image: opensearchproject/opensearch-dashboards:3.6.0
     container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-dashboard
