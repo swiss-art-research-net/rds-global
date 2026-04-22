@@ -263,6 +263,7 @@ datasets:
               schema:description ?description .
           } WHERE {
             ?s wdt:P31 wd:Q5 ;
+              wdt:P106 wd:Q483501 ;
               rdfs:label ?label ;
               schema:description ?description .
           }
