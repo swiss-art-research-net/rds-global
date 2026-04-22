@@ -237,7 +237,7 @@ datasets:
 
   wikidata:
     source:
-      - endpoint: https://qlever.dev/api/wikidata    
+      - endpoint: https://qlever.dev/api/wikidata
         type: construct_query
         page_size: 1000000
         count-query: |
