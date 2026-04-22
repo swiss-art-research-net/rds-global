@@ -239,7 +239,7 @@ datasets:
     source:
       - endpoint: https://qlever.dev/api/wikidata    
         type: construct_query
-        page_size: 1000
+        page_size: 10000
         query: |
           CONSTRUCT {
             ?s wdt:P31 wd:Q5 ;
@@ -254,8 +254,8 @@ datasets:
     graph: http://wikidata.org/graph
     namespace: http://wikidata.org/entity/
     prefixes:
-      wd: http://wikidata.org/entity/
-      wdt: http://wikidata.org/prop/direct/
+      wd: http://www.wikidata.org/entity/
+      wdt: http://www.wikidata.org/prop/direct/
       rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       schema: http://schema.org/

@@ -7,6 +7,7 @@ import requests
 import base64
 import hashlib
 import re
+import shlex
 from lib.utils import load_config
 import rdflib
 import os
@@ -26,6 +27,11 @@ def download_data_from_query(query: str, endpoint: str, out_path: Path, page_siz
         print(f"Downloading page {page} (offset {offset})...")
         headers = {}
         headers["Accept"] = "application/n-triples"
+        print("Request debug:")
+        print(f"  endpoint: {endpoint}")
+        print(f"  accept: {headers['Accept']}")
+        print("  query:")
+        print(paged_query)
         response = requests.get(endpoint, params={"query": paged_query}, headers=headers)
         response.raise_for_status()
         if response.status_code != 200:
