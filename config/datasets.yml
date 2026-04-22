@@ -255,8 +255,8 @@ datasets:
               rdfs:label ?label ;
               schema:description ?description .
           }
-    graph: http://wikidata.org/graph
-    namespace: http://wikidata.org/entity/
+    graph: http://www.wikidata.org/graph
+    namespace: http://www.wikidata.org/entity/
     prefixes:
       wd: http://www.wikidata.org/entity/
       wdt: http://www.wikidata.org/prop/direct/
