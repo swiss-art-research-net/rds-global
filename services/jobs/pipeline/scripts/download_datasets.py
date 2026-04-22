@@ -117,12 +117,14 @@ def main():
     data_dir.mkdir(parents=True, exist_ok=True)
 
     dataset_config = config["datasets"][args.dataset]
+    if "source" not in dataset_config:
+        print(f"No source defined for dataset {args.dataset}")
+        return
     sources = dataset_config["source"]
     if not isinstance(sources, list):
         sources = [sources]
 
     print(f"[{args.dataset}] Updating dataset: {data_dir}")
-
     for idx, source in enumerate(sources):
         source_type = source.get("type", "http_zip")
         source_url = source.get("url")
