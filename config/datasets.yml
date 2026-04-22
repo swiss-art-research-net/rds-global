@@ -236,7 +236,17 @@ datasets:
     wikidata_match_property: P245
 
   wikidata:
-    endpoint: https://qlever.dev/api/wikidata    
+    source:
+      - endpoint: https://qlever.dev/api/wikidata    
+        type: construct_query
+        query: |
+          CONSTRUCT {
+            ?s ?p ?o 
+          } WHERE {
+            ?s ?p ?o .
+            VALUES ?p { wdt:P31 rdfs:label schema:description skos:prefLabel skos:altLabel }
+            VALUES ?s { wd:Q5 }
+          }
     graph: http://wikidata.org/graph
     namespace: http://wikidata.org/entity/
     prefixes:

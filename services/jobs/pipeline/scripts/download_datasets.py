@@ -118,8 +118,8 @@ def main():
 
     dataset_config = config["datasets"][args.dataset]
     if "source" not in dataset_config:
-        print(f"No source defined for dataset {args.dataset}")
-        return
+        raise RuntimeError(f"No source defined for dataset {args.dataset}")
+
     sources = dataset_config["source"]
     if not isinstance(sources, list):
         sources = [sources]
@@ -162,6 +162,14 @@ def main():
                 out_path=archive,
             )
             input_file = archive
+        elif source_type == "construct_query":
+            if not source.get("query"):
+                raise RuntimeError("Query is required for construct_query sources")
+            if not source.get("endpoint"):
+                raise RuntimeError("SPARQL endpoint is required for construct_query sources")
+            prefixes = "\n".join(f"PREFIX {p['prefix']}: <{p['uri']}>" for p in source.get("prefixes", []))
+            query = prefixes + "\n" + source["query"]
+            # TODO: add function/mechanism to retreive data in chunks using limit and offset
         else:
             raise ValueError(f"Unsupported source type: {source_type}")
 
