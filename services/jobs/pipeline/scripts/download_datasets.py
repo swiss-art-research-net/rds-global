@@ -7,7 +7,7 @@ import requests
 import base64
 import hashlib
 import re
-from lib.utils import load_config
+from lib.utils import generate_prefixes_for_SPARQL, load_config
 from lib.sparql_data_download import download_construct_query
 import rdflib
 import os
@@ -168,7 +168,7 @@ def main():
                 raise RuntimeError("Query is required for construct_query sources")
             if not source.get("endpoint"):
                 raise RuntimeError("SPARQL endpoint is required for construct_query sources")
-            prefixes = "\n".join(f"PREFIX {p}: <{iri}>" for p, iri in dataset_config.get("prefixes", {}).items())
+            prefixes = generate_prefixes_for_SPARQL(dataset_config.get("prefixes", {}))
             query = prefixes + "\n" + source["query"]
             count_query = None
             if source.get("count-query"):
