@@ -251,12 +251,14 @@ datasets:
         page_size: 1000000
         count-query: |
           SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
-            ?s wdt:P31 wd:Q5 .
+            ?s wdt:P31 wd:Q5 ;
+              wdt:P106 wd:Q483501 .
           }
         query: |
           CONSTRUCT {
             ?s wdt:P31 wd:Q5 ;
               rdf:type wd:Q5 ;
+              wdt:P106 wd:Q483501 ;
               rdfs:label ?label ;
               schema:description ?description .
           } WHERE {
@@ -269,11 +271,13 @@ datasets:
         - wd:Q5
     queries:
       prefLabel: |
-        ?subject skos:prefLabel ?value .
+        ?subject rdfs:label ?value .
         FILTER(LANG(?value) = "en" )
       labels: |
         ?subject rdfs:label ?value .
       description: |
         ?subject schema:description ?value .
         FILTER(LANG(?value) = "en")
+      matches: |
+        ?subject owl:sameAs ?value .
       
