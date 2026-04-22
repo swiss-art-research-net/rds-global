@@ -241,11 +241,13 @@ datasets:
         type: construct_query
         query: |
           CONSTRUCT {
-            ?s ?p ?o 
+            ?s wdt:P31 ?type ;
+              rdfs:label ?label ;
+              schema:description ?description .
           } WHERE {
-            ?s ?p ?o .
-            VALUES ?p { wdt:P31 rdfs:label schema:description skos:prefLabel skos:altLabel }
-            VALUES ?s { wd:Q5 }
+            VALUES ?type { wd:Q5 }
+            ?s wdt:P31 ?type ;
+              rdfs:label ?label .
           }
     graph: http://wikidata.org/graph
     namespace: http://wikidata.org/entity/
@@ -253,6 +255,8 @@ datasets:
       wd: http://wikidata.org/entity/
       wdt: http://wikidata.org/prop/direct/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
     typePredicate: wdt:P31
     types:
       Person:
@@ -260,6 +264,7 @@ datasets:
     queries:
       prefLabel: |
         ?subject skos:prefLabel ?value .
+        FILTER(LANG(?value) = "en" )
       labels: |
         ?subject rdfs:label ?value .
       description: |
