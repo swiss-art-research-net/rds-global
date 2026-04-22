@@ -7,127 +7,16 @@ import requests
 import base64
 import hashlib
 import re
-import shlex
-import time
 from lib.utils import load_config
+from lib.sparql_data_download import download_construct_query
 import rdflib
 import os
-from tqdm import tqdm
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
     result = subprocess.run(cmd, cwd=cwd)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}")
-
-def _retry_delay(response: requests.Response | None, attempt: int, base_delay_s: float) -> float:
-    if response is not None:
-        retry_after = response.headers.get("Retry-After")
-        if retry_after:
-            try:
-                return max(float(retry_after), base_delay_s)
-            except ValueError:
-                pass
-    return base_delay_s * (2 ** attempt)
-
-def debug_curl_get(*, endpoint: str, query: str, headers: dict[str, str]) -> str:
-    parts = ["curl", "-iG", endpoint]
-    for name, value in headers.items():
-        parts.extend(["-H", f"{name}: {value}"])
-    parts.extend(["--data-urlencode", f"query={query}"])
-    return " ".join(shlex.quote(part) for part in parts)
-
-def run_sparql_get(*, endpoint: str, query: str, accept: str, max_retries: int = 6, base_delay_s: float = 2.0) -> requests.Response:
-    headers = {"Accept": accept}
-    response = None
-    for attempt in range(max_retries + 1):
-        response = requests.get(
-            endpoint,
-            params={"query": query},
-            headers=headers,
-            timeout=120,
-        )
-        if response.status_code == 200:
-            return response
-        if response.status_code not in {429, 500, 502, 503, 504}:
-            response.raise_for_status()
-        if attempt >= max_retries:
-            response.raise_for_status()
-        delay_s = _retry_delay(response, attempt, base_delay_s)
-        print(
-            f"Request throttled or failed with {response.status_code}; "
-            f"sleeping {delay_s:.1f}s before retry {attempt + 1}/{max_retries}."
-        )
-        time.sleep(delay_s)
-    raise RuntimeError("SPARQL request failed without returning a response")
-
-def count_distinct_subjects(nt_payload: str) -> int:
-    subjects = set()
-    for line in nt_payload.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        subject, _, _ = stripped.partition(" ")
-        if subject:
-            subjects.add(subject)
-    return len(subjects)
-
-def fetch_total_count(*, endpoint: str, count_query: str) -> int:
-    response = run_sparql_get(
-        endpoint=endpoint,
-        query=count_query,
-        accept="application/sparql-results+json",
-    )
-    data = response.json()
-    bindings = data.get("results", {}).get("bindings", [])
-    if not bindings:
-        raise RuntimeError("Count query returned no bindings")
-    first_row = bindings[0]
-    for key in ("count", "total"):
-        if key in first_row and "value" in first_row[key]:
-            return int(first_row[key]["value"])
-    raise RuntimeError("Count query must return ?count or ?total")
-
-def download_data_from_query(query: str, endpoint: str, out_path: Path, page_size: int, count_query: str | None = None) -> None:
-    page = 0
-    offset = 0
-    hasResults = True
-    max_retries = 6
-    base_delay_s = 2.0
-    inter_page_delay_s = 1.0
-    progress = None
-    if count_query:
-        total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
-        print(f"Total count from count query: {total_count}")
-        progress = tqdm(total=total_count, desc="Downloading entities", unit="entity")
-    while hasResults:
-        paged_query = f"{query}\nLIMIT {page_size} OFFSET {offset}"
-        response = run_sparql_get(
-            endpoint=endpoint,
-            query=paged_query,
-            accept="application/n-triples",
-            max_retries=max_retries,
-            base_delay_s=base_delay_s,
-        )
-
-        page_file = out_path / f"data_page_{page}.nt"
-        payload = response.text.strip()
-        if not payload:
-            hasResults = False
-            print("No more results, finished downloading.")
-            break
-        with open(page_file, "w", encoding="utf-8") as f:
-            f.write(payload)
-            if not payload.endswith("\n"):
-                f.write("\n")
-        if progress is not None:
-            progress.update(count_distinct_subjects(payload))
-
-        page += 1
-        offset += page_size
-        time.sleep(inter_page_delay_s)
-    if progress is not None:
-        progress.close()
 
 def download_http(url: str, out_path: Path) -> None:
     run(["curl", "-fL", url, "-o", str(out_path)])
@@ -284,7 +173,7 @@ def main():
             if source.get("count-query"):
                 count_query = prefixes + "\n" + source["count-query"]
             page_size = source.get("page_size", 1000)
-            download_data_from_query(
+            download_construct_query(
                 query=query,
                 endpoint=source["endpoint"],
                 out_path=data_dir,
