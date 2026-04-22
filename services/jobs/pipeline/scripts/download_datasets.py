@@ -8,6 +8,7 @@ import base64
 import hashlib
 import re
 import shlex
+import time
 from lib.utils import load_config
 import rdflib
 import os
@@ -18,22 +19,44 @@ def run(cmd: list[str], cwd: Path | None = None) -> None:
     if result.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}")
 
+def _retry_delay(response: requests.Response | None, attempt: int, base_delay_s: float) -> float:
+    if response is not None:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return max(float(retry_after), base_delay_s)
+            except ValueError:
+                pass
+    return base_delay_s * (2 ** attempt)
+
 def download_data_from_query(query: str, endpoint: str, out_path: Path, page_size: int) -> None:
     page = 0
     offset = 0
     hasResults = True
+    max_retries = 6
+    base_delay_s = 2.0
+    inter_page_delay_s = 1.0
     while hasResults:
         paged_query = f"{query}\nLIMIT {page_size} OFFSET {offset}"
         print(f"Downloading page {page} (offset {offset})...")
         headers = {}
         headers["Accept"] = "application/n-triples"
-        print("Request debug:")
-        print(f"  endpoint: {endpoint}")
-        print(f"  accept: {headers['Accept']}")
-        print("  query:")
-        print(paged_query)
-        response = requests.get(endpoint, params={"query": paged_query}, headers=headers)
-        response.raise_for_status()
+        response = None
+        for attempt in range(max_retries + 1):
+            response = requests.get(
+                endpoint,
+                params={"query": paged_query},
+                headers=headers,
+                timeout=120,
+            )
+            if response.status_code == 200:
+                break
+            if response.status_code not in {429, 500, 502, 503, 504}:
+                response.raise_for_status()
+            if attempt >= max_retries:
+                response.raise_for_status()
+            delay_s = _retry_delay(response, attempt, base_delay_s)
+            time.sleep(delay_s)
         if response.status_code != 200:
             raise RuntimeError(f"SPARQL query failed with status code {response.status_code}: {response.text}")
 
@@ -47,9 +70,10 @@ def download_data_from_query(query: str, endpoint: str, out_path: Path, page_siz
             f.write(payload)
             if not payload.endswith("\n"):
                 f.write("\n")
-    
+
         page += 1
         offset += page_size
+        time.sleep(inter_page_delay_s)
 
 def download_http(url: str, out_path: Path) -> None:
     run(["curl", "-fL", url, "-o", str(out_path)])
