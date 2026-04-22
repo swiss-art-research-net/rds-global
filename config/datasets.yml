@@ -239,7 +239,11 @@ datasets:
     source:
       - endpoint: https://qlever.dev/api/wikidata    
         type: construct_query
-        page_size: 10000
+        page_size: 100000
+        count-query: |
+          SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
+            ?s wdt:P31 wd:Q5 .
+          }
         query: |
           CONSTRUCT {
             ?s wdt:P31 wd:Q5 ;
