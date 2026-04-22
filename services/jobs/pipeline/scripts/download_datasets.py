@@ -24,24 +24,24 @@ def download_data_from_query(query: str, endpoint: str, out_path: Path, page_siz
     while hasResults:
         paged_query = f"{query}\nLIMIT {page_size} OFFSET {offset}"
         print(f"Downloading page {page} (offset {offset})...")
-        response = requests.get(endpoint, data={"query": paged_query})
+        headers = {}
+        headers["Accept"] = "application/n-triples"
+        response = requests.get(endpoint, params={"query": paged_query}, headers=headers)
         response.raise_for_status()
         if response.status_code != 200:
-            
             raise RuntimeError(f"SPARQL query failed with status code {response.status_code}: {response.text}")
-        
-        data = response.json()
-        results = data.get("results", {}).get("bindings", [])
-        if not results:
+
+        page_file = out_path / f"data_page_{page}.nt"
+        payload = response.text.strip()
+        if not payload:
             hasResults = False
             print("No more results, finished downloading.")
             break
-        with open(out_path / f"data_page_{page}.nt", "w") as f:
-            for result in results:
-                s = result["s"]["value"]
-                p = result["p"]["value"]
-                o = result["o"]["value"]
-                f.write(f"<{s}> <{p}> <{o}> .\n")
+        with open(page_file, "w", encoding="utf-8") as f:
+            f.write(payload)
+            if not payload.endswith("\n"):
+                f.write("\n")
+    
         page += 1
         offset += page_size
 
@@ -194,8 +194,10 @@ def main():
                 raise RuntimeError("Query is required for construct_query sources")
             if not source.get("endpoint"):
                 raise RuntimeError("SPARQL endpoint is required for construct_query sources")
-            prefixes = "\n".join(f"PREFIX {p['prefix']}: <{p['uri']}>" for p in source.get("prefixes", []))
+            # Rewrite prefixes which are sotred as {'wd': 'http://wikidata.org/entity/', 'wdt': 'http://wikidata.org/prop/direct/', 'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdfs': 'http://www.w3.org/2000/01/rdf-schema#', 'schema': 'http://schema.org/', 'skos': 'http://www.w3.org/2004/02/skos/core#'}
+            prefixes = "\n".join(f"PREFIX {p}: <{iri}>" for p, iri in dataset_config.get("prefixes", {}).items())
             query = prefixes + "\n" + source["query"]
+            print(query)
             page_size = source.get("page_size", 1000)
             download_data_from_query(query=query, endpoint=source["endpoint"], out_path=data_dir, page_size=page_size)
         else:
