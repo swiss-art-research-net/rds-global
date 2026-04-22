@@ -5,7 +5,7 @@ services:
 
   opensearch-node:
     ports:
-      - ${PORT_OPENSEARCH:-9200}:9200
+      - 127.0.0.1:${PORT_OPENSEARCH:-9200}:9200
   
   platform:
     ports:
