@@ -101,6 +101,7 @@ def main():
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--data_directory", required=False)
+    parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--github-username")
     parser.add_argument("--github-token")
 
@@ -178,6 +179,7 @@ def main():
                 endpoint=source["endpoint"],
                 out_path=data_dir,
                 page_size=page_size,
+                offset=args.offset,
                 count_query=count_query,
             )
         else:

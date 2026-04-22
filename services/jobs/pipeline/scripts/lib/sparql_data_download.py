@@ -83,22 +83,29 @@ def download_construct_query(
     endpoint: str,
     out_path: Path,
     page_size: int,
+    offset: int = 0,
     count_query: str | None = None,
     max_retries: int = 6,
     base_delay_s: float = 2.0,
     inter_page_delay_s: float = 0.5,
 ) -> None:
-    page = 0
-    offset = 0
+    page = offset // page_size if page_size > 0 else 0
+    current_offset = offset
     has_results = True
     progress = None
     if count_query:
         total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
         print(f"Total count from count query: {total_count}")
-        progress = tqdm(total=total_count, desc="Downloading entities", unit="entity")
+        progress = tqdm(
+            total=total_count,
+            initial=min(offset, total_count),
+            desc="Downloading entities",
+            unit="entity",
+        )
+        progress.set_postfix({"offset": current_offset})
 
     while has_results:
-        paged_query = f"{query}\nLIMIT {page_size} OFFSET {offset}"
+        paged_query = f"{query}\nLIMIT {page_size} OFFSET {current_offset}"
         response = run_sparql_get(
             endpoint=endpoint,
             query=paged_query,
@@ -121,9 +128,10 @@ def download_construct_query(
 
         if progress is not None:
             progress.update(count_distinct_subjects(payload))
+            progress.set_postfix({"offset": current_offset})
 
         page += 1
-        offset += page_size
+        current_offset += page_size
         time.sleep(inter_page_delay_s)
 
     if progress is not None:
