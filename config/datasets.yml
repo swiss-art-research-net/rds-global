@@ -239,25 +239,27 @@ datasets:
     source:
       - endpoint: https://qlever.dev/api/wikidata    
         type: construct_query
+        page_size: 1000
         query: |
           CONSTRUCT {
-            ?s wdt:P31 ?type ;
+            ?s wdt:P31 wd:Q5 ;
+              rdf:type wd:Q5 ;
               rdfs:label ?label ;
               schema:description ?description .
           } WHERE {
-            VALUES ?type { wd:Q5 }
-            ?s wdt:P31 ?type ;
-              rdfs:label ?label .
+            ?s wdt:P31 wd:Q5 ;
+              rdfs:label ?label ;
+              schema:description ?description .
           }
     graph: http://wikidata.org/graph
     namespace: http://wikidata.org/entity/
     prefixes:
       wd: http://wikidata.org/entity/
       wdt: http://wikidata.org/prop/direct/
+      rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       schema: http://schema.org/
       skos: http://www.w3.org/2004/02/skos/core#
-    typePredicate: wdt:P31
     types:
       Person:
         - wd:Q5

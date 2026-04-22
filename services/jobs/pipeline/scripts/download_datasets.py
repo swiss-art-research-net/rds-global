@@ -17,6 +17,33 @@ def run(cmd: list[str], cwd: Path | None = None) -> None:
     if result.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}")
 
+def download_data_from_query(query: str, endpoint: str, out_path: Path, page_size: int) -> None:
+    page = 0
+    offset = 0
+    hasResults = True
+    while hasResults:
+        paged_query = f"{query}\nLIMIT {page_size} OFFSET {offset}"
+        print(f"Downloading page {page} (offset {offset})...")
+        response = requests.get(endpoint, data={"query": paged_query})
+        response.raise_for_status()
+        if response.status_code != 200:
+            
+            raise RuntimeError(f"SPARQL query failed with status code {response.status_code}: {response.text}")
+        
+        data = response.json()
+        results = data.get("results", {}).get("bindings", [])
+        if not results:
+            hasResults = False
+            print("No more results, finished downloading.")
+            break
+        with open(out_path / f"data_page_{page}.nt", "w") as f:
+            for result in results:
+                s = result["s"]["value"]
+                p = result["p"]["value"]
+                o = result["o"]["value"]
+                f.write(f"<{s}> <{p}> <{o}> .\n")
+        page += 1
+        offset += page_size
 
 def download_http(url: str, out_path: Path) -> None:
     run(["curl", "-fL", url, "-o", str(out_path)])
@@ -169,7 +196,8 @@ def main():
                 raise RuntimeError("SPARQL endpoint is required for construct_query sources")
             prefixes = "\n".join(f"PREFIX {p['prefix']}: <{p['uri']}>" for p in source.get("prefixes", []))
             query = prefixes + "\n" + source["query"]
-            # TODO: add function/mechanism to retreive data in chunks using limit and offset
+            page_size = source.get("page_size", 1000)
+            download_data_from_query(query=query, endpoint=source["endpoint"], out_path=data_dir, page_size=page_size)
         else:
             raise ValueError(f"Unsupported source type: {source_type}")
 
