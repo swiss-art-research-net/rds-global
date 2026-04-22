@@ -236,6 +236,15 @@ datasets:
     wikidata_match_property: P245
 
   wikidata:
+    graph: http://www.wikidata.org/graph
+    namespace: http://www.wikidata.org/entity/
+    prefixes:
+      wd: http://www.wikidata.org/entity/
+      wdt: http://www.wikidata.org/prop/direct/
+      rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
     source:
       - endpoint: https://qlever.dev/api/wikidata
         type: construct_query
@@ -255,15 +264,6 @@ datasets:
               rdfs:label ?label ;
               schema:description ?description .
           }
-    graph: http://www.wikidata.org/graph
-    namespace: http://www.wikidata.org/entity/
-    prefixes:
-      wd: http://www.wikidata.org/entity/
-      wdt: http://www.wikidata.org/prop/direct/
-      rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      rdfs: http://www.w3.org/2000/01/rdf-schema#
-      schema: http://schema.org/
-      skos: http://www.w3.org/2004/02/skos/core#
     types:
       Person:
         - wd:Q5
