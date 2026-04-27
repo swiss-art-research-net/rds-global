@@ -119,8 +119,7 @@ def download_construct_query(
                 f.write("\n")
 
         if progress is not None:
-            num_rows = payload.count("\n")
-            progress.update(num_rows)
+            progress.update(min(page_size, total_count - progress.n))
             progress.set_postfix({"offset": current_offset})
 
         page += 1
