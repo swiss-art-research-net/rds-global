@@ -248,7 +248,7 @@ datasets:
     source:
       - endpoint: https://qlever.dev/api/wikidata
         type: construct_query
-        page_size: 10000
+        page_size: 500000
         query: |
           CONSTRUCT {
             ?s wdt:P31 wd:Q5 ;
