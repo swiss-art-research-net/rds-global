@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 
+import re
 import requests
 from tqdm import tqdm
 
@@ -48,18 +49,6 @@ def run_sparql_get(
     raise RuntimeError("SPARQL request failed without returning a response")
 
 
-def count_distinct_subjects(nt_payload: str) -> int:
-    subjects = set()
-    for line in nt_payload.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        subject, _, _ = stripped.partition(" ")
-        if subject:
-            subjects.add(subject)
-    return len(subjects)
-
-
 def fetch_total_count(*, endpoint: str, count_query: str) -> int:
     response = run_sparql_get(
         endpoint=endpoint,
@@ -89,20 +78,23 @@ def download_construct_query(
     base_delay_s: float = 2.0,
     inter_page_delay_s: float = 0.5,
 ) -> None:
+    if page_size > 0 and offset % page_size != 0:
+        raise ValueError("Offset must be a multiple of page size")
     page = offset // page_size if page_size > 0 else 0
     current_offset = offset
     has_results = True
     progress = None
-    if count_query:
-        total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
-        print(f"Total count from count query: {total_count}")
-        progress = tqdm(
-            total=total_count,
-            initial=min(offset, total_count),
-            desc="Downloading entities",
-            unit="entity",
-        )
-        progress.set_postfix({"offset": current_offset})
+
+    count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
+    total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
+    print(f"Total rows: {total_count}")
+    progress = tqdm(
+        total=total_count,
+        initial=min(offset, total_count),
+        desc="Downloading data",
+        unit="rows",
+    )
+    progress.set_postfix({"offset": current_offset})
 
     while has_results:
         paged_query = f"{query}\nLIMIT {page_size} OFFSET {current_offset}"
@@ -127,7 +119,7 @@ def download_construct_query(
                 f.write("\n")
 
         if progress is not None:
-            progress.update(count_distinct_subjects(payload))
+            progress.update(min(page_size, total_count - progress.n))
             progress.set_postfix({"offset": current_offset})
 
         page += 1

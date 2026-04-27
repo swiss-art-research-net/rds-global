@@ -170,17 +170,13 @@ def main():
                 raise RuntimeError("SPARQL endpoint is required for construct_query sources")
             prefixes = generate_prefixes_for_SPARQL(dataset_config.get("prefixes", {}))
             query = prefixes + "\n" + source["query"]
-            count_query = None
-            if source.get("count-query"):
-                count_query = prefixes + "\n" + source["count-query"]
             page_size = source.get("page_size", 1000)
             download_construct_query(
                 query=query,
                 endpoint=source["endpoint"],
                 out_path=data_dir,
                 page_size=page_size,
-                offset=args.offset,
-                count_query=count_query,
+                offset=args.offset
             )
         else:
             raise ValueError(f"Unsupported source type: {source_type}")
