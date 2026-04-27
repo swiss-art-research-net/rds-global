@@ -1,6 +1,17 @@
 services:
-  
+  jobs:
+    restart: unless-stopped
+
+  opensearch-connector:
+    restart: unless-stopped
+
+  opensearch-node:
+    restart: unless-stopped
+  opensearch-dashboard:
+    restart: unless-stopped
+
   platform:
+    restart: unless-stopped
     environment:
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
       LETSENCRYPT_HOST: ${HOST_NAME}
@@ -10,6 +21,10 @@ services:
     networks:
       - internal
       - proxy
+      
+  qlever:
+    restart: unless-stopped
+  
 
 networks:
   proxy:
