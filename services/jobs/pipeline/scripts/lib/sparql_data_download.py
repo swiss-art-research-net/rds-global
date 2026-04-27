@@ -78,14 +78,14 @@ def download_construct_query(
     base_delay_s: float = 2.0,
     inter_page_delay_s: float = 0.5,
 ) -> None:
+    if page_size > 0 and offset % page_size != 0:
+        raise ValueError("Offset must be a multiple of page size")
     page = offset // page_size if page_size > 0 else 0
     current_offset = offset
     has_results = True
     progress = None
 
     count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
-    print("Derived count query:")
-    print(count_query)
     total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
     print(f"Total rows: {total_count}")
     progress = tqdm(
@@ -119,7 +119,8 @@ def download_construct_query(
                 f.write("\n")
 
         if progress is not None:
-            progress.update(count_distinct_subjects(payload))
+            num_rows = payload.count("\n")
+            progress.update(num_rows)
             progress.set_postfix({"offset": current_offset})
 
         page += 1
