@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 
+import re
 import requests
 from tqdm import tqdm
 
@@ -48,18 +49,6 @@ def run_sparql_get(
     raise RuntimeError("SPARQL request failed without returning a response")
 
 
-def count_distinct_subjects(nt_payload: str) -> int:
-    subjects = set()
-    for line in nt_payload.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        subject, _, _ = stripped.partition(" ")
-        if subject:
-            subjects.add(subject)
-    return len(subjects)
-
-
 def fetch_total_count(*, endpoint: str, count_query: str) -> int:
     response = run_sparql_get(
         endpoint=endpoint,
@@ -93,16 +82,19 @@ def download_construct_query(
     current_offset = offset
     has_results = True
     progress = None
-    if count_query:
-        total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
-        print(f"Total count from count query: {total_count}")
-        progress = tqdm(
-            total=total_count,
-            initial=min(offset, total_count),
-            desc="Downloading entities",
-            unit="entity",
-        )
-        progress.set_postfix({"offset": current_offset})
+
+    count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
+    print("Derived count query:")
+    print(count_query)
+    total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
+    print(f"Total rows: {total_count}")
+    progress = tqdm(
+        total=total_count,
+        initial=min(offset, total_count),
+        desc="Downloading data",
+        unit="rows",
+    )
+    progress.set_postfix({"offset": current_offset})
 
     while has_results:
         paged_query = f"{query}\nLIMIT {page_size} OFFSET {current_offset}"
