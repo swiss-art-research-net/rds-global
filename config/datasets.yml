@@ -43,11 +43,7 @@ datasets:
         page_size: 1000
         query: |
           CONSTRUCT {
-            ?s a crm:E21_Person, search:Person ;
-              skos:prefLabel ?prefLabel ;
-              crm:P1_is_identified_by ?identifier ;
-              crmdig:L54_is_same-as ?sameas ;
-              schema:description ?description .
+            ?s ?p ?o.
             ?sameas gndo:biographicalOrHistoricalInformation ?description .
             ?identifier rdfs:label ?label .
           } WHERE {
@@ -57,6 +53,7 @@ datasets:
               crmdig:L54_is_same-as ?sameas .
             ?sameas gndo:biographicalOrHistoricalInformation ?description .
             ?identifier rdfs:label ?label .
+            ?s ?p ?o.
           }
         process:
           - gunzip   
@@ -69,7 +66,7 @@ datasets:
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       description: |
-        ?subject schema:description ?value .
+        ?subject crmdig:L54_is_same-as/gndo:biographicalOrHistoricalInformation ?value .
       matches: |
         ?subject crmdig:L54_is_same-as ?value .
 
