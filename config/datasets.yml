@@ -25,7 +25,6 @@ datasets:
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
     wikidata_match_property: P1014
 
-
   bso:
     graph: http://bso.swissartresearch.net/graph
     namespace: https://resource.swissartresearch.net
@@ -69,7 +68,7 @@ datasets:
         ?subject crmdig:L54_is_same-as/gndo:biographicalOrHistoricalInformation ?value .
       matches: |
         ?subject crmdig:L54_is_same-as ?value .
-
+  
   geonames:
     source:
       - url: http://download.geonames.org/all-geonames-rdf.zip
@@ -209,7 +208,6 @@ datasets:
         ?subject crmdig:L54_same_as ?value .
     wikidata_match_property: P781
 
-
   thesarchesp:
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
@@ -290,28 +288,10 @@ datasets:
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       schema: http://schema.org/
       skos: http://www.w3.org/2004/02/skos/core#
-    source:
-      - endpoint: https://qlever.dev/api/wikidata
-        type: construct_query
-        page_size: 500000
-        query: |
-          CONSTRUCT {
-            ?s wdt:P31 wd:Q5 ;
-              rdf:type wd:Q5 ;
-              wdt:P106 wd:Q483501 ;
-              rdfs:label ?label ;
-              schema:description ?description .
-          } WHERE {
-            ?s wdt:P31 wd:Q5 ;
-              wdt:P106/wdt:P279* wd:Q483501 ;
-              rdfs:label ?label ;
-              schema:description ?description .
-          }
-        process:
-          - gunzip
     types:
       Person:
         - wd:Q5
+    typePredicate: wdt:P31
     queries:
       prefLabel: |
         ?subject rdfs:label ?value .
