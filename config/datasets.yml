@@ -262,6 +262,8 @@ datasets:
               rdfs:label ?label ;
               schema:description ?description .
           }
+        process:
+          - gunzip   
     types:
       Person:
         - wd:Q5

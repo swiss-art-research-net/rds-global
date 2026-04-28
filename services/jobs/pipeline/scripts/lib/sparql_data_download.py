@@ -1,3 +1,4 @@
+import gzip
 import time
 from pathlib import Path
 
@@ -106,14 +107,14 @@ def download_construct_query(
             base_delay_s=base_delay_s,
         )
 
-        page_file = out_path / f"data_page_{page}.nt"
+        page_file = out_path / f"data_page_{page}.nt.gz"
         payload = response.text.strip()
         if not payload:
             has_results = False
             print("No more results, finished downloading.")
             break
 
-        with open(page_file, "w", encoding="utf-8") as f:
+        with gzip.open(page_file, "wt", encoding="utf-8") as f:
             f.write(payload)
             if not payload.endswith("\n"):
                 f.write("\n")
