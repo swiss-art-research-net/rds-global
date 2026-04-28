@@ -7,7 +7,8 @@ import requests
 import base64
 import hashlib
 import re
-from lib.utils import load_config
+from lib.utils import generate_prefixes_for_SPARQL, load_config
+from lib.sparql_data_download import download_construct_query
 import rdflib
 import os
 
@@ -16,7 +17,6 @@ def run(cmd: list[str], cwd: Path | None = None) -> None:
     result = subprocess.run(cmd, cwd=cwd)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}")
-
 
 def download_http(url: str, out_path: Path) -> None:
     run(["curl", "-fL", url, "-o", str(out_path)])
@@ -101,6 +101,7 @@ def main():
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--data_directory", required=False)
+    parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--github-username")
     parser.add_argument("--github-token")
 
@@ -117,12 +118,14 @@ def main():
     data_dir.mkdir(parents=True, exist_ok=True)
 
     dataset_config = config["datasets"][args.dataset]
+    if "source" not in dataset_config:
+        raise RuntimeError(f"No source defined for dataset {args.dataset}")
+
     sources = dataset_config["source"]
     if not isinstance(sources, list):
         sources = [sources]
 
     print(f"[{args.dataset}] Updating dataset: {data_dir}")
-
     for idx, source in enumerate(sources):
         source_type = source.get("type", "http_zip")
         source_url = source.get("url")
@@ -160,6 +163,21 @@ def main():
                 out_path=archive,
             )
             input_file = archive
+        elif source_type == "construct_query":
+            if not source.get("query"):
+                raise RuntimeError("Query is required for construct_query sources")
+            if not source.get("endpoint"):
+                raise RuntimeError("SPARQL endpoint is required for construct_query sources")
+            prefixes = generate_prefixes_for_SPARQL(dataset_config.get("prefixes", {}))
+            query = prefixes + "\n" + source["query"]
+            page_size = source.get("page_size", 1000)
+            download_construct_query(
+                query=query,
+                endpoint=source["endpoint"],
+                out_path=data_dir,
+                page_size=page_size,
+                offset=args.offset
+            )
         else:
             raise ValueError(f"Unsupported source type: {source_type}")
 
