@@ -119,8 +119,7 @@ def main():
 
     dataset_config = config["datasets"][args.dataset]
     if "source" not in dataset_config:
-        print(f"INFO: No source defined for dataset {args.dataset}. Skipping download.", file=sys.stderr)
-        return
+        raise RuntimeError(f"No source defined for dataset {args.dataset}")
 
     sources = dataset_config["source"]
     if not isinstance(sources, list):
