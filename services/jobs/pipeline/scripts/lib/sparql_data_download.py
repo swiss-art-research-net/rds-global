@@ -81,6 +81,7 @@ def download_construct_query(
     query: str,
     endpoint: str,
     out_path: Path,
+    out_file: Path,
     page_size: int,
     offset: int = 0,
     count_query: str | None = None,
@@ -142,6 +143,6 @@ def download_construct_query(
         progress.close()
 
     if page_files:
-        combined_file = out_path / "data.nt.gz"
+        combined_file = out_file
         combine_gzip_files(source_files=page_files, destination_file=combined_file)
         print(f"Combined {len(page_files)} page files into {combined_file.name}.")
