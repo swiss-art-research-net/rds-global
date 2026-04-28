@@ -69,11 +69,17 @@ def fetch_total_count(*, endpoint: str, count_query: str) -> int:
 
 
 def combine_gzip_files(*, source_files: list[Path], destination_file: Path) -> None:
-    with gzip.open(destination_file, "wt", encoding="utf-8") as destination:
+    temp_file = destination_file.with_suffix(destination_file.suffix + ".tmp")
+
+    with gzip.open(temp_file, "wt", encoding="utf-8") as destination:
         for source_file in source_files:
             with gzip.open(source_file, "rt", encoding="utf-8") as source:
                 shutil.copyfileobj(source, destination)
-            source_file.unlink()
+
+    temp_file.replace(destination_file)
+
+    for source_file in source_files:
+        source_file.unlink()
 
 
 def download_construct_query(
