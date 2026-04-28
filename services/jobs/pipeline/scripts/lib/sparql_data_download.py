@@ -1,4 +1,5 @@
 import gzip
+import shutil
 import time
 from pathlib import Path
 
@@ -67,6 +68,14 @@ def fetch_total_count(*, endpoint: str, count_query: str) -> int:
     raise RuntimeError("Count query must return ?count or ?total")
 
 
+def combine_gzip_files(*, source_files: list[Path], destination_file: Path) -> None:
+    with gzip.open(destination_file, "wt", encoding="utf-8") as destination:
+        for source_file in source_files:
+            with gzip.open(source_file, "rt", encoding="utf-8") as source:
+                shutil.copyfileobj(source, destination)
+            source_file.unlink()
+
+
 def download_construct_query(
     *,
     query: str,
@@ -85,6 +94,7 @@ def download_construct_query(
     current_offset = offset
     has_results = True
     progress = None
+    page_files: list[Path] = []
 
     count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
     total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
@@ -118,6 +128,7 @@ def download_construct_query(
             f.write(payload)
             if not payload.endswith("\n"):
                 f.write("\n")
+        page_files.append(page_file)
 
         if progress is not None:
             progress.update(min(page_size, total_count - progress.n))
@@ -129,3 +140,8 @@ def download_construct_query(
 
     if progress is not None:
         progress.close()
+
+    if page_files:
+        combined_file = out_path / "data.nt.gz"
+        combine_gzip_files(source_files=page_files, destination_file=combined_file)
+        print(f"Combined {len(page_files)} page files into {combined_file.name}.")
