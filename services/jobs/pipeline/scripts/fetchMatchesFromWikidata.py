@@ -175,7 +175,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
         prefixes = generate_prefixes(datasetConfig.get("prefixes", {}))
 
         outputPath = f"{output_directory}/{datasetName}WikidataSameAs.ttl"
-        wdEntitiesOutputPath = f"{output_directory}/{datasetName}WikidataEntities.txt"
+        wdEntitiesOutputPath = f"{output_wd_entities_directory}/{datasetName}WikidataEntities.txt"
 
         # progress bar total
         countQuery = build_count_query(prefixes, namedGraph, rdfTypes, types_query=typesQuery)
@@ -283,7 +283,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-wd-entities-directory",
         required=False,
-        default="/data/wikidata_entities",
+        default="/data/wikidataEntities",
     )
     parser.add_argument("--page-size", required=False, type=int, default=PAGE_SIZE, help="number of results to fetch per query")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
