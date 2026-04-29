@@ -11,3 +11,43 @@ body {
 .page {
   padding: 20px;
 }
+.main-panel {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+.results-col {
+  flex: 2;
+  min-width: 0;
+}
+.detail-col {
+  flex: 0 0 0;
+  overflow: hidden;
+}
+.detail-col:has(.detail-panel) {
+  flex: 1;
+  min-width: 0;
+}
+.detail-panel {
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+}
+.detail-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+.detail-property {
+  color: #666;
+  flex: 0 0 40%;
+  word-break: break-all;
+}
+.detail-value {
+  flex: 1;
+  word-break: break-all;
+}
+.record-label {
+  cursor: pointer;
+  text-decoration: underline;
+}

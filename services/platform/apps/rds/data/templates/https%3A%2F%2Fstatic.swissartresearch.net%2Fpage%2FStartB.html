@@ -77,9 +77,11 @@
 
     <semantic-search-facet open-by-default="true"></semantic-search-facet>
 
-    <semantic-search-result-holder>
-      <semantic-search-result>
-        <semantic-data-table 
+    <div class="main-panel">
+      <div class="results-col">
+        <semantic-search-result-holder>
+          <semantic-search-result>
+            <semantic-data-table 
             id='grid-result'
             query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
                 
@@ -125,7 +127,13 @@
             ]'
         >    
             <template id="prefLabelTemplate">
-                <semantic-link iri="{{subject.value}}">{{prefLabel.value}}</semantic-link>
+              <mp-event-trigger
+                type="Component.TemplateUpdate"
+                targets='["detail-panel"]'
+                data='{"subjectUri": "{{subject.value}}", "prefLabel": "{{prefLabel.value}}", "dataset": "{{dataset.value}}"}'>
+                <button>Open</button>
+              </mp-event-trigger>
+              <span>{{prefLabel.value}}</span>
             </template>
             <template id="groupHeaderTemplate">
               <div>
@@ -149,7 +157,50 @@
                 ></semantic-query>
             </template>
         </semantic-data-table>
-      </semantic-search-result>
-    </semantic-search-result-holder>
+          </semantic-search-result>
+        </semantic-search-result-holder>
+      </div>
+
+      <div class="detail-col">
+        <mp-event-target-template-render id="detail-panel" template="{{> detail-panel-template}}">
+          <template id="detail-panel-template">
+            {{#if subjectUri}}
+              <semantic-query
+                query='SELECT ?value WHERE {
+                  <{{subjectUri}}> rdf:type ?value .
+                }'
+                template="{{> detail-props-template}}"
+              >
+                <template id="detail-props-template">
+                  <div class="detail-panel">
+                    <div class="detail-panel-header">
+                      <h3>{{prefLabel}}</h3>
+                      <mp-event-trigger
+                        type="Component.TemplateUpdate"
+                        targets='["detail-panel"]'
+                        data='{}'>
+                        <button class="detail-close">✕</button>
+                      </mp-event-trigger>
+                    </div>
+                    <div class="detail-dataset">{{dataset}}</div>
+                    <div class="detail-row">
+                      <span class="detail-property">Type</span>
+                      <div>
+                        {{#each bindings}}
+                          <div class="detail-value">
+                            <mp-label iri="{{value.value}}"></mp-label>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </semantic-query>
+            {{/if}}
+          </template>
+        </mp-event-target-template-render>
+      </div>
+    </div>
+
   </semantic-search>
 </div>
