@@ -117,7 +117,7 @@ def build_wd_matches_query(unique_wd_entities, wikidata_external_id_properties):
     return WIKIDATA_MATCHES_QUERY_TEMPLATE.replace("$VALUES", wikidata_entities_for_values).replace("$PREDICATES_FORMATTERS_AND_LABELS", " ".join(predicates_and_formatter_values))
 
 
-def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directory, page_size=PAGE_SIZE, config=None, dataset=None):
+def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directory, output_wd_entities_directory, page_size=PAGE_SIZE, config=None, dataset=None):
     sparqlLocal = SPARQLWrapper(endpoint)
     sparqlLocal.setReturnFormat(JSON)
     sparqlLocal.setMethod(POST)
@@ -175,6 +175,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
         prefixes = generate_prefixes(datasetConfig.get("prefixes", {}))
 
         outputPath = f"{output_directory}/{datasetName}WikidataSameAs.ttl"
+        wdEntitiesOutputPath = f"{output_directory}/{datasetName}WikidataEntities.txt"
 
         # progress bar total
         countQuery = build_count_query(prefixes, namedGraph, rdfTypes, types_query=typesQuery)
@@ -188,6 +189,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
         counter = 0
         wdEquivalentsFound = 0
         hasResults = True
+        discoveredWdEntities = set()
 
         with open(outputPath, "w") as f:
             while hasResults:
@@ -227,6 +229,7 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                 # retrieve formatter-url matches for the currently retrieved wikidata entities
                 uniqueWdEntities = set(newWdEntities)
                 if uniqueWdEntities:
+                    discoveredWdEntities.update(uniqueWdEntities)
                     matchesQuery = build_wd_matches_query(unique_wd_entities=uniqueWdEntities, wikidata_external_id_properties=wikidata_external_id_properties)
                     matchesResults = query_with_retry(
                         sparqlWikidata, matchesQuery, label=f"{datasetName}:wikidata matches"
@@ -251,6 +254,10 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
 
         pbar.close()
         print(f"Found {wdEquivalentsFound} total sameAs links for dataset {datasetName}")
+        with open(wdEntitiesOutputPath, "w") as f:
+            for wdEntity in sorted(discoveredWdEntities):
+                f.write(f"{wdEntity}\n")
+        print(f"Wrote {len(discoveredWdEntities)} discovered Wikidata entities to {wdEntitiesOutputPath}")
 
 
 if __name__ == "__main__":
@@ -273,6 +280,11 @@ if __name__ == "__main__":
         default="/data/sameAsStatements/sources",
         help="directory to store output files",
     )
+    parser.add_argument(
+        "--output-wd-entities-directory",
+        required=False,
+        default="/data/wikidata_entities",
+    )
     parser.add_argument("--page-size", required=False, type=int, default=PAGE_SIZE, help="number of results to fetch per query")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--dataset", required=False, help="Dataset to fetch Wikidata matches for (all datasets if not specified)")
@@ -283,6 +295,7 @@ if __name__ == "__main__":
         wikidata_endpoint=args.wikidata_endpoint,
         wikidata_properties_csv=args.wikidata_properties_csv,
         output_directory=args.output_directory,
+        output_wd_entities_directory=args.output_wd_entities_directory,
         page_size=args.page_size,
         config=args.config,
         dataset=args.dataset if args.dataset else None,
