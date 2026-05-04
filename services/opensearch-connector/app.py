@@ -482,7 +482,6 @@ async def _reconcile_single(q: Dict[str, Any]):
     if isinstance(entity_type, list):
         entity_type = entity_type[0] if entity_type else None
 
-    # extract dataset filter from properties
     properties = q.get("properties", [])
     datasets = None
 
@@ -507,6 +506,13 @@ async def _reconcile_single(q: Dict[str, Any]):
         print("SEARCH ERROR:", e)
         return {"result": []}
 
+    if not hits:
+        return {"result": []}
+
+    # only consider matches with score >= 90% of the top hit's score, but never below 1.0
+    top_score = float(hits[0].get("_score", 0.0))
+    threshold = max(top_score * 0.9, 1.0)
+
     results = []
 
     for h in hits:
@@ -522,12 +528,43 @@ async def _reconcile_single(q: Dict[str, Any]):
 
         score = float(h.get("_score", 0.0))
 
-        results.append({
+        type_classes = source.get("typeClasses") or []
+        types = []
+
+        for t in type_classes:
+            if isinstance(t, dict):
+                types.append({
+                    "id": t.get("id") or t.get("name"),
+                    "name": t.get("name") or t.get("id")
+                })
+            else:
+                types.append({
+                    "id": t,
+                    "name": t
+                })
+        
+        description = source.get("description")
+
+        if not description:
+            descs = source.get("descriptions")
+            if isinstance(descs, list) and descs:
+                description = descs[0]
+            elif isinstance(descs, str):
+                description = descs
+
+
+        result = {
             "id": h["_id"],
             "name": label,
+            "type": types,
             "score": score,
-            "match": label.lower() == query_string.lower()
-        })
+            "match": score >= threshold
+        }
+
+        if description:
+            result["description"] = description
+
+        results.append(result)
 
     results.sort(key=lambda x: x["score"], reverse=True)
 
