@@ -56,6 +56,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
 from fastapi import Body
 from fastapi.middleware.cors import CORSMiddleware
+import html
 
 app = FastAPI()
 
@@ -372,11 +373,9 @@ async def get_manifest():
 
         "view": {"url": "{{id}}"},
 
-        # "preview": {
-        #     "url": "http://localhost:8000/preview?id={{id}}",
-        #     "width": 400,
-        #     "height": 200
-        # },
+        "preview": {
+            "url": "http://localhost:8000/preview?id={{id}}"
+        },
 
         "suggest": {
             "entity": {"service_path": "/suggest/entity"},
@@ -570,6 +569,109 @@ async def _reconcile_single(q: Dict[str, Any]):
 
     return {"result": results[:limit]}
 
+
+@app.get("/preview")
+async def preview(id: str):
+
+    index = getattr(app.state, "opensearch_index", None)
+    endpoint = getattr(app.state, "opensearch_url", None)
+
+    if not index or not endpoint:
+        return HTMLResponse("<p>Server not configured</p>")
+
+    source = None
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+
+        # direct lookup by _id
+        url_get = endpoint.rstrip("/") + f"/{index}/_doc/{id}"
+
+        try:
+            r = await client.get(url_get)
+            if r.status_code == 200:
+                doc = r.json()
+                source = doc.get("_source")
+        except Exception:
+            pass
+
+        # fallback to search by uri field
+        if not source:
+            url_search = endpoint.rstrip("/") + f"/{index}/_search"
+
+            body = {
+                "size": 1,
+                "query": {
+                    "term": {
+                        "uri": id
+                    }
+                }
+            }
+
+            try:
+                r = await client.post(url_search, json=body)
+                r.raise_for_status()
+                hits = r.json().get("hits", {}).get("hits", [])
+                if hits:
+                    source = hits[0].get("_source")
+            except Exception:
+                pass
+
+    if not source:
+        return HTMLResponse(f"<p>No data for {html.escape(id)}</p>")
+
+    # extract fields
+    label = (
+        (source.get("prefLabels") or [None])[0]
+        or (source.get("labels") or [None])[0]
+        or "Unknown"
+    )
+
+    description = (
+        source.get("description")
+        or (source.get("descriptions") or [None])[0]
+        or ""
+    )
+
+    types = ", ".join([
+        t.get("name") if isinstance(t, dict) else str(t)
+        for t in (source.get("typeClasses") or [])
+    ])
+
+    # escape for safe HTML rendering
+    label = html.escape(label)
+    description = html.escape(description)
+    types = html.escape(types)
+    id_safe = html.escape(id)
+    
+    html_content = f"""
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <style>
+          body {{
+            font-family: sans-serif;
+            font-size: 14px;
+            margin: 10px;
+          }}
+          h3 {{
+            margin: 0 0 5px 0;
+          }}
+          .meta {{
+            color: #555;
+            font-size: 12px;
+          }}
+        </style>
+      </head>
+      <body>
+        <h3>{label}</h3>
+        <div class="meta">{types}</div>
+        <p>{description}</p>
+        <div class="meta">{id_safe}</div>
+      </body>
+    </html>
+    """
+
+    return HTMLResponse(content=html_content)
 
 @app.get("/suggest/entity")
 async def suggest_entity(prefix: str = "", limit: int = 5):
