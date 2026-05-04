@@ -694,16 +694,39 @@ async def suggest_entity(prefix: str = "", limit: int = 5):
         if not label:
             continue
 
-        if not label.lower().startswith(prefix_lower):
+        label_lower = label.lower()
+        entity_id = hit.get("_id", "")
+
+        # match label OR id
+        if not (
+            label_lower.startswith(prefix_lower)
+            or prefix_lower in label_lower
+            or prefix_lower in entity_id.lower()
+        ):
             continue
 
-        description = source.get("description", "")
+        # description
+        description = (
+            source.get("description")
+            or (source.get("descriptions") or [None])[0]
+            or ""
+        )
+
+        # notable types
+        type_classes = source.get("typeClasses") or []
+        notable = [
+            {"id": t, "name": t} if not isinstance(t, dict) else {
+                "id": t.get("id") or t.get("name"),
+                "name": t.get("name") or t.get("id")
+            }
+            for t in type_classes[:2]  # keep small number of types for suggestions
+        ]
 
         results.append({
-            "id": hit.get("_id"),
+            "id": entity_id,
             "name": label,
             "description": description,
-            "score": float(hit.get("_score", 0.0))
+            "notable": notable
         })
 
         if len(results) >= limit:
@@ -716,11 +739,11 @@ async def suggest_entity(prefix: str = "", limit: int = 5):
 async def suggest_type(prefix: str = Query(""), limit: int = 5):
 
     types = await get_type_classes()
+    prefix_lower = prefix.lower()
 
     results = [
-        {"id": t, "name": t}
-        for t in types
-        if prefix.lower() in t.lower()
+        t for t in types
+        if prefix_lower in t["name"].lower()
     ]
 
     return {"result": results[:limit]}
@@ -730,7 +753,23 @@ async def suggest_type(prefix: str = Query(""), limit: int = 5):
 
 @app.get("/suggest/property")
 async def suggest_property(prefix: str = Query(""), limit: int = 5):
-    return {"result": []}
+
+    properties = [
+        {
+            "id": "dataset",
+            "name": "Dataset",
+            "description": "Filter results by dataset/source"
+        }
+    ]
+
+    prefix_lower = prefix.lower()
+
+    results = [
+        p for p in properties
+        if prefix_lower in p["name"].lower()
+    ]
+
+    return {"result": results[:limit]}
 
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
