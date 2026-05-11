@@ -171,13 +171,16 @@ def main():
             prefixes = generate_prefixes_for_SPARQL(dataset_config.get("prefixes", {}))
             query = prefixes + "\n" + source["query"]
             page_size = source.get("page_size", 1000)
+            archive = data_dir / f"data_{idx}.nt.gz"
             download_construct_query(
                 query=query,
                 endpoint=source["endpoint"],
                 out_path=data_dir,
+                out_file=archive,
                 page_size=page_size,
                 offset=args.offset
             )
+            input_file = archive
         else:
             raise ValueError(f"Unsupported source type: {source_type}")
 
