@@ -1,0 +1,74 @@
+// main: styles.less
+@import '_tokens.less';
+
+.nav-bar.navbar-fixed-top {
+  left: 20px;
+  right: 20px;
+  width: auto;
+}
+
+.nav-bar {
+  background-color: @col-bg;
+  border-bottom: 1px solid @col-black;
+  border-top: none;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 48px;
+  margin-bottom: 0;
+
+  .rs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0;
+  }
+
+  .navbar-header {
+    float: none;
+  }
+
+  .rs-header-sari-logo {
+    height: 30px;
+    width: auto;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  .rs-header-logo {
+    font-family: @font-body;
+    font-size: 24px;
+    color: @col-black;
+    text-decoration: none;
+    padding: 0;
+    font-weight: 400;
+
+    &:hover {
+      color: @col-black;
+      text-decoration: none;
+    }
+  }
+
+  .rds-nav {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-weight: 400;
+
+    > li > a {
+      font-size: @font-size-body-large;
+      color: @col-black;
+      padding: 0 12px;
+      line-height: 48px;
+      text-decoration: none;
+    }
+  }
+}
+
+.navbar-default .navbar-nav.rds-nav > li > a {
+  &:hover, &:focus {
+    background-color: transparent;
+    color: @col-black;
+    text-decoration: underline;
+  }
+  }

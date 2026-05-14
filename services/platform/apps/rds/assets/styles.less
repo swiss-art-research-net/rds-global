@@ -1,20 +1,18 @@
 // out: styles.css
-@font-body: 'Familjen Grotesk', Arial, sans-serif;
-@font-size-body: 16px;
-@font-data: 'Geist Mono', 'Courier New', monospace;
-@font-size-data: 12px;
-@col-black: #000000;
-@col-grey: #5F5F5F;
-@col-bg: #EAEEF0;
+// main: styles.less
+
+@import '_tokens.less';
+@import '_header.less';
 
 body {
   font-family: @font-body;
-  font-size: 16px;
+  font-size: @font-size-body;
   background: @col-bg;
 }
 
 .page {
   padding: 20px;
+  padding-top: 40px;
 }
 
 .eyebrow {
@@ -23,6 +21,11 @@ body {
   color: @col-grey;
   font-family: @font-data;
   font-weight: 500;
+}
+
+ol.page-breadcrumb {
+  background-color: transparent;
+  box-shadow: none;
 }
 
 /* filter-search-bar */
@@ -70,7 +73,7 @@ body {
   .keyword-search-search-input {
     background-color: transparent;
     font-family: @font-body;
-    font-size: 18px;
+    font-size: @font-size-body-large;
     border: none;
     border-bottom: 1px solid @col-black;
     height: auto;
@@ -92,14 +95,13 @@ body {
 
 .filter-button {
   padding: 2px 6px;
-  font-size: 18px;
+  font-size: @font-size-body-large;
   font-family: @font-data;
   border: 1px solid @col-black;
 }
 
-.active {
-  background: @col-black;
-  color: @col-bg;
+.active-filter {
+  background: @col-highlight;
 }
 
 /* results table */

@@ -28,7 +28,7 @@
                   <semantic-link iri="page:Start"
                     urlqueryparam-dataset="{{key.value}}"
                     urlqueryparam-type="[[urlParam 'type']]">
-                    <button class="filter-button{{#ifCond key.value '==' selectedDataset.value}} active{{/ifCond}}">
+                    <button class="filter-button{{#ifCond key.value '==' selectedDataset.value}} active-filter{{/ifCond}}">
                       {{label.value}}
                     </button>
                   </semantic-link>
@@ -52,7 +52,7 @@
                   <semantic-link iri="page:Start"
                     urlqueryparam-type="{{key.value}}"
                     urlqueryparam-dataset="[[urlParam 'dataset']]">
-                    <button class="filter-button{{#ifCond key.value '==' selectedType.value}} active{{/ifCond}}">
+                    <button class="filter-button{{#ifCond key.value '==' selectedType.value}} active-filter{{/ifCond}}">
                       {{#if key.value}}{{key.value}}{{else}}All{{/if}}
                     </button>
                   </semantic-link>
