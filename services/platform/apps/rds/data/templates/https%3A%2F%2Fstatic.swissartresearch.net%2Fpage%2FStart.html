@@ -1,203 +1,232 @@
-<style>
-    h2 {
-        margin-bottom: 2rem;
-    }
-    .filter {
-        margin: 1rem 0;
-    }
-
-    .filter button {
-        border: 0;
-    }
-    .page {
-        padding: 20px;
-    }
-</style>
-
 <div class="page">
-    <h2>Welcome to RDS</h2>
-    <div class="filter">
-        Types: 
-        <mp-event-trigger id="trigger-search-all"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass ?typeClass",
-                "label": "all"
+  <semantic-search limit='100' id='search-browse'
+    search-profile='[[> partial:searchProfile]]'
+    categories='[[> partial:searchCategories]]'
+    relations='[[> partial:searchRelations]]'
+  >
+    <div class="filter-search-bar">
+      <div class="filter-container">
+        <div>
+          <div class="eyebrow">Datasets</div>
+          <semantic-query
+            query='SELECT ?key ?selectedDataset ?label WHERE {
+              BIND("[[urlParam "dataset"]]" AS ?selectedDataset)
+              VALUES (?key ?label) {
+                ("" "All")
+                ("gnd" "GND")
+                ("ulan" "ULAN")
+                ("wikidata" "WD")
+                ("sikart" "SIKART")
+                ("geonames" "GeoNames")
+              }
             }'
-        >
-            <button>All</button>
-        </mp-event-trigger>
+            template="{{> tmpl}}"
+          >
+            <template id="tmpl">
+              <div class="filter-button-group">
+                {{#each bindings}}
+                  <semantic-link iri="page:Start"
+                    urlqueryparam-dataset="{{key.value}}"
+                    urlqueryparam-type="[[urlParam 'type']]">
+                    <button class="filter-button{{#ifCond key.value '==' selectedDataset.value}} active{{/ifCond}}">
+                      {{label.value}}
+                    </button>
+                  </semantic-link>
+                {{/each}}
+              </div>
+            </template>
+          </semantic-query>
+        </div>
+        <div>
+          <div class="eyebrow">Types</div >
+          <semantic-query
+            query='SELECT ?key ?selectedType WHERE {
+              BIND("[[urlParam "type"]]" AS ?selectedType)
+              VALUES (?key) { ("") ("Person") ("Place") ("Group") ("Built Work") ("Event") }
+            }'
+            template="{{> tmpl}}"
+          >
+            <template id="tmpl">
+              <div class="filter-button-group">
+                {{#each bindings}}
+                  <semantic-link iri="page:Start"
+                    urlqueryparam-type="{{key.value}}"
+                    urlqueryparam-dataset="[[urlParam 'dataset']]">
+                    <button class="filter-button{{#ifCond key.value '==' selectedType.value}} active{{/ifCond}}">
+                      {{#if key.value}}{{key.value}}{{else}}All{{/if}}
+                    </button>
+                  </semantic-link>
+                {{/each}}
+              </div>
+            </template>
+          </semantic-query>
+        </div>
+      </div>
+      <div class="keyword-search">
+        <div class="eyebrow">Query</div>
+        <div class="input-wrap">
+          <semantic-search-query-keyword 
+            class="keyword-search-search-input"
+            min-search-term-length='3' debounce='600' tokenize-lucene-query='false'
+            domain='<http://schema.swissartresearch.net/ontology/rds#Entity>'
+            placeholder="Search for [[#if (urlParam 'type')]][[urlParam 'type']][[else]]all[[/if]] entities [[#if (urlParam 'dataset')]]in [[urlParam 'dataset']][[/if]]..."
+            query='SELECT DISTINCT ?subject WHERE {
+              SERVICE <http://platform:8080/sparql?repository=opensearch> {
+                ?query os:searchTerm ?__token__ ;
+                    #os:searchDataset "aat" ;
+                    [[#if (urlParam "type")]]os:hasTypeClass "[[urlParam "type"]]", ?typeClass ;[[else]]os:hasTypeClass ?typeClass ;[[/if]]
+                    [[#if (urlParam "dataset")]]os:searchDataset "[[urlParam "dataset"]]" ;[[/if]]
+                    os:hasScore ?score ;
+                    os:hasSubject ?subject ;
+                    os:hasDataset ?dataset ;
+                    os:hasDescription ?description ;
+                    os:hasReference ?reference ;
+                    os:hasPrefLabel ?prefLabel .
+                }
+              }
+          '>
+          </semantic-search-query-keyword>
+          <a 
+            class="search-reset"
+            href="/resource/?uri=page%3AStart[[#if (urlParam 'dataset')]]&dataset=[[urlParam 'dataset']][[/if]][[#if (urlParam 'type')]]&type=[[urlParam 'type']][[/if]]">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/>
+            </svg>
+          </a>
+        </div>
+        
+      </div>
 
-        <mp-event-trigger id="trigger-search-person"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"Person\", ?typeClass",
-                "label": "Person"
-            }'
-        >
-            <button>Person</button>
-        </mp-event-trigger>
-
-        <mp-event-trigger id="trigger-search-group"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"Group\", ?typeClass",
-                "label": "Group"
-            }'
-        >
-            <button>Group</button>
-        </mp-event-trigger>
-
-        <mp-event-trigger id="trigger-search-place"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"Place\", ?typeClass",
-                "label": "Place"
-            }'
-        >
-            <button>Place</button>
-        </mp-event-trigger>
-
-        <mp-event-trigger id="trigger-search-type"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"Type\", ?typeClass",
-                "label": "Type"
-            }'
-        >
-            <button>Type</button>
-        </mp-event-trigger>
-
-        <mp-event-trigger id="trigger-search-event"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"Event\", ?typeClass",
-                "label": "Event"
-            }'
-        >
-            <button>Event</button>
-        </mp-event-trigger>
-
-        <mp-event-trigger id="trigger-search-artwork"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"Artwork\", ?typeClass",
-                "label": "Artwork"
-            }'
-        >
-            <button>Artwork</button>
-        </mp-event-trigger>
-
-        <mp-event-trigger id="trigger-search-bibliographicitem"
-            type="Component.TemplateUpdate"
-            targets='["search-form"]'
-            data='{
-                "typeQueryPart": "os:hasTypeClass \"BibliographicItem\", ?typeClass",
-                "label": "Bibliographic Item"
-            }'
-        >
-            <button>Bibliographic Item</button>
-        </mp-event-trigger>
     </div>
+   
+      <div class="main-panel">
 
+        <div class="facets-col">
+          <semantic-search-facet open-by-default="false"></semantic-search-facet>
+        </div>
 
-    <mp-event-target-template-render id="search-form" template="{{> search-form-template}}">
-        <template id="search-form-template">
-            <semantic-search
-                limit='100'
-                id='search-browse'
-            >
-                <semantic-search-query-keyword 
-                    min-search-term-length='3' 
-                    debounce='600'
-                    tokenize-lucene-query='false'
-                    placeholder="Search for {{#if label}}{{label}}{{else}}all{{/if}} entities..."
-                    query='SELECT DISTINCT ?subject WHERE {
-                            SERVICE <http://platform:8080/sparql?repository=opensearch> {
-                                    ?query os:searchTerm ?__token__ ;
-                                        #os:searchDataset "aat" ;
-                                        {{#if typeQueryPart}}{{typeQueryPart}}{{else}}os:hasTypeClass ?typeClass{{/if}} ;
-                                        os:hasScore ?score ;
-                                        os:hasSubject ?subject ;
-                                        os:hasDataset ?dataset ;
-                                        os:hasDescription ?description ;
-                                        os:hasReference ?reference ;
-                                        os:hasPrefLabel ?prefLabel .
-                                    }
-                            }
-                '>
-                </semantic-search-query-keyword>
-                <semantic-search-result-holder>
-                    <semantic-search-result>
-                        <semantic-data-table 
-                            id='grid-result'
-                            query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
-                                
-                            } GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
-                            ORDER BY DESC(?score) ?reference'
-                            number-of-displayed-rows="50"
-                            options='{
-                                "showFilter": false,
-                                "enableGrouping": true,
-                                "groupingOptions": {
-                                    "groupedBy": ["reference"],
-                                    "expandByDefault": false
-                                    }
-                            }'
-                            no-result-template="Nothing found"
-                            column-configuration='[
-                                {
-                                    "variableName": "prefLabel",
-                                    "displayName": "Label",
-                                    "cellTemplate": "{{> prefLabelTemplate}}"                        
-                                },
-                                {
-                                    "variableName": "description",
-                                    "displayName": "Description"
-                                },
-                                {
-                                    "variableName": "typeClass",
-                                    "displayName": "Type Class"
-                                },
-                                {
-                                    "variableName": "dataset",
-                                    "displayName": "Dataset"
-                                },
-                                {
-                                    "variableName": "reference",
-                                    "displayName": "Reference"
-                                },
-                                {
-                                    "variableName": "score",
-                                    "displayName": "Score"
-                                }
-                            ]'
-                        >    
-                            <template id="prefLabelTemplate">
-                                <semantic-link iri="{{subject.value}}">{{prefLabel.value}}</semantic-link>
-                            </template>
-                            <template id="matchesTemplate">
-                                <semantic-query
-                                    query='SELECT DISTINCT ?match WHERE {
-                                        BIND(<{{subject.value}}> AS ?subject)
-                                        ?subject rds:related ?match .
-                                        GRAPH ?g {
-                                            ?match a ?type .
-                                        }
-                                    }'
-                                ></semantic-query>
-                            </template>
-                        </semantic-data-table>
-                    </semantic-search-result>
-                </semantic-search-result-holder>
-            </semantic-search>  
-        </template>
-    </mp-event-target-template-render>
+        <div class="results-col">
+          <semantic-search-result-holder>
+            <semantic-search-result>
+              <semantic-data-table 
+                id='grid-result'
+                query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
+                } GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
+                ORDER BY DESC(?score) ?reference'
+                number-of-displayed-rows="50"
+                options='{
+                  "showFilter": false,
+                  "enableGrouping": true,
+                  "groupingOptions": {
+                    "groupedBy": ["reference"],
+                    "expandByDefault": false
+                    }
+                  }'
+                no-result-template="Nothing found"
+                column-configuration='[
+                    {
+                        "variableName": "prefLabel",
+                        "displayName": "Label",
+                        "cellTemplate": "{{> prefLabelTemplate}}",
+                        "aggregationCellTemplate": "{{> groupHeaderTemplate}}"
+                    },
+                    {
+                        "variableName": "description",
+                        "displayName": "Description"
+                    },
+                    {
+                        "variableName": "typeClass",
+                        "displayName": "Type Class"
+                    },
+                    {
+                        "variableName": "dataset",
+                        "displayName": "Dataset"
+                    },
+                    {
+                        "variableName": "reference",
+                        "displayName": "Reference"
+                    },
+                    {
+                        "variableName": "score",
+                        "displayName": "Score"
+                    }
+                ]'
+            >    
+              <template id="prefLabelTemplate">
+                <mp-event-trigger
+                  type="Component.TemplateUpdate"
+                  targets='["detail-panel"]'
+                  data='{"subjectUri": "{{subject.value}}", "prefLabel": "{{prefLabel.value}}", "dataset": "{{dataset.value}}"}'>
+                  <button>Open</button>
+                </mp-event-trigger>
+                <span>{{prefLabel.value}}</span>
+              </template>
+              <template id="groupHeaderTemplate">
+                <div>
+                    <strong>{{rows.0.prefLabel.value}}</strong>
+                    — {{rows.length}} records
+                    {{#each rows}}
+                        <span>[{{dataset.value}}]</span>
+                    {{/each}}
+                </div>
+            </template>
+
+              <template id="matchesTemplate">
+                  <semantic-query
+                      query='SELECT DISTINCT ?match WHERE {
+                          BIND(<{{subject.value}}> AS ?subject)
+                          ?subject rds:related ?match .
+                          GRAPH ?g {
+                              ?match a ?type .
+                          }
+                      }'
+                  ></semantic-query>
+              </template>
+          </semantic-data-table>
+            </semantic-search-result>
+          </semantic-search-result-holder>
+        </div>
+
+        <div class="detail-col">
+          <mp-event-target-template-render id="detail-panel" template="{{> detail-panel-template}}">
+            <template id="detail-panel-template">
+              {{#if subjectUri}}
+                <semantic-query
+                  query='SELECT ?value WHERE {
+                    <{{subjectUri}}> rdf:type ?value .
+                  }'
+                  template="{{> detail-props-template}}"
+                >
+                  <template id="detail-props-template">
+                    <div class="detail-panel">
+                      <div class="detail-panel-header">
+                        <h3>{{prefLabel}}</h3>
+                        <mp-event-trigger
+                          type="Component.TemplateUpdate"
+                          targets='["detail-panel"]'
+                          data='{}'>
+                          <button class="detail-close">✕</button>
+                        </mp-event-trigger>
+                      </div>
+                      <div class="detail-dataset">{{dataset}}</div>
+                      <div class="detail-row">
+                        <span class="detail-property">Type</span>
+                        <div>
+                          {{#each bindings}}
+                            <div class="detail-value">
+                              <mp-label iri="{{value.value}}"></mp-label>
+                            </div>
+                          {{/each}}
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </semantic-query>
+              {{/if}}
+            </template>
+          </mp-event-target-template-render>
+        </div>
+      </div>
+
+  </semantic-search>
 </div>

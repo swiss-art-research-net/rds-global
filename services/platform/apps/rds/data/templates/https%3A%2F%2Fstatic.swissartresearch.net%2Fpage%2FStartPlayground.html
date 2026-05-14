@@ -1,0 +1,203 @@
+<style>
+    h2 {
+        margin-bottom: 2rem;
+    }
+    .filter {
+        margin: 1rem 0;
+    }
+
+    .filter button {
+        border: 0;
+    }
+    .page {
+        padding: 20px;
+    }
+</style>
+
+<div class="page">
+    <h2>Welcome to RDS</h2>
+    <div class="filter">
+        Types: 
+        <mp-event-trigger id="trigger-search-all"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass ?typeClass",
+                "label": "all"
+            }'
+        >
+            <button>All</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-person"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"Person\", ?typeClass",
+                "label": "Person"
+            }'
+        >
+            <button>Person</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-group"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"Group\", ?typeClass",
+                "label": "Group"
+            }'
+        >
+            <button>Group</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-place"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"Place\", ?typeClass",
+                "label": "Place"
+            }'
+        >
+            <button>Place</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-type"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"Type\", ?typeClass",
+                "label": "Type"
+            }'
+        >
+            <button>Type</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-event"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"Event\", ?typeClass",
+                "label": "Event"
+            }'
+        >
+            <button>Event</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-artwork"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"Artwork\", ?typeClass",
+                "label": "Artwork"
+            }'
+        >
+            <button>Artwork</button>
+        </mp-event-trigger>
+
+        <mp-event-trigger id="trigger-search-bibliographicitem"
+            type="Component.TemplateUpdate"
+            targets='["search-form"]'
+            data='{
+                "typeQueryPart": "os:hasTypeClass \"BibliographicItem\", ?typeClass",
+                "label": "Bibliographic Item"
+            }'
+        >
+            <button>Bibliographic Item</button>
+        </mp-event-trigger>
+    </div>
+
+
+    <mp-event-target-template-render id="search-form" template="{{> search-form-template}}">
+        <template id="search-form-template">
+            <semantic-search
+                limit='100'
+                id='search-browse'
+            >
+                <semantic-search-query-keyword 
+                    min-search-term-length='3' 
+                    debounce='600'
+                    tokenize-lucene-query='false'
+                    placeholder="Search for {{#if label}}{{label}}{{else}}all{{/if}} entities..."
+                    query='SELECT DISTINCT ?subject WHERE {
+                            SERVICE <http://platform:8080/sparql?repository=opensearch> {
+                                    ?query os:searchTerm ?__token__ ;
+                                        #os:searchDataset "aat" ;
+                                        {{#if typeQueryPart}}{{typeQueryPart}}{{else}}os:hasTypeClass ?typeClass{{/if}} ;
+                                        os:hasScore ?score ;
+                                        os:hasSubject ?subject ;
+                                        os:hasDataset ?dataset ;
+                                        os:hasDescription ?description ;
+                                        os:hasReference ?reference ;
+                                        os:hasPrefLabel ?prefLabel .
+                                    }
+                            }
+                '>
+                </semantic-search-query-keyword>
+                <semantic-search-result-holder>
+                    <semantic-search-result>
+                        <semantic-data-table 
+                            id='grid-result'
+                            query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
+                                
+                            } GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
+                            ORDER BY DESC(?score) ?reference'
+                            number-of-displayed-rows="50"
+                            options='{
+                                "showFilter": false,
+                                "enableGrouping": true,
+                                "groupingOptions": {
+                                    "groupedBy": ["reference"],
+                                    "expandByDefault": false
+                                    }
+                            }'
+                            no-result-template="Nothing found"
+                            column-configuration='[
+                                {
+                                    "variableName": "prefLabel",
+                                    "displayName": "Label",
+                                    "cellTemplate": "{{> prefLabelTemplate}}"                        
+                                },
+                                {
+                                    "variableName": "description",
+                                    "displayName": "Description"
+                                },
+                                {
+                                    "variableName": "typeClass",
+                                    "displayName": "Type Class"
+                                },
+                                {
+                                    "variableName": "dataset",
+                                    "displayName": "Dataset"
+                                },
+                                {
+                                    "variableName": "reference",
+                                    "displayName": "Reference"
+                                },
+                                {
+                                    "variableName": "score",
+                                    "displayName": "Score"
+                                }
+                            ]'
+                        >    
+                            <template id="prefLabelTemplate">
+                                <semantic-link iri="{{subject.value}}">{{prefLabel.value}}</semantic-link>
+                            </template>
+                            <template id="matchesTemplate">
+                                <semantic-query
+                                    query='SELECT DISTINCT ?match WHERE {
+                                        BIND(<{{subject.value}}> AS ?subject)
+                                        ?subject rds:related ?match .
+                                        GRAPH ?g {
+                                            ?match a ?type .
+                                        }
+                                    }'
+                                ></semantic-query>
+                            </template>
+                        </semantic-data-table>
+                    </semantic-search-result>
+                </semantic-search-result-holder>
+            </semantic-search>  
+        </template>
+    </mp-event-target-template-render>
+</div>
