@@ -63,6 +63,11 @@ body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
   font-size: 16px;
   background: #EAEEF0;
+  overscroll-behavior: none;
+}
+.rs-application {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 .page {
   padding: 20px;
@@ -83,7 +88,7 @@ ol.page-breadcrumb {
 .filter-search-bar {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 2.5rem;
 }
 .filter-container {
   display: flex;
@@ -141,6 +146,46 @@ ol.page-breadcrumb {
 }
 .active-filter {
   background: #DBE5EB;
+}
+/* search meta bar */
+.search-meta {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #000000;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 21px;
+}
+.search-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-meta-left semantic-search-result {
+  display: contents;
+}
+.search-meta-sep {
+  color: #5F5F5F;
+}
+.rds-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3.6px 6px;
+  border: 1px solid #000000;
+  border-radius: 28px;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.rds-badge rds-nav-link {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
 /* results table */
 .main-panel {

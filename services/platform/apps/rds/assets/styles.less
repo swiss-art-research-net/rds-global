@@ -8,6 +8,12 @@ body {
   font-family: @font-body;
   font-size: @font-size-body;
   background: @col-bg;
+  overscroll-behavior: none;
+}
+
+.rs-application {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .page {
@@ -33,7 +39,7 @@ ol.page-breadcrumb {
 .filter-search-bar {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 2.5rem;
 }
 
 .filter-container {
@@ -102,6 +108,53 @@ ol.page-breadcrumb {
 
 .active-filter {
   background: @col-highlight;
+}
+
+/* search meta bar */
+
+.search-meta {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid @col-black;
+  font-family: @font-data;
+  font-size: 16px;
+  line-height: 21px;
+}
+
+.search-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  semantic-search-result {
+    display: contents;
+  }
+}
+
+.search-meta-sep {
+  color: @col-grey;
+}
+
+.rds-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3.6px 6px;
+  border: 1px solid @col-black;
+  border-radius: 28px;
+  font-family: @font-data;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+
+  rds-nav-link {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
 }
 
 /* results table */
