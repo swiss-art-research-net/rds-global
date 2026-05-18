@@ -9,7 +9,7 @@
     <div class="filter-search-bar">
       <div class="filter-container">
         <div>
-          <div class="eyebrow">Datasets</div>
+          <div class="eyebrow-label">Datasets</div>
           <semantic-query
             query='SELECT ?key ?selectedDataset ?label WHERE {
               BIND("[[urlParam "dataset"]]" AS ?selectedDataset)
@@ -38,7 +38,7 @@
           </semantic-query>
         </div>
         <div>
-          <div class="eyebrow">Types</div>
+          <div class="eyebrow-label">Types</div>
           <semantic-query
             query='SELECT ?key ?selectedType WHERE {
               BIND("[[urlParam "type"]]" AS ?selectedType)
@@ -61,7 +61,7 @@
         </div>
       </div>
       <div class="keyword-search">
-        <div class="eyebrow">Query</div>
+        <div class="eyebrow-label">Query</div>
         <div class="input-wrap">
           <semantic-search-query-keyword 
             class="keyword-search-search-input"

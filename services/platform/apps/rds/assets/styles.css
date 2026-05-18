@@ -73,7 +73,7 @@ body {
   padding: 20px;
   padding-top: 40px;
 }
-.eyebrow {
+.eyebrow-label {
   text-transform: uppercase;
   margin-bottom: 0.8rem;
   color: #5F5F5F;
@@ -92,7 +92,7 @@ ol.page-breadcrumb {
 }
 .filter-container {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
   align-items: center;
   flex: 1;
 }
@@ -190,18 +190,32 @@ ol.page-breadcrumb {
 /* results table */
 .main-panel {
   display: flex;
-  gap: 1rem;
   align-items: stretch;
+  margin-top: 20px;
 }
 .results-col {
   flex: 2;
   min-width: 0;
+}
+.table {
+  margin-top: 0;
 }
 .table > tbody > tr > td,
 .table > tbody > tr > th,
 .table > tbody > tr > td > a,
 .table > tbody > tr > td > span a {
   font-size: 16px;
+}
+.table > thead > tr > th {
+  vertical-align: top;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  color: #5F5F5F;
+  font-weight: 500;
+}
+.show-facet-button {
+  margin-right: 0;
+  width: 48px;
 }
 /* detail panel */
 .detail-col {
