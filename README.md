@@ -141,6 +141,7 @@ When querying the `opensearch` repository through `SERVICE`, use the dedicated s
 
 - `os:searchTerm` for the search string
 - `os:searchDataset` to restrict the search to one or more datasets as a comma-separated string, for example `"gnd"` or `"aat,gnd"`
+- `os:searchTypeClass` to restrict the search to one or more type classes as a comma-separated string, for example `"Person"` or `"Person,Group"`
 - `os:searchLimit` to control the total number of results requested from the connector
 - `os:hasTypeClass` to filter by type class
 
@@ -156,7 +157,8 @@ SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference 
     ?query os:searchTerm "newton" ;
       os:searchDataset "gnd" ;
       os:searchLimit 100 ;
-      os:hasTypeClass "Person", ?typeClass ;
+      os:searchTypeClass "Person,Group" ;
+      os:hasTypeClass ?typeClass ;
       os:hasScore ?score ;
       os:hasSubject ?subject ;
       os:hasDataset ?dataset ;
