@@ -100,13 +100,6 @@ task: Available tasks for this project:
 * verify-data:                                             Verify the validity of the source data or any data in a specified directory passed as CLI argument
 ```
 
-### Troubleshooting
-
-If QLever index failes due to write permission issues, set the permission of the bind mount directory to user 999 and group 999:
-
-```bash
-sudo chown -R 999:999 binds/qlever
-```
 
 ### Data Verification
 
@@ -196,3 +189,19 @@ Useful environment overrides:
 - `SEARCH_EVAL_LIMIT=100` to control how many hits are requested from the connector before top results are evaluated
 - `SEARCH_EVAL_DATASET=gnd` to restrict the test run to a single dataset, or for example `SEARCH_EVAL_DATASET=aat,gnd`
 - `SEARCH_EVAL_TIMEOUT=30` to adjust the request timeout in seconds
+
+
+### Troubleshooting
+
+#### Setup
+
+If QLever index failes due to write permission issues, set the permission of the bind mount directory to user 999 and group 999:
+
+```bash
+sudo chown -R 999:999 binds/qlever
+```
+
+
+If a task in the default pipline run fails, restart it by calling it directly with `task <task-name>`. Then execute the following tasks in the order they are defined in the default pipeline, until the pipeline is complete again. This is necessary because some tasks depend on the output of previous tasks, for example the OpenSearch indexing depends on the generated SameAs statements and labels.
+
+If the indexing to the OpenSearch Index is incomplete, it is possible to continue it from a given offset.
