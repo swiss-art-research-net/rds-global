@@ -84,14 +84,18 @@ def sanitize_text(value: Optional[str]) -> Optional[str]:
     return sanitized or None
 
 
-def parse_requested_datasets(value: Optional[str]) -> Optional[List[str]]:
+def split_comma_separated_values(value: Optional[str]) -> Optional[List[str]]:
     sanitized = sanitize_text(value)
     if sanitized is None:
         return None
 
-    datasets = [dataset.strip() for dataset in sanitized.split(",") if dataset.strip()]
-    return datasets or None
+    values: List[str] = []
+    for candidate in sanitized.split(","):
+        normalized = candidate.strip()
+        if normalized and normalized not in values:
+            values.append(normalized)
 
+    return values or None
 
 def sanitize_query(value: str) -> str:
     sanitized = value.strip()
@@ -139,7 +143,7 @@ def build_msearch_query(
     config: Dict[str, Any], 
     total_limit: int = DEFAULT_TOTAL_LIMIT,
     index: str = "rds-entities",
-    typeclass_filter: Optional[str] = None,
+    typeclass_filters: Optional[List[str]] = None,
     requested_datasets: Optional[List[str]] = None
 ) -> str:
     """
@@ -163,8 +167,8 @@ def build_msearch_query(
                 }
             }
         ]
-        if typeclass_filter:
-            must_conditions.append({"term": {"typeClasses": typeclass_filter}})
+        if typeclass_filters:
+            must_conditions.append({"terms": {"typeClasses": typeclass_filters}})
         body = {
             "size": limit_per_dataset,
             "query": {
@@ -360,8 +364,9 @@ async def search(body: SearchRequest) -> Any:
     
     query = sanitize_query(body.query)
     dataset = sanitize_text(body.dataset)
-    requested_datasets = parse_requested_datasets(dataset)
+    requested_datasets = split_comma_separated_values(dataset)
     typeclass = sanitize_text(body.typeclass)
+    requested_typeclasses = split_comma_separated_values(typeclass)
     requested_limit = body.limit
     effective_limit = min(requested_limit, max_limit)
 
@@ -393,7 +398,7 @@ async def search(body: SearchRequest) -> Any:
         config=app.state.config,
         total_limit=effective_limit,
         index=index,
-        typeclass_filter=typeclass,
+        typeclass_filters=requested_typeclasses,
         requested_datasets=requested_datasets
     )
     

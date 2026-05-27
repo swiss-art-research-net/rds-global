@@ -2,7 +2,10 @@ import argparse
 import csv
 import random
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
+import requests
 from SPARQLWrapper import SPARQLWrapper, POST, JSON
 from lib.utils import load_config, generate_prefixes_for_SPARQL as generate_prefixes
 from tqdm import tqdm
@@ -11,6 +14,11 @@ PAGE_SIZE = 1000
 PREDICATE_SAMEAS = "<http://www.w3.org/2002/07/owl#sameAs>"
 PREDICATE_DESCRIPTION = "<http://www.w3.org/2000/01/rdf-schema#comment>"
 DEFAULT_TYPES_QUERY = "?subject a ?value ."
+WIKIDATA_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/50.0.2661.102 Safari/537.36"
+)
 
 WIKIDATA_MATCHES_QUERY_TEMPLATE = """
     PREFIX wd: <http://www.wikidata.org/entity/>
@@ -53,6 +61,94 @@ def query_with_retry(
             print(f"[{label}] error (attempt {attempt + 1}/{max_retries + 1}): {e}")
             _sleep_backoff(attempt)
     raise last_exc 
+
+
+def _get_retry_after_seconds(headers, fallback=90):
+    if headers is None:
+        return fallback
+
+    retry_after = headers.get("Retry-After")
+    if retry_after is None:
+        return fallback
+
+    try:
+        return max(int(retry_after), 1)
+    except (TypeError, ValueError):
+        pass
+
+    try:
+        retry_at = parsedate_to_datetime(retry_after)
+        if retry_at.tzinfo is None:
+            retry_at = retry_at.replace(tzinfo=timezone.utc)
+        return max(int((retry_at - datetime.now(timezone.utc)).total_seconds()), 1)
+    except (TypeError, ValueError, OverflowError):
+        return fallback
+
+
+def query_wikidata_with_retry(
+    endpoint,
+    query,
+    *,
+    max_retries=6,
+    max_retry_after_seconds=300,
+    timeout=60,
+    label="Wikidata",
+):
+    last_exc = None
+    for attempt in range(max_retries + 1):
+        try:
+            response = requests.post(
+                endpoint,
+                data=query.encode("utf-8"),
+                headers={
+                    "Accept": "application/sparql-results+json",
+                    "Content-Type": "application/sparql-query; charset=utf-8",
+                    "User-Agent": WIKIDATA_USER_AGENT,
+                    "Api-User-Agent": WIKIDATA_USER_AGENT,
+                },
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            last_exc = e
+            response = e.response
+            if response is not None and response.status_code == 429:
+                retry_after_seconds = _get_retry_after_seconds(response.headers)
+                if attempt >= max_retries:
+                    print(
+                        f"[{label}] failed after {max_retries} retries due to HTTP 429 "
+                        f"(last Retry-After: {retry_after_seconds}s)."
+                    )
+                    print(f"Query:\n{query}")
+                    raise
+                if retry_after_seconds > max_retry_after_seconds:
+                    raise RuntimeError(
+                        f"[{label}] aborting because Retry-After ({retry_after_seconds}s) "
+                        f"exceeds the configured maximum of {max_retry_after_seconds}s."
+                    ) from e
+                print(
+                    f"[{label}] HTTP 429 from Wikidata (attempt {attempt + 1}/{max_retries + 1}). "
+                    f"Waiting {retry_after_seconds}s before retrying."
+                )
+                time.sleep(retry_after_seconds)
+                continue
+
+            if attempt >= max_retries:
+                print(f"[{label}] failed after {max_retries} retries: {e}")
+                print(f"Query:\n{query}")
+                raise
+            print(f"[{label}] error (attempt {attempt + 1}/{max_retries + 1}): {e}")
+            _sleep_backoff(attempt)
+        except requests.RequestException as e:
+            last_exc = e
+            if attempt >= max_retries:
+                print(f"[{label}] failed after {max_retries} retries: {e}")
+                print(f"Query:\n{query}")
+                raise
+            print(f"[{label}] error (attempt {attempt + 1}/{max_retries + 1}): {e}")
+            _sleep_backoff(attempt)
+    raise last_exc
 
 def build_count_query(prefixes, named_graph, rdf_types, types_query=DEFAULT_TYPES_QUERY):
     types_query = types_query.replace("?value", "?type")
@@ -121,11 +217,6 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
     sparqlLocal = SPARQLWrapper(endpoint)
     sparqlLocal.setReturnFormat(JSON)
     sparqlLocal.setMethod(POST)
-
-    sparqlWikidata = SPARQLWrapper(wikidata_endpoint)
-    sparqlWikidata.setReturnFormat(JSON)
-    sparqlWikidata.setMethod(POST)
-    sparqlWikidata.setTimeout(60)
 
     cfg = load_config(config)
     datasets = cfg.get("datasets", {})
@@ -213,8 +304,8 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
 
                 # sameAs statements from wikidata based on configured external-id property
                 sameAsQuery = build_wd_sameas_query(prefixes, wikidataProperty, candidateIds)
-                sameAsResults = query_with_retry(
-                    sparqlWikidata, sameAsQuery, label=f"{datasetName}:wikidata sameAs"
+                sameAsResults = query_wikidata_with_retry(
+                    wikidata_endpoint, sameAsQuery, label=f"{datasetName}:wikidata sameAs"
                 )
 
                 newWdEntities = []
@@ -231,8 +322,8 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                 if uniqueWdEntities:
                     discoveredWdEntities.update(uniqueWdEntities)
                     matchesQuery = build_wd_matches_query(unique_wd_entities=uniqueWdEntities, wikidata_external_id_properties=wikidata_external_id_properties)
-                    matchesResults = query_with_retry(
-                        sparqlWikidata, matchesQuery, label=f"{datasetName}:wikidata matches"
+                    matchesResults = query_wikidata_with_retry(
+                        wikidata_endpoint, matchesQuery, label=f"{datasetName}:wikidata matches"
                     )
 
                     match_bindings = matchesResults["results"]["bindings"]
