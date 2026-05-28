@@ -6,7 +6,6 @@ data/**/*
 !data/ingest/.gitkeep
 !data/source/.gitkeep
 !data/source/rds-metadata/**
-!data/wikidata/.gitkeep
 data-preparation/labelAdjustment/*/*
 data-preparation/update-scripts/aat-data/*
 data-preparation/update-scripts/geonames-data/*
