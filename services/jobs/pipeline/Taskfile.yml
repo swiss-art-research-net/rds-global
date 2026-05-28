@@ -12,7 +12,6 @@ vars:
 
 env:
   QLEVER_ENDPOINT: http://qlever:7001
-  WIKIDATA_ENDPOINT: https://qlever.dev/api/wikidata
 
 includes:
   utilities:
