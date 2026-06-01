@@ -299,11 +299,23 @@ datasets:
       wdt: http://www.wikidata.org/prop/direct/
       rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
       rdfs: http://www.w3.org/2000/01/rdf-schema#
+      rds: http://schema.swissartresearch.net/ontology/rds#
       schema: http://schema.org/
       skos: http://www.w3.org/2004/02/skos/core#
     types:
+      BibliographicItem:
+        - rds:BibliographicItem
+      Event:
+        - rds:Event
+      Group:
+        - rds:Group
       Person:
         - wd:Q5
+        - rds:Person
+      Place:
+        - rds:Place
+      Type:
+        - rds:Type
     queries:
       prefLabel: |
         ?subject rdfs:label ?value .
