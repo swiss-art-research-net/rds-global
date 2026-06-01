@@ -32,6 +32,9 @@ tasks:
       - task: generate-sameas-statements
       - task: index-data
       - task: restart-qlever
+      - task: generate-wikidata-type-mappings
+      - task: index-data
+      - task: restart-qlever
       - task: add-data-to-search-index
 
   add-data-to-search-index:
@@ -145,6 +148,46 @@ tasks:
           split: ','
           as: DATASET
         cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
+  generate-wikidata-type-mappings:
+    desc: Generate mappings for Wikidata entities that lack a RDS type
+    vars:
+      TYPES_GRAPH: http://schema.swissartresearch.net/rds/graph/types
+      MATCH_GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
+      WIKIDATA_GRAPH: http://www.wikidata.org/graph
+      OUTPUT_DIRECTORY: /data/ingest/type-mappings-wikidata
+      QUERY: |
+        PREFIX rds: <http://schema.swissartresearch.net/ontology/rds#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        CONSTRUCT {
+          ?wikidataEntity a ?otherRdsType .
+        }
+        WHERE {
+          GRAPH <{{.WIKIDATA_GRAPH}}> {
+            ?wikidataEntity a ?wdType .
+          }
+          FILTER NOT EXISTS {
+            GRAPH <{{.TYPES_GRAPH}}> {
+              ?wikidataEntity a ?rdsType .
+            }
+          }
+          GRAPH <{{.MATCH_GRAPH}}> {
+            ?otherEntity rds:related ?wikidataEntity .
+          }
+          GRAPH <{{.TYPES_GRAPH}}> {
+            ?otherEntity a ?otherRdsType .
+          }
+        }
+    cmds:
+      - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      - |
+          curl -X POST "{{.QLEVER_ENDPOINT}}/sparql" \
+            -H "Accept: text/turtle" \
+            -H "Content-Type: application/sparql-query" \
+            --data "{{.QUERY}}" \
+            -o "{{.OUTPUT_DIRECTORY}}/wikidata-type-mappings.ttl"
+      - awk -v graph="<{{.TYPES_GRAPH}}>" '{sub(/[ \t]*\.$/, " " graph " ."); print}' "{{.OUTPUT_DIRECTORY}}/wikidata-type-mappings.ttl" > "{{.OUTPUT_DIRECTORY}}/wikidata-type-mappings.nt"
+      - rm "{{.OUTPUT_DIRECTORY}}/wikidata-type-mappings.ttl"
 
   ingest-data-from-folder:
     desc: Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
