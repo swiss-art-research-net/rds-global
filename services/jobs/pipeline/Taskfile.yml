@@ -295,12 +295,14 @@ tasks:
         }
     cmds:
       - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      # Retrieve mappings based on query and save as .nt file
       - |
           curl -X POST "{{.QLEVER_ENDPOINT}}/sparql" \
             -H "Accept: text/turtle" \
             -H "Content-Type: application/sparql-query" \
             --data "{{.QUERY}}" \
             -o "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
+      # Generate UPDATE query from retrieved mappings
       - |
         {
           printf 'INSERT DATA { GRAPH <{{.TYPES_GRAPH}}> {\n'
