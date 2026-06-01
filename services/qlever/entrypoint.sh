@@ -10,6 +10,8 @@ START_ARGS="
   --name ${DATASET_NAME}
   --description \"RDS Qlever instance\"
   --system native
+  --persist-updates
+  --use-text-index yes
   --port ${PORT}
   --access-token ${QLEVER_ACCESS_TOKEN}
 "
