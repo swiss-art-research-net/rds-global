@@ -292,6 +292,10 @@ datasets:
         url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.1/gndTerms.ttl.gz
         process:
           - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.1/ulanPersons.ttl.gz
+        process:
+          - gunzip
     graph: http://www.wikidata.org/graph
     namespace: http://www.wikidata.org/entity/
     prefixes:
