@@ -28,6 +28,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
     [
       sp:subject :_hits ;
+      sp:predicate os:searchTypeClass ;
+      sp:object :_typeclass
+    ]
+
+    [
+      sp:subject :_hits ;
       sp:predicate os:searchLimit ;
       sp:object :_limit
     ]
@@ -47,7 +53,7 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     [
       sp:subject :_hits ;
       sp:predicate os:hasTypeClass ;
-      sp:object :_typeclass
+      sp:object :_typeclasses
     ]
 
     [
@@ -130,7 +136,7 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
   spin:column [
     a spin:Column ;
     rdfs:comment "The type class" ;
-    spl:predicate :_typeclass ;
+    spl:predicate :_typeclasses ;
     spl:valueType xsd:string;
     ephedra:jsonPath "$._source.typeClasses[0]"
   ]  ;

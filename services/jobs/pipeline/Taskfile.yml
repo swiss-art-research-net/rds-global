@@ -7,11 +7,11 @@ vars:
   DIRECTORY_INGEST_DATA: /data/ingest
   DIRECTORY_SOURCE_DATA: /data/source
   DIRECTORY_SAMEAS_STATEMENTS: /data/sameAsStatements/sources
+  DIRECTORY_WIKIDATA_ENTITIES: /data/wikidataEntities
   WIKIDATA_IDS_CSV: /config/wikidata/wikidata-external-id-properties.csv
 
 env:
   QLEVER_ENDPOINT: http://qlever:7001
-  WIKIDATA_ENDPOINT: https://qlever.dev/api/wikidata
 
 includes:
   utilities:
@@ -32,6 +32,7 @@ tasks:
       - task: generate-sameas-statements
       - task: index-data
       - task: restart-qlever
+      - task: supplement-wikidata-type-mappings
       - task: add-data-to-search-index
 
   add-data-to-search-index:
@@ -98,7 +99,9 @@ tasks:
             echo "{{.DATASET}}"
           fi
     cmds:
-      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
+      - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
+      - mkdir -p "{{.DIRECTORY_WIKIDATA_ENTITIES}}"
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
@@ -143,6 +146,7 @@ tasks:
           split: ','
           as: DATASET
         cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+
 
   ingest-data-from-folder:
     desc: Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
@@ -258,6 +262,57 @@ tasks:
       - echo "Requesting QLever restart"
       - touch /index/.restart-qlever
       - sleep 10s
+  
+  supplement-wikidata-type-mappings:
+    desc: Generate and index mappings for Wikidata entities that lack a RDS type based on entities linked via match statements
+    vars:
+      FILE_BASENAME: wikidata-type-mappings 
+      TYPES_GRAPH: http://schema.swissartresearch.net/rds/graph/types
+      MATCH_GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
+      WIKIDATA_GRAPH: http://www.wikidata.org/graph
+      OUTPUT_DIRECTORY: /tmp
+      QUERY: |
+        PREFIX rds: <http://schema.swissartresearch.net/ontology/rds#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        CONSTRUCT {
+          ?wikidataEntity a ?otherRdsType .
+        }
+        WHERE {
+          GRAPH <{{.WIKIDATA_GRAPH}}> {
+            ?wikidataEntity a ?wdType .
+          }
+          FILTER NOT EXISTS {
+            GRAPH <{{.TYPES_GRAPH}}> {
+              ?wikidataEntity a ?rdsType .
+            }
+          }
+          GRAPH <{{.MATCH_GRAPH}}> {
+            ?otherEntity rds:related ?wikidataEntity .
+          }
+          GRAPH <{{.TYPES_GRAPH}}> {
+            ?otherEntity a ?otherRdsType .
+          }
+        }
+    cmds:
+      - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      # Retrieve mappings based on query and save as .nt file
+      - |
+          curl -X POST "{{.QLEVER_ENDPOINT}}/sparql" \
+            -H "Accept: text/turtle" \
+            -H "Content-Type: application/sparql-query" \
+            --data "{{.QUERY}}" \
+            -o "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
+      # Generate UPDATE query from retrieved mappings
+      - |
+        {
+          printf 'INSERT DATA { GRAPH <{{.TYPES_GRAPH}}> {\n'
+          cat {{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt
+          printf '\n} }'
+        } > {{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql
+      # Update QLever data
+      - qlever update --update-file "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql" --sparql-endpoint "{{.QLEVER_ENDPOINT}}" --access-token "$QLEVER_ACCESS_TOKEN" --log-level DEBUG
+      - rm "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
+      - rm "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql"
 
   update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
