@@ -369,7 +369,7 @@ async def get_manifest():
 
     return {
         "versions": ["0.2"],
-        "name": "RDS OpenSearch Reconciliation Service",
+        "name": "RDS Reconciliation Service",
         "identifierSpace": "http://rds.global.org/resource/",
         "schemaSpace": "http://rds.global.org/ontology/",
 
