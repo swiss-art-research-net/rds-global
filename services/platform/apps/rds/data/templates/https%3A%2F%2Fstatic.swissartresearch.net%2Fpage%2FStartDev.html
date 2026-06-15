@@ -1,4 +1,5 @@
-<div class="page">
+<link href="/assets/resulttable.css" rel="stylesheet" type="text/css">
+<div class="page page-resulttable">
   <semantic-search
     limit='100' 
     id='keyword-search' 
@@ -27,7 +28,7 @@
             <template id="tmpl">
               <div class="filter-button-group">
                 {{#each bindings}}
-                  <rds-nav-link href="/resource/page:Start?dataset={{key.value}}&type=[[urlParam 'type']]">
+                  <rds-nav-link href="/resource/page:StartDev?dataset={{key.value}}&type=[[urlParam 'type']]">
                     <button class="filter-button{{#ifCond key.value '==' selectedDataset.value}} active-filter{{/ifCond}}">
                       {{label.value}}
                     </button>
@@ -49,7 +50,7 @@
             <template id="tmpl">
               <div class="filter-button-group">
                 {{#each bindings}}
-                  <rds-nav-link href="/resource/page:Start?type={{key.value}}&dataset=[[urlParam 'dataset']]">
+                  <rds-nav-link href="/resource/page:StartDev?type={{key.value}}&dataset=[[urlParam 'dataset']]">
                     <button class="filter-button{{#ifCond key.value '==' selectedType.value}} active-filter{{/ifCond}}">
                       {{#if key.value}}{{key.value}}{{else}}All{{/if}}
                     </button>
@@ -72,7 +73,8 @@
               SERVICE <http://platform:8080/sparql?repository=opensearch> {
                 ?query os:searchTerm ?__token__ ;
                     #os:searchDataset "aat" ;
-                    [[#if (urlParam "type")]]os:hasTypeClass "[[urlParam "type"]]", ?typeClass ;[[else]]os:hasTypeClass ?typeClass ;[[/if]]
+                    [[#if (urlParam "type")]]os:searchTypeClass "[[urlParam "type"]]" ;[[/if]]
+                    os:hasTypeClass ?typeClass ;
                     [[#if (urlParam "dataset")]]os:searchDataset "[[urlParam "dataset"]]" ;[[/if]]
                     os:hasScore ?score ;
                     os:hasSubject ?subject ;
@@ -86,7 +88,7 @@
           </semantic-search-query-keyword>
           <a 
             class="search-reset"
-            href="/resource/page:Start?dataset=[[urlParam 'dataset']]&type=[[urlParam 'type']]">
+            href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]&type=[[urlParam 'type']]">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/>
             </svg>
@@ -111,7 +113,7 @@
               <span class="search-meta-label">Datasets:</span>
               <span class="rds-badge">
                 <rds-dataset-label key="[[urlParam 'dataset']]"></rds-dataset-label>
-                <rds-nav-link href="/resource/page:Start?type=[[urlParam 'type']]">
+                <rds-nav-link href="/resource/page:StartDev?type=[[urlParam 'type']]">
                   <svg width="11" height="11" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/></svg>
                 </rds-nav-link>
               </span>
@@ -121,7 +123,7 @@
               <span class="search-meta-label">Types:</span>
               <span class="rds-badge">
                 [[urlParam "type"]]
-                <rds-nav-link href="/resource/page:Start?dataset=[[urlParam 'dataset']]">
+                <rds-nav-link href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]">
                   <svg width="11" height="11" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/></svg>
                 </rds-nav-link>
               </span>
@@ -135,81 +137,7 @@
           </div>
           <div class="results-col">
             <semantic-search-result>
-              <semantic-data-table
-                id='grid-result'
-                query='SELECT DISTINCT ?prefLabel ?subject ?description ?typeClass ?dataset ?reference ?score WHERE {
-                } GROUP BY ?subject ?description ?prefLabel ?typeClass ?dataset ?reference ?score
-                ORDER BY DESC(?score) ?reference'
-                number-of-displayed-rows="50"
-                options='{
-                  "showFilter": false,
-                  "enableGrouping": true,
-                  "groupingOptions": {
-                    "groupedBy": ["reference"],
-                    "expandByDefault": false
-                    }
-                  }'
-                  no-result-template="Nothing found"
-                  column-configuration='[
-                    {
-                      "variableName": "prefLabel",
-                      "displayName": "Label",
-                      "cellTemplate": "{{> prefLabelTemplate}}",
-                      "aggregationCellTemplate": "{{> groupHeaderTemplate}}"
-                    },
-                    {
-                        "variableName": "description",
-                        "displayName": "Description"
-                    },
-                    {
-                        "variableName": "typeClass",
-                        "displayName": "Type Class"
-                    },
-                    {
-                        "variableName": "dataset",
-                        "displayName": "Dataset"
-                    },
-                    {
-                        "variableName": "reference",
-                        "displayName": "Reference"
-                    },
-                    {
-                        "variableName": "score",
-                        "displayName": "Score"
-                    }
-                ]'
-            >    
-              <template id="prefLabelTemplate">
-                <mp-event-trigger
-                  type="Component.TemplateUpdate"
-                  targets='["detail-panel"]'
-                  data='{"subjectUri": "{{subject.value}}", "prefLabel": "{{prefLabel.value}}", "dataset": "{{dataset.value}}"}'>
-                  <button>Open</button>
-                </mp-event-trigger>
-                <span>{{prefLabel.value}}</span>
-              </template>
-              <template id="groupHeaderTemplate">
-                <div>
-                  <strong>{{rows.0.prefLabel.value}}</strong>
-                  — {{rows.length}} records
-                  {{#each rows}}
-                      <span>[{{dataset.value}}]</span>
-                  {{/each}}
-                </div>
-            </template>
-
-              <template id="matchesTemplate">
-                  <semantic-query
-                    query='SELECT DISTINCT ?match WHERE {
-                        BIND(<{{subject.value}}> AS ?subject)
-                        ?subject rds:related ?match .
-                        GRAPH ?g {
-                            ?match a ?type .
-                        }
-                    }'
-                  ></semantic-query>
-              </template>
-              </semantic-data-table>
+              [[> partial:resultTable]]
             </semantic-search-result>
           </div>
           <div class="detail-col">
