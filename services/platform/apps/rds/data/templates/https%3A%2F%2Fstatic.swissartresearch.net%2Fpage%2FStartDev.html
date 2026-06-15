@@ -28,8 +28,12 @@
             <template id="tmpl">
               <div class="filter-button-group">
                 {{#each bindings}}
-                  <rds-nav-link href="/resource/page:StartDev?dataset={{key.value}}&type=[[urlParam 'type']]">
-                    <button class="filter-button{{#ifCond key.value '==' selectedDataset.value}} active-filter{{/ifCond}}">
+                  <rds-nav-link
+                    href="/resource/page:StartDev?type=[[urlParam 'type']]"
+                    toggle-param="dataset"
+                    toggle-value="{{key.value}}"
+                  >
+                    <button class="filter-button">
                       {{label.value}}
                     </button>
                   </rds-nav-link>
@@ -50,8 +54,12 @@
             <template id="tmpl">
               <div class="filter-button-group">
                 {{#each bindings}}
-                  <rds-nav-link href="/resource/page:StartDev?type={{key.value}}&dataset=[[urlParam 'dataset']]">
-                    <button class="filter-button{{#ifCond key.value '==' selectedType.value}} active-filter{{/ifCond}}">
+                  <rds-nav-link
+                    href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]"
+                    toggle-param="type"
+                    toggle-value="{{key.value}}"
+                  >
+                    <button class="filter-button">
                       {{#if key.value}}{{key.value}}{{else}}All{{/if}}
                     </button>
                   </rds-nav-link>
@@ -111,22 +119,12 @@
             [[#if (urlParam "dataset")]]
               <span class="search-meta-sep">|</span>
               <span class="search-meta-label">Datasets:</span>
-              <span class="rds-badge">
-                <rds-dataset-label key="[[urlParam 'dataset']]"></rds-dataset-label>
-                <rds-nav-link href="/resource/page:StartDev?type=[[urlParam 'type']]">
-                  <svg width="11" height="11" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/></svg>
-                </rds-nav-link>
-              </span>
+              <rds-filter-selection param="dataset" preserve-param="type"></rds-filter-selection>
             [[/if]]
             [[#if (urlParam "type")]]
               <span class="search-meta-sep">|</span>
               <span class="search-meta-label">Types:</span>
-              <span class="rds-badge">
-                [[urlParam "type"]]
-                <rds-nav-link href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]">
-                  <svg width="11" height="11" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/></svg>
-                </rds-nav-link>
-              </span>
+              <rds-filter-selection param="type" preserve-param="dataset"></rds-filter-selection>
             [[/if]]
           </div>
         </div>

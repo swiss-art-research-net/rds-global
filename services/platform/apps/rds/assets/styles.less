@@ -137,6 +137,12 @@ ol.page-breadcrumb {
   color: @col-grey;
 }
 
+rds-filter-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .rds-badge {
   display: inline-flex;
   align-items: center;
@@ -154,6 +160,15 @@ ol.page-breadcrumb {
     display: flex;
     align-items: center;
     cursor: pointer;
+
+    button {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      line-height: 1;
+      cursor: pointer;
+    }
   }
 }
 
@@ -329,5 +344,3 @@ td[role="cell"]:empty {
   cursor: pointer;
   text-decoration: underline;
 }
-
-
