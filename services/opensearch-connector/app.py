@@ -506,15 +506,16 @@ async def _reconcile_single(q: Dict[str, Any]):
             typeclass_filter=entity_type
         )
     except Exception as e:
-        print("SEARCH ERROR:", e)
+        logger.exception("SEARCH ERROR for query=%s: %s", query_string, e)
         return {"result": []}
 
     if not hits:
         return {"result": []}
 
-    # only consider matches with score >= 90% of the top hit's score, but never below 1.0
+    # only consider matches with score >= 90% of the top hit's score.
+    # For very small absolute scores avoid treating them as matches.
     top_score = float(hits[0].get("_score", 0.0))
-    threshold = max(top_score * 0.9, 1.0)
+    threshold = top_score * 0.9
 
     results = []
 
@@ -791,12 +792,16 @@ async def run_search(
 
     url = endpoint.rstrip("/") + "/_msearch"
 
+    # Normalize the single `typeclass_filter` string (if provided) into a
+    # list so callers can pass either a single type or let it be None.
+    requested_typeclasses = [typeclass_filter] if typeclass_filter else None
+
     payload = build_msearch_query(
         q=query,
         config=app.state.config,
         total_limit=limit,
         index=index,
-        typeclass_filter=typeclass_filter,
+        typeclass_filters=requested_typeclasses,
         requested_datasets=datasets
     )
 
