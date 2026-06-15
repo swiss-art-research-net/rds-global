@@ -1,0 +1,69 @@
+// main: styles.less
+
+.detail-col {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 76px;
+  justify-self: end;
+  align-self: start;
+  z-index: 2;
+  width: 0;
+  max-height: calc(100vh - 88px);
+  overflow: hidden;
+
+  &:has(.detail-panel) {
+    width: min(40%, 520px);
+    overflow-y: auto;
+  }
+}
+
+.detail-panel {
+  padding: 20px;
+  border: 1px solid @col-black;
+  background: @col-bg;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.detail-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.detail-close {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0 0 0.5rem;
+  color: #666;
+
+  &:hover {
+    color: #0a0a0a;
+  }
+}
+
+.detail-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-property {
+  color: #666;
+  flex: 0 0 40%;
+  word-break: break-all;
+}
+
+.detail-value {
+  flex: 1;
+  word-break: break-all;
+}
