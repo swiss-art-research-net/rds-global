@@ -8,6 +8,40 @@
     relations='[[> partial:searchRelations]]'
   >
     <div class="filter-search-bar">
+      <div class="keyword-search">
+        <div class="eyebrow-label">Query</div>
+        <div class="input-wrap">
+          <semantic-search-query-keyword
+            class="keyword-search-search-input"
+            min-search-term-length='3' debounce='600' tokenize-lucene-query='false'
+            domain='<http://schema.swissartresearch.net/ontology/rds#Entity>'
+            placeholder="Search for [[#if (urlParam 'type')]][[urlParam 'type']][[else]]all[[/if]] entities [[#if (urlParam 'dataset')]]in [[urlParam 'dataset']][[/if]]..."
+            query='SELECT DISTINCT ?subject WHERE {
+              SERVICE <http://platform:8080/sparql?repository=opensearch> {
+                ?query os:searchTerm ?__token__ ;
+                    #os:searchDataset "aat" ;
+                    [[#if (urlParam "type")]]os:searchTypeClass "[[urlParam "type"]]" ;[[/if]]
+                    os:hasTypeClass ?typeClass ;
+                    [[#if (urlParam "dataset")]]os:searchDataset "[[urlParam "dataset"]]" ;[[/if]]
+                    os:hasScore ?score ;
+                    os:hasSubject ?subject ;
+                    os:hasDataset ?dataset ;
+                    os:hasDescription ?description ;
+                    os:hasReference ?reference ;
+                    os:hasPrefLabel ?prefLabel .
+                }
+              }
+          '>
+          </semantic-search-query-keyword>
+          <a
+            class="search-reset"
+            href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]&type=[[urlParam 'type']]">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/>
+            </svg>
+          </a>
+        </div>
+      </div>
       <div class="filter-container">
         <div>
           <div class="eyebrow-label">Datasets</div>
@@ -69,42 +103,6 @@
           </semantic-query>
         </div>
       </div>
-      <div class="keyword-search">
-        <div class="eyebrow-label">Query</div>
-        <div class="input-wrap">
-          <semantic-search-query-keyword 
-            class="keyword-search-search-input"
-            min-search-term-length='3' debounce='600' tokenize-lucene-query='false'
-            domain='<http://schema.swissartresearch.net/ontology/rds#Entity>'
-            placeholder="Search for [[#if (urlParam 'type')]][[urlParam 'type']][[else]]all[[/if]] entities [[#if (urlParam 'dataset')]]in [[urlParam 'dataset']][[/if]]..."
-            query='SELECT DISTINCT ?subject WHERE {
-              SERVICE <http://platform:8080/sparql?repository=opensearch> {
-                ?query os:searchTerm ?__token__ ;
-                    #os:searchDataset "aat" ;
-                    [[#if (urlParam "type")]]os:searchTypeClass "[[urlParam "type"]]" ;[[/if]]
-                    os:hasTypeClass ?typeClass ;
-                    [[#if (urlParam "dataset")]]os:searchDataset "[[urlParam "dataset"]]" ;[[/if]]
-                    os:hasScore ?score ;
-                    os:hasSubject ?subject ;
-                    os:hasDataset ?dataset ;
-                    os:hasDescription ?description ;
-                    os:hasReference ?reference ;
-                    os:hasPrefLabel ?prefLabel .
-                }
-              }
-          '>
-          </semantic-search-query-keyword>
-          <a 
-            class="search-reset"
-            href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]&type=[[urlParam 'type']]">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="black"/>
-            </svg>
-          </a>
-        </div>
-        
-      </div>
-
     </div>
    
       <semantic-search-result-holder>

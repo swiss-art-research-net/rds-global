@@ -87,7 +87,7 @@ ol.page-breadcrumb {
 /* filter-search-bar */
 .filter-search-bar {
   display: flex;
-  gap: 1rem;
+  gap: 4rem;
   margin-bottom: 2.5rem;
 }
 .filter-container {
