@@ -1,26 +1,26 @@
 <mp-event-target-template-render id="detail-panel" template="{{> detail-panel-template}}">
   <template id="detail-panel-template">
     {{#if subjectUri}}
-      <semantic-query
-        query='SELECT ?value WHERE {
-          <{{subjectUri}}> rdf:type ?value .
-        }'
-        template="{{> detail-props-template}}"
-      >
-        <template id="detail-props-template">
-          <div class="detail-panel">
-            <div class="detail-panel-header">
-              <h3>{{prefLabel}}</h3>
-              <mp-event-trigger
-                type="Component.TemplateUpdate"
-                targets='["detail-panel"]'
-                data='{}'>
-                <button class="detail-close">✕</button>
-              </mp-event-trigger>
-            </div>
-            <div class="detail-dataset">{{dataset}}</div>
-            <div class="detail-row">
-              <span class="detail-property">Type</span>
+      <div class="detail-panel">
+        <div class="detail-panel-header">
+          <h3>{{prefLabel}}</h3>
+          <mp-event-trigger
+            type="Component.TemplateUpdate"
+            targets='["detail-panel"]'
+            data='{}'>
+            <rds-record-deselect class="detail-close">✕</rds-record-deselect>
+          </mp-event-trigger>
+        </div>
+        <div class="detail-dataset">{{dataset}}</div>
+        <div class="detail-row">
+          <span class="detail-property">Type</span>
+          <semantic-query
+            query='SELECT ?value WHERE {
+              <{{subjectUri}}> rdf:type ?value .
+            }'
+            template="{{> detail-template}}"
+          >
+            <template id="detail-template">
               <div>
                 {{#each bindings}}
                   <div class="detail-value">
@@ -28,10 +28,10 @@
                   </div>
                 {{/each}}
               </div>
-            </div>
-          </div>
-        </template>
-      </semantic-query>
+            </template>
+          </semantic-query>
+        </div>
+      </div>
     {{/if}}
   </template>
 </mp-event-target-template-render>

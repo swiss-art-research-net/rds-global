@@ -139,3 +139,36 @@ class RdsFilterSelection extends HTMLElement {
 }
 
 customElements.define('rds-filter-selection', RdsFilterSelection);
+
+
+function clearSelectedRecord() {
+  document.querySelector('.single-row.is-selected')?.classList.remove('is-selected');
+}
+
+class RdsRecordSelect extends HTMLElement {
+  connectedCallback() {
+    this.onclick = (e) => {
+      const row = this.closest('.single-row');
+      if (!row) return;
+      if (row.classList.contains('is-selected')) {
+        // Re-click on the open record: cancel RS's re-open and close the panel
+        // by clicking its close button (which also clears the highlight).
+        e.stopPropagation();
+        document.querySelector('.detail-close')?.click();
+        return;
+      }
+      clearSelectedRecord();
+      row.classList.add('is-selected');
+    };
+  }
+}
+
+class RdsRecordDeselect extends HTMLElement {
+  connectedCallback() {
+    this.onclick = clearSelectedRecord;
+  }
+}
+
+customElements.define('rds-record-deselect', RdsRecordDeselect);
+
+customElements.define('rds-record-select', RdsRecordSelect);

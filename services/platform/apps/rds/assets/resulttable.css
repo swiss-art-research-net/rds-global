@@ -129,14 +129,15 @@
 .page-resulttable .single-row + .single-row {
   border-top: 1px solid #000000;
 }
+.page-resulttable .single-row.is-selected {
+  background: #DEE7ED;
+  box-shadow: inset 8px 0 0 0 #000000;
+}
 .page-resulttable .single-row-field,
 .page-resulttable .single-row-dataset,
 .page-resulttable .single-row-description {
   min-width: 0;
   word-break: break-word;
-}
-.page-resulttable .single-row-dataset {
-  margin-left: -14px;
 }
 .page-resulttable .single-row-heading {
   margin-bottom: 8px;
@@ -157,6 +158,7 @@
   line-height: inherit;
   text-align: left;
   text-decoration: underline;
+  cursor: pointer;
 }
 .page-resulttable .single-row-link:hover,
 .page-resulttable .single-row-link:focus {

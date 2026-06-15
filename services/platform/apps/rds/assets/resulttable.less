@@ -169,17 +169,17 @@
     border-top: 1px solid @col-black;
   }
 
+  .single-row.is-selected {
+    background: @col-highlight-dark;
+    box-shadow: inset 8px 0 0 0 @col-black;
+  }
+
   .single-row-field,
   .single-row-dataset,
   .single-row-description {
     min-width: 0;
     word-break: break-word;
   }
-
-  .single-row-dataset {
-    margin-left: -14px;
-  }
-
 
   .single-row-heading {
     margin-bottom: 8px;
@@ -201,6 +201,7 @@
     line-height: inherit;
     text-align: left;
     text-decoration: underline;
+    cursor: pointer;
   }
 
   .single-row-link:hover,
