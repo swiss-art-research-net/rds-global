@@ -1,0 +1,28 @@
+<nav class="navbar navbar-default navbar-fixed-top nav-bar" role="navigation">
+  <div class="rs-header">
+    <div class="navbar-header">
+      <a class="rs-header-logo" href="/">
+        <img src="/assets/no-auth/sari-logo.svg" class="rs-header-sari-logo" alt="SARI">
+        RDS Global
+      </a>
+    </div>
+    <div class="collapse navbar-collapse" id="rs-navbar">
+      <ul class="nav navbar-nav navbar-right rds-nav">
+        <li><a href="/sparql">SPARQL</a></li>
+        <li><a href="/resource/page:About">About</a></li>
+        <li>
+          <mp-anonymous-hidden>
+            <a href=":admin">Settings</a>
+          </mp-anonymous-hidden>
+        </li>
+        <li>
+          <mp-anonymous-hidden
+            alt='<a href="/login">Login</a>'
+          >
+            <a href="/logout">Logout</a>
+          </mp-anonymous-hidden>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

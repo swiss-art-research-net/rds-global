@@ -1,0 +1,211 @@
+// out: resulttable.css
+// main: resulttable.less
+
+@import '_tokens.less';
+
+.page-resulttable {
+  --group-summary-width: 250px;
+  --result-table-row-padding-y: 14px;
+  --result-table-row-padding-x: 18px;
+  --result-table-column-gap: 22px;
+  --result-table-header-columns:
+    minmax(0, 0.6fr)
+    minmax(0, 2fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 2fr)
+    minmax(0, 0.6fr);
+  --result-table-member-columns:
+    max-content
+    repeat(4, minmax(0, 1fr))
+    minmax(0, 2fr);
+
+  .semantic-data-table {
+    display: block;
+    width: 100%;
+
+    thead tr {
+      display: grid;
+      grid-template-columns: var(--result-table-header-columns);
+      width: 100%;
+    }
+
+    thead th {
+      display: block;
+      min-width: 0;
+      border: 0;
+      box-sizing: border-box;
+      cursor: default;
+    }
+
+    tbody {
+      border-bottom: 1px solid @col-black;
+    }
+  }
+
+  .group-row {
+    display: grid;
+    grid-template-columns: var(--result-table-header-columns);
+    align-items: start;
+    width: 100%;
+    border: 1px solid @col-black;
+    border-bottom: none;
+    min-height: 10rem;
+  }
+
+  .group-row > * {
+    min-width: 0;
+    padding: var(--result-table-row-padding-y) 10px;
+    box-sizing: border-box;
+  }
+
+  .semantic-data-table__group-row-template-cell--clickable {
+    cursor: default;
+  }
+
+  .group-row-toggle {
+    justify-self: end;
+    align-self: end;
+    display: inline-flex;
+    gap: 2px;
+    border: none;
+    font-size: @font-size-large;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .group-row-toggle-chevron {
+    width: 18px;
+    height: auto;
+    transition: transform 0.2s ease;
+    margin-top: 8px;
+  }
+
+  .group-row-toggle.is-expanded .group-row-toggle-chevron {
+    transform: rotate(180deg);
+  }
+
+  .group-row-label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .group-row-label-text {
+    font-size: @font-size-large;
+    line-height: 1;
+  }
+
+  .group-row-reference-uri {
+    word-break: break-all;
+    span {
+      font-weight: 700;
+    }
+  }
+
+  .group-row-datasets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .group-row-score {
+    font-size: @font-size-large;
+    line-height: 1;
+  }
+
+  .group-members {
+    display: grid;
+    grid-template-columns: var(--group-summary-width) minmax(0, 1fr);
+    width: 100%;
+    background: @col-highlight;
+    border-left: 8px solid @col-black;
+    box-sizing: border-box;
+    /* border-top: 1px solid @col-black; */
+  }
+
+  .group-members-summary {
+    min-width: 0;
+    padding:
+      var(--result-table-row-padding-y)
+      var(--result-table-row-padding-x);
+    box-sizing: border-box;
+  }
+
+  .group-members-count {
+    margin-bottom: 8px;
+    font-family: @font-data;
+    font-size: @font-size-data;
+  }
+
+  .group-members-label {
+    font-family: @font-body;
+    font-size: 20px;
+    line-height: 1;
+    word-break: break-word;
+  }
+
+  .group-members-list {
+    display: grid;
+    grid-template-columns: var(--result-table-member-columns);
+    column-gap: var(--result-table-column-gap);
+    min-width: 0;
+  }
+
+  .single-row {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    align-items: start;
+    min-width: 0;
+    padding:
+      var(--result-table-row-padding-y)
+      var(--result-table-row-padding-x);
+    box-sizing: border-box;
+    min-height: 12rem;
+  }
+
+  .single-row + .single-row {
+    border-top: 1px solid @col-black;
+  }
+
+  .single-row-field,
+  .single-row-dataset,
+  .single-row-description {
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .single-row-dataset {
+    margin-left: -14px;
+  }
+
+
+  .single-row-heading {
+    margin-bottom: 8px;
+    color: @col-grey;
+    font-family: @font-data;
+    font-size: @font-size-body;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .single-row-link {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: @col-black;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+    text-decoration: underline;
+  }
+
+  .single-row-link:hover,
+  .single-row-link:focus {
+    color: @col-black;
+    text-decoration: underline;
+  }
+}
