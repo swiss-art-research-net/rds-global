@@ -358,7 +358,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 # --- Dynamic manifest generator
-async def get_manifest():
+async def get_manifest(request: Request):
 
     types = await get_type_classes()
 
@@ -366,6 +366,9 @@ async def get_manifest():
         types = [{"id": "Entity", "name": "All Entities"}]
 
     dataset_property = get_dataset_properties()
+    base_url = str(request.base_url).rstrip("/")
+    root_path = (request.scope.get("root_path") or "").rstrip("/")
+    service_path = f"{root_path}/" if root_path else "/"
 
     return {
         "versions": ["0.2"],
@@ -378,7 +381,7 @@ async def get_manifest():
         "view": {"url": "{{id}}"},
 
         "preview": {
-            "url": "http://localhost:8000/preview?id={{id}}"
+            "url": f"{base_url}/preview?id={{{{id}}}}"
         },
 
         "suggest": {
@@ -389,7 +392,7 @@ async def get_manifest():
 
         "properties": [dataset_property],
 
-        "service_path": "/"
+        "service_path": service_path
     }
 
 
@@ -442,7 +445,7 @@ async def root(request: Request):
 
     # GET without queries: MANIFEST
     if request.method == "GET" and "queries" not in request.query_params:
-        return JSONResponse(content=await get_manifest())
+        return JSONResponse(content=await get_manifest(request))
 
     # GET with queries: RECONCILIATION
     if request.method == "GET":
