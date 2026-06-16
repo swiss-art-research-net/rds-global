@@ -8,7 +8,11 @@
             type="Component.TemplateUpdate"
             targets='["detail-panel"]'
             data='{}'>
-            <rds-record-deselect class="detail-close">✕</rds-record-deselect>
+            <rds-record-deselect class="detail-close">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="currentColor"/>
+              </svg>
+            </rds-record-deselect>
           </mp-event-trigger>
         </div>
         <div class="detail-dataset">{{dataset}}</div>
@@ -31,6 +35,9 @@
             </template>
           </semantic-query>
         </div>
+        <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
+          Open full record
+        </semantic-link>
       </div>
     {{/if}}
   </template>

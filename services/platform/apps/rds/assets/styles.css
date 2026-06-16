@@ -79,7 +79,6 @@
   padding: 20px;
   border: 1px solid #000000;
   background: #DEE7ED;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 .detail-panel-header {
   display: flex;
@@ -91,16 +90,7 @@
   margin: 0;
 }
 .detail-close {
-  border: 0;
-  background: none;
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 0 0 0.5rem;
-  color: #666;
-}
-.detail-close:hover {
-  color: #0a0a0a;
 }
 .detail-row {
   display: flex;
@@ -116,6 +106,16 @@
 .detail-value {
   flex: 1;
   word-break: break-all;
+}
+.detail-resource-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #000000;
+  font-weight: 500;
+  text-decoration: underline;
+}
+.detail-resource-link:hover {
+  text-decoration: none;
 }
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
