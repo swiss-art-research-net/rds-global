@@ -370,8 +370,8 @@ async def get_manifest():
     return {
         "versions": ["0.2"],
         "name": "RDS Reconciliation Service",
-        "identifierSpace": "http://rds.global.org/resource/",
-        "schemaSpace": "http://rds.global.org/ontology/",
+        "identifierSpace": "https://rds.swissartresearch.net/resource/",
+        "schemaSpace": "http://schema.swissartresearch.net/ontology/rds#",
 
         "defaultTypes": types,
 
