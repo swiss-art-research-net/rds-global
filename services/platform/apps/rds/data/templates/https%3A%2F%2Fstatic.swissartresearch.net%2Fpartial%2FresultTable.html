@@ -102,8 +102,38 @@
               <div>{{recordId.value}}</div>
             </div>
             <div class="single-row-field">
-              <div class="single-row-heading">Type(s)</div>
-              <div>{{typeClass.value}}</div>
+              <div class="single-row-heading">Source Type(s)</div>
+              <semantic-query
+                query='SELECT DISTINCT ?originalType WHERE {
+                  BIND(<{{subject.value}}> AS ?subject)
+                  BIND("{{dataset.value}}" AS ?dataset)
+
+                  VALUES (?dataset ?sourceGraph) {
+                    ("aat" <http://vocab.getty.edu/aat/graph>)
+                    ("gnd" <https://d-nb.info/gnd/authorities/graph>)
+                    ("geonames" <http://sws.geonames.org/graph>)
+                    ("sikart" <http://recherche.sik-isea.ch/graph>)
+                    ("ulan" <http://vocab.getty.edu/ulan/graph>)
+                    ("wikidata" <http://www.wikidata.org/graph>)
+                  }
+
+                  GRAPH ?sourceGraph {
+                    ?subject a ?originalType .
+                  }
+                }
+                LIMIT 12'
+                template="{{> originalTypesTemplate}}"
+              >
+                <template id="originalTypesTemplate">
+                  {{#if bindings}}
+                    <div class="single-row-type-list">
+                      {{#each bindings}}
+                        <span><mp-label iri="{{originalType.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </template>
+              </semantic-query>
             </div>
             <div class="single-row-field single-row-description">
               <div class="single-row-heading">Description</div>
