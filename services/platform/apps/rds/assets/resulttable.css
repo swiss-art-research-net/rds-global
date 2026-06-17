@@ -141,6 +141,10 @@
   min-width: 0;
   word-break: break-word;
 }
+.page-resulttable .single-row-dataset {
+  margin-left: -14px;
+  min-width: 100px;
+}
 .page-resulttable .single-row-heading {
   margin-bottom: 8px;
   color: #5F5F5F;
@@ -166,4 +170,8 @@
 .page-resulttable .single-row-link:focus {
   color: #000000;
   text-decoration: underline;
+}
+.page-resulttable .single-row-type-list {
+  min-width: 0;
+  word-break: break-word;
 }
