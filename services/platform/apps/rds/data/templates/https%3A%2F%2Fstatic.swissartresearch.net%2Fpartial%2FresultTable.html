@@ -109,6 +109,50 @@
               <div class="single-row-heading">Description</div>
               <div>{{description.value}}</div>
             </div>
+            <div class="single-row-related">
+              <semantic-query
+                query='SELECT DISTINCT ?related ?relatedDataset ?label WHERE {
+                    BIND(<{{subject.value}}> AS ?subject)
+
+                    VALUES (?relatedDataset ?prefix) {
+                      ("gnd" "https://d-nb.info/gnd/")
+                      ("wikidata" "http://www.wikidata.org/entity/")
+                      ("aat" "http://vocab.getty.edu/aat/")
+                      ("ulan" "http://vocab.getty.edu/ulan/")
+                      ("sikart" "https://recherche.sik-isea.ch/")
+                      ("geonames" "https://sws.geonames.org/")
+                    }
+
+                    GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+                      ?subject rds:related ?related .
+                    }
+
+                    FILTER(?related != ?subject)
+                    FILTER(STRSTARTS(STR(?related), ?prefix))
+
+                    OPTIONAL { ?related rds:label ?label }
+                  }
+                  LIMIT 12'
+                template="{{> relatedRecordsTemplate}}"
+              >
+                <template id="relatedRecordsTemplate">
+                  {{#if bindings}}
+                    <div class="related-records">
+                      <div class="single-row-heading">Related records</div>
+                      <div class="related-records-list">
+                        {{#each bindings}}
+                          <div class="related-record">
+                            <span class="rds-badge" data-ds="{{relatedDataset.value}}">{{relatedDataset.value}}</span>
+                            <span class="related-record-label">{{label.value}}</span>
+                            <span class="related-record-uri">{{related.value}}</span>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </template>
+              </semantic-query>
+            </div>
           </div>
         {{/each}}
       </div>

@@ -165,6 +165,11 @@
     min-height: 12rem;
   }
 
+  .single-row-related {
+    grid-column: 2 / -1;
+    min-width: 0;
+  }
+
   .single-row + .single-row {
     border-top: 1px solid @col-black;
   }
@@ -208,4 +213,33 @@
     color: @col-black;
     text-decoration: underline;
   }
+
+  .related-records {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed @col-black;
+  }
+
+  .related-records-list {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    column-gap: var(--result-table-column-gap);
+    row-gap: 8px;
+    align-items: baseline;
+  }
+
+  .related-record {
+    display: contents;
+  }
+
+  .related-record > .rds-badge {
+    justify-self: start;
+  }
+
+  .related-record-label,
+  .related-record-uri {
+    min-width: 0;
+    word-break: break-word;
+  }
+
 }
