@@ -15,26 +15,65 @@
             </rds-record-deselect>
           </mp-event-trigger>
         </div>
-        <div class="detail-dataset">{{dataset}}</div>
-        <div class="detail-row">
-          <span class="detail-property">Type</span>
-          <semantic-query
-            query='SELECT ?value WHERE {
-              <{{subjectUri}}> rdf:type ?value .
-            }'
-            template="{{> detail-template}}"
-          >
-            <template id="detail-template">
-              <div>
-                {{#each bindings}}
-                  <div class="detail-value">
-                    <mp-label iri="{{value.value}}"></mp-label>
-                  </div>
-                {{/each}}
-              </div>
-            </template>
-          </semantic-query>
+
+        <div class="detail-panel-section">
+          <div class="detail-row">
+            <span class="detail-property">Dataset</span>
+            <span class="detail-value">
+              <span class="rds-badge" data-ds="{{dataset}}">{{dataset}}</span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-property">RDS type</span>
+            <span class="detail-value">{{rdsType}}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-property">URI</span>
+            <span class="detail-value">{{subjectUri}}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-property">Source type(s)</span>
+            <semantic-query
+              query='SELECT DISTINCT ?originalType WHERE {
+                BIND(<{{subjectUri}}> AS ?subject)
+                BIND("{{dataset}}" AS ?dataset)
+
+                VALUES (?dataset ?sourceGraph) {
+                  ("aat" <http://vocab.getty.edu/aat/graph>)
+                  ("gnd" <https://d-nb.info/gnd/authorities/graph>)
+                  ("geonames" <http://sws.geonames.org/graph>)
+                  ("sikart" <http://recherche.sik-isea.ch/graph>)
+                  ("ulan" <http://vocab.getty.edu/ulan/graph>)
+                  ("wikidata" <http://www.wikidata.org/graph>)
+                }
+
+                GRAPH ?sourceGraph {
+                  ?subject a ?originalType .
+                }
+              }
+              LIMIT 12'
+              template="{{> detail-source-types-template}}"
+              no-result-template=""
+            >
+              <template id="detail-source-types-template">
+                {{#if bindings}}
+                  <span class="detail-value">
+                    {{#each bindings}}
+                      <span><mp-label iri="{{originalType.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+                    {{/each}}
+                  </span>
+                {{/if}}
+              </template>
+            </semantic-query>
+          </div>
         </div>
+
+        {{#ifCond dataset "==" "gnd"}}
+          <semantic-query query='[[> partial:queryGnd]]' template="{{> detail-fields}}" no-result-template="">
+            [[> detailFieldsTemplate]]
+          </semantic-query>
+        {{/ifCond}}
+
         <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
           Open full record
         </semantic-link>
@@ -42,3 +81,19 @@
     {{/if}}
   </template>
 </mp-event-target-template-render>
+
+[[#*inline "detailFieldsTemplate"]]
+  <template id="detail-fields">
+    {{#if bindings}}
+      <div class="detail-panel-section">
+        <div class="detail-section-title">Details</div>
+        {{#each bindings}}
+          <div class="detail-row">
+            <span class="detail-property">{{field.value}}</span>
+            <span class="detail-value">{{value.value}}</span>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}}
+  </template>
+[[/inline]]
