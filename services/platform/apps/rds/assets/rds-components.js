@@ -77,15 +77,33 @@ class RdsNavLink extends HTMLElement {
 customElements.define('rds-nav-link', RdsNavLink);
 
 const RDS_DATASET_LABELS = {
+  aat: 'AAT',
+  bso: 'BSO',
+  geonames: 'GeoNames',
   gnd: 'GND',
-  ulan: 'ULAN',
-  wikidata: 'WD',
   sikart: 'SIKART',
-  geonames: 'GeoNames'
+  thesarchesp: 'ThesArchESP',
+  thesobjmob: 'ThesObjMob',
+  ulan: 'ULAN',
+  wikidata: 'WD'
+};
+
+const RDS_TYPE_LABELS = {
+  Artwork: 'Artwork',
+  BibliographicItem: 'Bibliographic Item',
+  Event: 'Event',
+  Group: 'Group',
+  Person: 'Person',
+  Place: 'Place',
+  Type: 'Type'
 };
 
 function getDatasetLabel(key) {
   return RDS_DATASET_LABELS[key] || key;
+}
+
+function getTypeLabel(key) {
+  return RDS_TYPE_LABELS[key] || key;
 }
 
 class RdsDatasetLabel extends HTMLElement {
@@ -114,7 +132,7 @@ class RdsFilterSelection extends HTMLElement {
   _createBadge(value, values, params, paramName) {
     const badge = document.createElement('span');
     badge.className = 'rds-badge';
-    const label = paramName === 'dataset' ? getDatasetLabel(value) : value;
+    const label = paramName === 'dataset' ? getDatasetLabel(value) : getTypeLabel(value);
     badge.appendChild(document.createTextNode(label));
 
     const remaining = values.filter(selectedValue => selectedValue !== value);

@@ -50,11 +50,15 @@
               BIND("[[urlParam "dataset"]]" AS ?selectedDataset)
               VALUES (?key ?label) {
                 ("" "All")
+                ("aat" "AAT")
+                ("bso" "BSO")
+                ("geonames" "GeoNames")
                 ("gnd" "GND")
+                ("sikart" "SIKART")
+                ("thesarchesp" "ThesArchESP")
+                ("thesobjmob" "ThesObjMob")
                 ("ulan" "ULAN")
                 ("wikidata" "WD")
-                ("sikart" "SIKART")
-                ("geonames" "GeoNames")
               }
             }'
             template="{{> tmpl}}"
@@ -79,9 +83,18 @@
         <div>
           <div class="eyebrow-label">Types</div>
           <semantic-query
-            query='SELECT ?key ?selectedType WHERE {
+            query='SELECT ?key ?label ?selectedType WHERE {
               BIND("[[urlParam "type"]]" AS ?selectedType)
-              VALUES (?key) { ("") ("Person") ("Place") ("Group") ("Built Work") ("Event") }
+              VALUES (?key ?label) {
+                ("" "All")
+                ("Artwork" "Artwork")
+                ("BibliographicItem" "Bibliographic Item")
+                ("Event" "Event")
+                ("Group" "Group")
+                ("Person" "Person")
+                ("Place" "Place")
+                ("Type" "Type")
+              }
             }'
             template="{{> tmpl}}"
           >
@@ -94,7 +107,7 @@
                     toggle-value="{{key.value}}"
                   >
                     <button class="filter-button">
-                      {{#if key.value}}{{key.value}}{{else}}All{{/if}}
+                      {{label.value}}
                     </button>
                   </rds-nav-link>
                 {{/each}}
