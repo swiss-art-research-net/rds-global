@@ -61,6 +61,12 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
       sp:predicate os:hasTypeClass ;
       sp:object :_typeclasses
     ]
+        
+    [
+      sp:subject :_hits ;
+      sp:predicate os:hasTypes ;
+      sp:object :_types
+    ]
 
     [
       sp:subject :_hits ;
@@ -145,6 +151,14 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
     spl:predicate :_typeclasses ;
     spl:valueType xsd:string;
     ephedra:jsonPath "$._source.typeClasses[0]"
+  ]  ;
+
+  spin:column [
+    a spin:Column ;
+    rdfs:comment "The types" ;
+    spl:predicate :_types ;
+    spl:valueType xsd:string;
+    ephedra:jsonPath "$._source.types[*]"
   ]  ;
 
   spin:column [
