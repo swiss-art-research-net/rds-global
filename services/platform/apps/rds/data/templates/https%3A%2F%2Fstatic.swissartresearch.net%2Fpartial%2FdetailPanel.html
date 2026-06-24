@@ -74,6 +74,10 @@
           </semantic-query>
         {{/ifCond}}
 
+        <semantic-query query='[[> partial:queryRelatedExternal]]' template="{{> related-external}}" no-result-template="">
+          [[> relatedExternalTemplate]]
+        </semantic-query>
+
         <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
           Open full record
         </semantic-link>
@@ -90,9 +94,55 @@
         {{#each bindings}}
           <div class="detail-row">
             <span class="detail-property">{{field.value}}</span>
-            <span class="detail-value">{{value.value}}</span>
+            <mp-text-truncate 
+              class="detail-value"
+              lines=3 
+              expand='<div class="detail-value-expand"> ...<a>show more</a></div>' 
+              collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
+            >
+              {{value.value}}
+            </mp-text-truncate>
           </div>
         {{/each}}
+      </div>
+    {{/if}}
+  </template>
+[[/inline]]
+
+[[#*inline "relatedExternalTemplate"]]
+  <template id="related-external">
+    {{#if bindings}}
+      <div class="detail-panel-section detail-section--related">
+        <div class="detail-section-title">Related records</div>
+        <div class="detail-related-list">
+          {{#each bindings}}
+            {{#ifCond dataset.value "!==" ""}}
+              <div class="detail-related-record">
+                <span class="rds-badge" data-ds="{{dataset.value}}">{{dataset.value}}</span>
+                <div class="detail-related-content">
+                  {{#if label.value}}
+                    <div class="detail-related-label">{{label.value}}</div>
+                  {{/if}}
+                  <semantic-link class="detail-related-uri" iri="{{related.value}}" target="_blank">
+                    {{related.value}}
+                  </semantic-link>
+                </div>
+              </div>
+            {{/ifCond}}
+          {{/each}}
+        </div>
+      </div>
+      <div class="detail-panel-section detail-section--external">
+        <div class="detail-section-title">External links</div>
+        <div class="detail-host-list">
+          {{#each bindings}}
+            {{#ifCond dataset.value "===" ""}}
+              <span class="detail-host-item">
+                <a class="detail-host-name" href="{{related.value}}" target="_blank">{{host.value}}</a>
+              </span>
+            {{/ifCond}}
+          {{/each}}
+        </div>
       </div>
     {{/if}}
   </template>

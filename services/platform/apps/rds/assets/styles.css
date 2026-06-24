@@ -62,23 +62,24 @@
 .detail-col {
   grid-column: 2;
   grid-row: 1;
-  position: sticky;
-  top: 76px;
+  position: fixed;
+  top: 82px;
   justify-self: end;
   align-self: start;
   z-index: 2;
   width: 0;
-  max-height: calc(100vh - 88px);
+  max-height: calc(100vh - 102px);
   overflow: hidden;
+  border: 1px solid #000000;
+  background: #F9FAFB;
 }
 .detail-col:has(.detail-panel) {
   width: min(40%, 520px);
   overflow-y: auto;
+  overscroll-behavior: none;
 }
 .detail-panel {
   padding: 20px;
-  border: 1px solid #000000;
-  background: #DEE7ED;
 }
 .detail-panel-header {
   display: flex;
@@ -88,6 +89,8 @@
 }
 .detail-panel-header h3 {
   margin: 0;
+  font-size: 28px;
+  font-weight: 400;
 }
 .detail-close {
   cursor: pointer;
@@ -102,11 +105,10 @@
 .detail-row {
   display: flex;
   gap: 0.5rem;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 1rem 0;
+  border-bottom: 1px solid #000000;
 }
 .detail-property {
-  color: #666;
   flex: 0 0 40%;
   word-break: break-all;
 }
@@ -114,9 +116,53 @@
   flex: 1;
   word-break: break-all;
 }
+.detail-value-expand,
+.detail-value-collapse {
+  text-decoration: underline;
+  cursor: pointer;
+}
 .detail-inline-list {
   line-height: 1.5;
   word-break: break-word;
+}
+.detail-related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.detail-related-record {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: start;
+}
+.detail-related-content {
+  min-width: 0;
+}
+.detail-related-label {
+  font-weight: 500;
+}
+.detail-related-uri {
+  color: #000000;
+  word-break: break-all;
+  text-decoration: underline;
+}
+.detail-host-list {
+  line-height: 1.5;
+  margin-top: 0.4rem;
+}
+.detail-host-name {
+  color: #000000;
+  min-width: 0;
+  word-break: break-word;
+  text-decoration: underline;
+}
+.detail-host-item + .detail-host-item::before {
+  content: ", ";
+}
+.detail-section--related:not(:has(.detail-related-record)),
+.detail-section--external:not(:has(.detail-host-item)) {
+  display: none;
 }
 .detail-resource-link {
   display: inline-block;
@@ -163,7 +209,6 @@ ol.page-breadcrumb {
 .filter-container {
   display: flex;
   gap: 2rem;
-  align-items: center;
   flex: 1;
 }
 .keyword-search {

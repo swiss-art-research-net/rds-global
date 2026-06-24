@@ -1,30 +1,31 @@
 PREFIX gndo: <https://d-nb.info/standards/elementset/gnd#>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 
-SELECT ?field ?value ?order WHERE {
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=", ") AS ?value) ?order WHERE {
   BIND(<{{subjectUri}}> AS ?subject)
   GRAPH <https://d-nb.info/gnd/authorities/graph> {
-    { ?subject gndo:dateOfBirth ?value .
-      BIND("Birth date" AS ?field) BIND(1 AS ?order) }
+    { ?subject gndo:gndIdentifier ?rawValue .
+      BIND("GND identifier" AS ?field) BIND(1 AS ?order) }
     UNION
-    { ?subject gndo:dateOfDeath ?value .
-      BIND("Death date" AS ?field) BIND(2 AS ?order) }
+    { ?subject gndo:dateOfBirth ?rawValue .
+      BIND("Birth date" AS ?field) BIND(2 AS ?order) }
     UNION
-    { ?subject gndo:biographicalOrHistoricalInformation ?value .
-      BIND("Biographical / historical info" AS ?field) BIND(3 AS ?order) }
+    { ?subject gndo:dateOfDeath ?rawValue .
+      BIND("Death date" AS ?field) BIND(3 AS ?order) }
     UNION
-    { ?subject gndo:variantNameForThePerson ?value .
-      BIND("Variant name" AS ?field) BIND(4 AS ?order) }
+    { ?subject gndo:biographicalOrHistoricalInformation ?rawValue .
+      BIND("Biographical / historical info" AS ?field) BIND(4 AS ?order) }
     UNION
-    { ?subject gndo:variantNameForThePlaceOrGeographicName ?value .
-      BIND("Variant name" AS ?field) BIND(4 AS ?order) }
+    { ?subject gndo:variantNameForThePerson ?rawValue .
+      BIND("Variant name" AS ?field) BIND(5 AS ?order) }
     UNION
-    { ?subject geo:hasGeometry/geo:asWKT ?value .
-      BIND("Coordinates" AS ?field) BIND(5 AS ?order) }
+    { ?subject gndo:variantNameForThePlaceOrGeographicName ?rawValue .
+      BIND("Variant name" AS ?field) BIND(5 AS ?order) }
     UNION
-    { ?subject gndo:gndIdentifier ?value .
-      BIND("GND identifier" AS ?field) BIND(6 AS ?order) }
+    { ?subject geo:hasGeometry/geo:asWKT ?rawValue .
+      BIND("Coordinates" AS ?field) BIND(6 AS ?order) }
   }
+  BIND(STR(?rawValue) AS ?valueText)
 }
+GROUP BY ?field ?order
 ORDER BY ?order ?value
-LIMIT 60
