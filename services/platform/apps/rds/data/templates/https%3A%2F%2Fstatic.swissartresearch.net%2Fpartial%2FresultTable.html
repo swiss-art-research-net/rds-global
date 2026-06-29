@@ -60,7 +60,9 @@
       </div>
       <div class="group-row-datasets">
         {{#each rows}}
-          <span class="rds-badge" data-ds="{{dataset.value}}">{{dataset.value}}</span>
+          <span class="rds-badge" data-ds="{{dataset.value}}">
+            <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+          </span>
         {{/each}}
       </div>
       <div class="group-row-type">{{rows.0.typeClass.value}}</div>
@@ -82,7 +84,9 @@
         {{#each rows}}
           <div class="single-row">
             <div class="single-row-dataset">
-              <span class="rds-badge" data-ds="{{dataset.value}}">{{dataset.value}}</span>
+              <span class="rds-badge" data-ds="{{dataset.value}}">
+                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+              </span>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Label</div>
@@ -114,7 +118,7 @@
             </div>
             <div class="single-row-related">
               <semantic-query
-                query='SELECT DISTINCT ?related ?relatedDataset ?label WHERE {
+                query='SELECT DISTINCT ?related ?dataset ?datasetLabel ?label WHERE {
                   VALUES (?related) {
                     {{#each (arraySplit matches.value)}}
                       (<{{this}}>)
@@ -123,16 +127,9 @@
 
                   ?related a ?type .
 
-                  VALUES (?relatedDataset ?prefix) {
-                    ("gnd" "https://d-nb.info/gnd/")
-                    ("wikidata" "http://www.wikidata.org/entity/")
-                    ("aat" "http://vocab.getty.edu/aat/")
-                    ("ulan" "http://vocab.getty.edu/ulan/")
-                    ("sikart" "https://recherche.sik-isea.ch/")
-                    ("geonames" "https://sws.geonames.org/")
-                  }
+                  [[> partial:valuesDatasetLabels]]
 
-                  FILTER(STRSTARTS(STR(?related), ?prefix))
+                  FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
                   OPTIONAL { ?related rds:label ?label }
                 }
                 LIMIT 12'
@@ -145,7 +142,9 @@
                       <div class="related-records-list">
                         {{#each bindings}}
                           <div class="related-record">
-                            <span class="rds-badge" data-ds="{{relatedDataset.value}}">{{relatedDataset.value}}</span>
+                            <span class="rds-badge" data-ds="{{dataset.value}}">
+                              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                            </span>
                             <span class="related-record-label">{{label.value}}</span>
                             <span class="related-record-uri">{{related.value}}</span>
                           </div>
