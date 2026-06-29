@@ -28,7 +28,9 @@
                     os:hasDataset ?dataset ;
                     os:hasDescription ?description ;
                     os:hasReference ?reference ;
-                    os:hasPrefLabel ?prefLabel .
+                    os:hasPrefLabel ?prefLabel ;
+                    os:hasMatches ?matches ;
+                    os:hasTypes ?types .
                 }
               }
           '>
@@ -46,21 +48,18 @@
         <div>
           <div class="eyebrow-label">Datasets</div>
           <semantic-query
-            query='SELECT ?key ?selectedDataset ?label WHERE {
+            query='SELECT ?dataset ?selectedDataset ?datasetLabel WHERE {
               BIND("[[urlParam "dataset"]]" AS ?selectedDataset)
-              VALUES (?key ?label) {
-                ("" "All")
-                ("aat" "AAT")
-                ("bso" "BSO")
-                ("geonames" "GeoNames")
-                ("gnd" "GND")
-                ("sikart" "SIKART")
-                ("thesarchesp" "ThesArchESP")
-                ("thesobjmob" "ThesObjMob")
-                ("ulan" "ULAN")
-                ("wikidata" "WD")
+              {
+                BIND("" AS ?dataset)
+                BIND("All" AS ?datasetLabel)
               }
-            }'
+              UNION {
+                [[> partial:valuesDatasetLabels]]
+              }
+              BIND(IF(?dataset = "", 0, 1) AS ?sort)
+            }
+            ORDER BY ?sort ?datasetLabel'
             template="{{> tmpl}}"
           >
             <template id="tmpl">
@@ -69,10 +68,10 @@
                   <rds-nav-link
                     href="/resource/page:StartDev?type=[[urlParam 'type']]"
                     toggle-param="dataset"
-                    toggle-value="{{key.value}}"
+                    toggle-value="{{dataset.value}}"
                   >
                     <button class="filter-button">
-                      {{label.value}}
+                      {{datasetLabel.value}}
                     </button>
                   </rds-nav-link>
                 {{/each}}
@@ -83,19 +82,18 @@
         <div>
           <div class="eyebrow-label">Types</div>
           <semantic-query
-            query='SELECT ?key ?label ?selectedType WHERE {
+            query='SELECT ?type ?typeLabel ?selectedType WHERE {
               BIND("[[urlParam "type"]]" AS ?selectedType)
-              VALUES (?key ?label) {
-                ("" "All")
-                ("Artwork" "Artwork")
-                ("BibliographicItem" "Bibliographic Item")
-                ("Event" "Event")
-                ("Group" "Group")
-                ("Person" "Person")
-                ("Place" "Place")
-                ("Type" "Type")
+              {
+                BIND("" AS ?type)
+                BIND("All" AS ?typeLabel)
               }
-            }'
+              UNION {
+                [[> partial:valuesTypeLabels]]
+              }
+              BIND(IF(?type = "", 0, 1) AS ?sort)
+            }
+            ORDER BY ?sort ?typeLabel'
             template="{{> tmpl}}"
           >
             <template id="tmpl">
@@ -104,10 +102,10 @@
                   <rds-nav-link
                     href="/resource/page:StartDev?dataset=[[urlParam 'dataset']]"
                     toggle-param="type"
-                    toggle-value="{{key.value}}"
+                    toggle-value="{{type.value}}"
                   >
                     <button class="filter-button">
-                      {{label.value}}
+                      {{typeLabel.value}}
                     </button>
                   </rds-nav-link>
                 {{/each}}
@@ -118,43 +116,43 @@
       </div>
     </div>
    
-      <semantic-search-result-holder>
-        <div>
-        <div class="search-meta">
-          <div class="search-meta-left">
-            <semantic-search-result>
-              <mp-sparql-result-counts id='record-count' query="SELECT DISTINCT ?subject {}" template='{{> t}}'>
-                <template id='t'>{{numberOfResults}} results</template>
-              </mp-sparql-result-counts>
-            </semantic-search-result>
-            [[#if (urlParam "dataset")]]
-              <span class="search-meta-sep">|</span>
-              <span class="search-meta-label">Datasets:</span>
-              <rds-filter-selection param="dataset" preserve-param="type"></rds-filter-selection>
-            [[/if]]
-            [[#if (urlParam "type")]]
-              <span class="search-meta-sep">|</span>
-              <span class="search-meta-label">Types:</span>
-              <rds-filter-selection param="type" preserve-param="dataset"></rds-filter-selection>
-            [[/if]]
-          </div>
+    <semantic-search-result-holder>
+      <div>
+      <div class="search-meta">
+        <div class="search-meta-left">
+          <semantic-search-result>
+            <mp-sparql-result-counts id='record-count' query="SELECT DISTINCT ?subject {}" template='{{> t}}'>
+              <template id='t'>{{numberOfResults}} results</template>
+            </mp-sparql-result-counts>
+          </semantic-search-result>
+          [[#if (urlParam "dataset")]]
+            <span class="search-meta-sep">|</span>
+            <span class="search-meta-label">Datasets:</span>
+            <rds-filter-selection param="dataset" preserve-param="type"></rds-filter-selection>
+          [[/if]]
+          [[#if (urlParam "type")]]
+            <span class="search-meta-sep">|</span>
+            <span class="search-meta-label">Types:</span>
+            <rds-filter-selection param="type" preserve-param="dataset"></rds-filter-selection>
+          [[/if]]
         </div>
+      </div>
 
-        <div class="main-panel">
-          <div class="facets-col">
-            <semantic-search-facet open-by-default="false"></semantic-search-facet>
-          </div>
-          <div class="results-col">
-            <semantic-search-result>
-              [[> partial:resultTable]]
-            </semantic-search-result>
-          </div>
-          <div class="detail-col">
-            [[> partial:detailPanel]]
-          </div>
+      <div class="main-panel">
+        <div class="facets-col">
+          <semantic-search-facet open-by-default="false"></semantic-search-facet>
         </div>
+        <div class="results-col">
+          <semantic-search-result>
+            [[> partial:resultTable]]
+          </semantic-search-result>
         </div>
-      </semantic-search-result-holder>
+        <div class="detail-col">
+          [[> partial:detailPanel]]
+        </div>
+      </div>
+      </div>
+    </semantic-search-result-holder>
 
   </semantic-search>
 </div>
