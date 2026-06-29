@@ -140,14 +140,14 @@
 .detail-related-list {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 1rem;
 }
 .detail-related-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   align-items: start;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px dotted #000000;
 }
 .detail-related-record .rds-badge {
   justify-self: start;

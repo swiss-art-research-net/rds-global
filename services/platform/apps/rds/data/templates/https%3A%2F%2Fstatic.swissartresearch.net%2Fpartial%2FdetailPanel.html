@@ -32,38 +32,11 @@
           </div>
           <div class="detail-row">
             <span class="detail-property">Source type(s)</span>
-            <semantic-query
-              query='SELECT DISTINCT ?originalType WHERE {
-                BIND(<{{subjectUri}}> AS ?subject)
-                BIND("{{dataset}}" AS ?dataset)
-
-                VALUES (?dataset ?sourceGraph) {
-                  ("aat" <http://vocab.getty.edu/aat/graph>)
-                  ("gnd" <https://d-nb.info/gnd/authorities/graph>)
-                  ("geonames" <http://sws.geonames.org/graph>)
-                  ("sikart" <http://recherche.sik-isea.ch/graph>)
-                  ("ulan" <http://vocab.getty.edu/ulan/graph>)
-                  ("wikidata" <http://www.wikidata.org/graph>)
-                }
-
-                GRAPH ?sourceGraph {
-                  ?subject a ?originalType .
-                }
-              }
-              LIMIT 12'
-              template="{{> detail-source-types-template}}"
-              no-result-template=""
-            >
-              <template id="detail-source-types-template">
-                {{#if bindings}}
-                  <span class="detail-value">
-                    {{#each bindings}}
-                      <span><mp-label iri="{{originalType.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
-                    {{/each}}
-                  </span>
-                {{/if}}
-              </template>
-            </semantic-query>
+            <span class="detail-value">
+              {{#each sourceTypes}}
+                <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+              {{/each}}
+            </span>
           </div>
         </div>
 
@@ -73,8 +46,50 @@
           </semantic-query>
         {{/ifCond}}
 
-        <semantic-query query='[[> partial:queryRelatedExternal]]' template="{{> related-external}}" no-result-template="">
-          [[> relatedExternalTemplate]]
+        {{#if matches}}
+          <semantic-query
+            query='SELECT DISTINCT ?related ?dataset ?label WHERE {
+              VALUES (?related) {
+                {{#each matches}}
+                  (<{{this}}>)
+                {{/each}}
+              }
+
+              ?related a ?type .
+
+              [[> partial:valuesDatasetLabels]]
+
+              FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+              OPTIONAL { ?related rds:label ?label }
+            }'
+            template="{{> related-records}}"
+            no-result-template=""
+          >
+            [[> relatedRecordsTemplate]]
+          </semantic-query>
+        {{/if}}
+
+        <semantic-query
+          query='SELECT DISTINCT ?related ?external WHERE {
+            BIND(<{{subjectUri}}> AS ?subject)
+
+            GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+              ?subject rds:related ?related .
+            }
+
+            FILTER(?related != ?subject)
+
+            FILTER NOT EXISTS {
+              [[> partial:valuesDatasetLabels]]
+              FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+            }
+
+            BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
+          }'
+          template="{{> external-links}}"
+          no-result-template=""
+        >
+          [[> externalLinksTemplate]]
         </semantic-query>
 
         <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
@@ -108,38 +123,43 @@
   </template>
 [[/inline]]
 
-[[#*inline "relatedExternalTemplate"]]
-  <template id="related-external">
+[[#*inline "relatedRecordsTemplate"]]
+  <template id="related-records">
     {{#if bindings}}
       <div class="detail-panel-section detail-section--related">
         <div class="detail-section-title">Related records</div>
         <div class="detail-related-list">
           {{#each bindings}}
-            {{#ifCond dataset.value "!==" ""}}
-              <div class="detail-related-record">
-                <span class="rds-badge" data-ds="{{dataset.value}}">{{dataset.value}}</span>
-                <div class="detail-related-content">
-                  {{#if label.value}}
-                    <div class="detail-related-label">{{label.value}}</div>
-                  {{/if}}
-                  <semantic-link class="detail-related-uri" iri="{{related.value}}" target="_blank">
-                    {{related.value}}
-                  </semantic-link>
-                </div>
+            <div class="detail-related-record">
+              <span class="rds-badge" data-ds="{{dataset.value}}">
+                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+              </span>
+              <div class="detail-related-content">
+                {{#if label.value}}
+                  <div class="detail-related-label">{{label.value}}</div>
+                {{/if}}
+                <semantic-link class="detail-related-uri" iri="{{related.value}}" target="_blank">
+                  {{related.value}}
+                </semantic-link>
               </div>
-            {{/ifCond}}
+            </div>
           {{/each}}
         </div>
       </div>
+    {{/if}}
+  </template>
+[[/inline]]
+
+[[#*inline "externalLinksTemplate"]]
+  <template id="external-links">
+    {{#if bindings}}
       <div class="detail-panel-section detail-section--external">
         <div class="detail-section-title">External links</div>
         <div class="detail-external-list">
           {{#each bindings}}
-            {{#ifCond dataset.value "===" ""}}
-              <span class="detail-external-item">
-                <a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a>
-              </span>
-            {{/ifCond}}
+            <span class="detail-external-item">
+              <a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a>
+            </span>
           {{/each}}
         </div>
       </div>
