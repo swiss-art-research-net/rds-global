@@ -1,10 +1,10 @@
 <semantic-data-table
   id='grid-result-table'
-  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference WHERE {
+  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types WHERE {
     BIND(REPLACE(STR(?subject), "^.*[/#]", "") AS ?recordId)
     BIND(ROUND(?score * 10) / 10 AS ?scoreDisplay)
     BIND(IF(?subject = ?reference, 1, 0) AS ?isReference)
-  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference
+  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types
   ORDER BY DESC(?score) DESC(?isReference) ?reference'
   number-of-displayed-rows="4"
   options='{
@@ -103,41 +103,58 @@
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Source Type(s)</div>
-              <semantic-query
-                query='SELECT DISTINCT ?originalType WHERE {
-                  BIND(<{{subject.value}}> AS ?subject)
-                  BIND("{{dataset.value}}" AS ?dataset)
 
-                  VALUES (?dataset ?sourceGraph) {
-                    ("aat" <http://vocab.getty.edu/aat/graph>)
-                    ("gnd" <https://d-nb.info/gnd/authorities/graph>)
-                    ("geonames" <http://sws.geonames.org/graph>)
-                    ("sikart" <http://recherche.sik-isea.ch/graph>)
-                    ("ulan" <http://vocab.getty.edu/ulan/graph>)
-                    ("wikidata" <http://www.wikidata.org/graph>)
-                  }
-
-                  GRAPH ?sourceGraph {
-                    ?subject a ?originalType .
-                  }
-                }
-                LIMIT 12'
-                template="{{> originalTypesTemplate}}"
-              >
-                <template id="originalTypesTemplate">
-                  {{#if bindings}}
-                    <div class="single-row-type-list">
-                      {{#each bindings}}
-                        <span><mp-label iri="{{originalType.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
-                      {{/each}}
-                    </div>
-                  {{/if}}
-                </template>
-              </semantic-query>
+              {{#each (arraySplit types.value)}}
+                  <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+                {{/each}}
             </div>
             <div class="single-row-field single-row-description">
               <div class="single-row-heading">Description</div>
               <div>{{description.value}}</div>
+            </div>
+            <div class="single-row-related">
+              <semantic-query
+                query='SELECT DISTINCT ?related ?relatedDataset ?label WHERE {
+                  VALUES (?related) {
+                    {{#each (arraySplit matches.value)}}
+                      (<{{this}}>)
+                    {{/each}}
+                  }
+
+                  ?related a ?type .
+
+                  VALUES (?relatedDataset ?prefix) {
+                    ("gnd" "https://d-nb.info/gnd/")
+                    ("wikidata" "http://www.wikidata.org/entity/")
+                    ("aat" "http://vocab.getty.edu/aat/")
+                    ("ulan" "http://vocab.getty.edu/ulan/")
+                    ("sikart" "https://recherche.sik-isea.ch/")
+                    ("geonames" "https://sws.geonames.org/")
+                  }
+
+                  FILTER(STRSTARTS(STR(?related), ?prefix))
+                  OPTIONAL { ?related rds:label ?label }
+                }
+                LIMIT 12'
+                template="{{> relatedRecordsTemplate}}"
+              >
+                <template id="relatedRecordsTemplate">
+                  {{#if bindings}}
+                    <div class="related-records">
+                      <div class="single-row-heading">Related records</div>
+                      <div class="related-records-list">
+                        {{#each bindings}}
+                          <div class="related-record">
+                            <span class="rds-badge" data-ds="{{relatedDataset.value}}">{{relatedDataset.value}}</span>
+                            <span class="related-record-label">{{label.value}}</span>
+                            <span class="related-record-uri">{{related.value}}</span>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </template>
+              </semantic-query>
             </div>
           </div>
         {{/each}}

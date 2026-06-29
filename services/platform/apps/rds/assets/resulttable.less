@@ -214,4 +214,37 @@
     min-width: 0;
     word-break: break-word;
   }
+
+  .single-row-related {
+    grid-column: 2 / -1;
+    min-width: 0;
+  }
+
+  .related-records {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dotted @col-black;
+  }
+
+  .related-records-list {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    column-gap: var(--result-table-column-gap);
+    row-gap: 8px;
+    align-items: baseline;
+  }
+
+  .related-record {
+    display: contents;
+  }
+
+  .related-record > .rds-badge {
+    justify-self: start;
+  }
+
+  .related-record-label,
+  .related-record-uri {
+    min-width: 0;
+    word-break: break-word;
+  }
 }
