@@ -1,4 +1,4 @@
-SELECT DISTINCT ?related ?dataset ?label ?host WHERE {
+SELECT DISTINCT ?related ?dataset ?label ?external WHERE {
   BIND(<{{subjectUri}}> AS ?subject)
 
   GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
@@ -23,5 +23,5 @@ SELECT DISTINCT ?related ?dataset ?label ?host WHERE {
 
   OPTIONAL { GRAPH <http://schema.swissartresearch.net/rds/graph/labels> { ?related rds:label ?label } }
 
-  BIND(IF(?dataset = "", REPLACE(?uri, "^https?://([^/?#]+).*$", "$1"), "") AS ?host)
+  BIND(IF(?dataset = "", REPLACE(?uri, "^https?://([^/?#]+).*$", "$1"), "") AS ?external)
 }

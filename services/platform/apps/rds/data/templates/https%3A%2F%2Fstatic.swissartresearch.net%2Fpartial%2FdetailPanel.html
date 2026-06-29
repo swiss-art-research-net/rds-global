@@ -3,7 +3,10 @@
     {{#if subjectUri}}
       <div class="detail-panel">
         <div class="detail-panel-header">
-          <h3>{{prefLabel}}</h3>
+          <div class="detail-panel-heading">
+            <h3>{{prefLabel}}</h3>
+            <div class="detail-panel-uri"><span>URI: </span>{{subjectUri}}</div>
+          </div>
           <mp-event-trigger
             type="Component.TemplateUpdate"
             targets='["detail-panel"]'
@@ -26,10 +29,6 @@
           <div class="detail-row">
             <span class="detail-property">RDS type</span>
             <span class="detail-value">{{rdsType}}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-property">URI</span>
-            <span class="detail-value">{{subjectUri}}</span>
           </div>
           <div class="detail-row">
             <span class="detail-property">Source type(s)</span>
@@ -134,11 +133,11 @@
       </div>
       <div class="detail-panel-section detail-section--external">
         <div class="detail-section-title">External links</div>
-        <div class="detail-host-list">
+        <div class="detail-external-list">
           {{#each bindings}}
             {{#ifCond dataset.value "===" ""}}
-              <span class="detail-host-item">
-                <a class="detail-host-name" href="{{related.value}}" target="_blank">{{host.value}}</a>
+              <span class="detail-external-item">
+                <a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a>
               </span>
             {{/ifCond}}
           {{/each}}

@@ -38,6 +38,21 @@
   }
 }
 
+.detail-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-panel-uri {
+  word-break: break-all;
+
+  span {
+    font-weight: 700;
+  }
+}
+
 .detail-close {
   cursor: pointer;
 }
@@ -47,8 +62,8 @@
 }
 
 .detail-section-title {
-  margin-bottom: 0.35rem;
-  font-weight: 600;
+  margin: 1rem 0;
+  font-size: 20px;
 }
 
 .detail-row {
@@ -87,9 +102,14 @@
 
 .detail-related-record {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  column-gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   align-items: start;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid @col-black;
+
+  .rds-badge {
+    justify-self: start;
+  }
 }
 
 .detail-related-content {
@@ -98,6 +118,7 @@
 
 .detail-related-label {
   font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 .detail-related-uri {
@@ -106,26 +127,26 @@
   text-decoration: underline;
 }
 
-.detail-host-list {
+.detail-external-list {
   line-height: 1.5;
   margin-top: 0.4rem;
 }
 
-.detail-host-name {
+.detail-external-name {
   color: @col-black;
   min-width: 0;
   word-break: break-word;
   text-decoration: underline;
 }
 
-.detail-host-item + .detail-host-item::before {
+.detail-external-item + .detail-external-item::before {
   content: ", ";
 }
 
 // Related records and external links share one query; hide whichever
 // section has no matching rows for this record.
 .detail-section--related:not(:has(.detail-related-record)),
-.detail-section--external:not(:has(.detail-host-item)) {
+.detail-section--external:not(:has(.detail-external-item)) {
   display: none;
 }
 
