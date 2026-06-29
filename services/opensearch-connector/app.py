@@ -50,10 +50,13 @@ from typing import Any, Dict, Optional, List
 import httpx
 import logging
 import yaml
-from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Request, status, Query
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
+from fastapi import Body
+from fastapi.middleware.cors import CORSMiddleware
+import html
 
 app = FastAPI()
 
@@ -67,6 +70,15 @@ logger.setLevel(level)
 
 DEFAULT_TOTAL_LIMIT = 100
 DEFAULT_MAX_LIMIT = 1000
+
+# --- CORS for all endpoints (OpenRefine/browser compatibility) 
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=["*"], 
+    allow_credentials=True, 
+    allow_methods=["*"], 
+    allow_headers=["*"],
+    )
 
 
 class SearchRequest(BaseModel):
@@ -344,9 +356,478 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": body.decode()},
     )
 
+
+# --- Dynamic manifest generator
+async def get_manifest(request: Request):
+
+    types = await get_type_classes()
+
+    if not types:
+        types = [{"id": "Entity", "name": "All Entities"}]
+
+    dataset_property = get_dataset_properties()
+    base_url = str(request.base_url).rstrip("/")
+    root_path = (request.scope.get("root_path") or "").rstrip("/")
+    service_path = f"{root_path}/" if root_path else "/"
+
+    return {
+        "versions": ["0.2"],
+        "name": "RDS Reconciliation Service",
+        "identifierSpace": "https://rds.swissartresearch.net/resource/",
+        "schemaSpace": "http://schema.swissartresearch.net/ontology/rds#",
+
+        "defaultTypes": types,
+
+        "view": {"url": "{{id}}"},
+
+        "preview": {
+            "url": f"{base_url}/preview?id={{{{id}}}}"
+        },
+
+        "suggest": {
+            "entity": {"service_path": "/suggest/entity"},
+            "type": {"service_path": "/suggest/type"},
+            "property": {"service_path": "/suggest/property"}
+        },
+
+        "properties": [dataset_property],
+
+        "service_path": service_path
+    }
+
+
+def get_dataset_properties():
+    
+    datasets = getattr(app.state, "datasets", [])
+
+    return {
+        "id": "dataset",
+        "name": "Dataset",
+        "type": "string",
+        "constraints": {
+            "enum": datasets
+        }
+    }
+
+async def get_type_classes():
+
+    endpoint = app.state.opensearch_url
+    index = app.state.opensearch_index
+
+    url = endpoint.rstrip("/") + f"/{index}/_search"
+
+    body = {
+        "size": 0,
+        "aggs": {
+            "types": {
+                "terms": {
+                    "field": "typeClasses",
+                    "size": 50
+                }
+            }
+        }
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        r = await client.post(url, json=body)
+        r.raise_for_status()
+        data = r.json()
+
+    buckets = data.get("aggregations", {}).get("types", {}).get("buckets", [])
+
+    return [
+        {"id": b["key"], "name": b["key"]}
+        for b in buckets
+    ]
+
+@app.api_route("/", methods=["GET", "POST"])
+async def root(request: Request):
+
+    # GET without queries: MANIFEST
+    if request.method == "GET" and "queries" not in request.query_params:
+        return JSONResponse(content=await get_manifest(request))
+
+    # GET with queries: RECONCILIATION
+    if request.method == "GET":
+        queries_raw = request.query_params.get("queries")
+
+    # POST: RECONCILIATION (x-www-form-urlencoded)
+    elif request.method == "POST":
+        form = await request.form()
+        queries_raw = form.get("queries")
+
+    else:
+        return {}
+
+    if not queries_raw:
+        return {}
+
+    try:
+        queries = json.loads(queries_raw)
+    except Exception:
+        return {}
+
+    if not isinstance(queries, dict):
+        return {}
+
+    results = {}
+
+    for qid, q in queries.items():
+        print( f"Processing query id={qid} with content: {q}")
+        results[qid] = await _reconcile_single(q)
+
+    return results
+
+
+async def _reconcile_single(q: Dict[str, Any]):
+
+    query_string = (q.get("query") or "").strip()
+    limit = q.get("limit", 5)
+
+    entity_type = q.get("type")
+    if isinstance(entity_type, list):
+        entity_type = entity_type[0] if entity_type else None
+
+    properties = q.get("properties", [])
+    datasets = None
+
+    if isinstance(properties, list):
+        for p in properties:
+            if p.get("pid") == "dataset":
+                val = p.get("v")
+                if val:
+                    datasets = [val]
+
+    if not query_string:
+        return {"result": []}
+
+    try:
+        hits = await run_search(
+            query=query_string,
+            datasets=datasets,
+            limit=limit,
+            typeclass_filter=entity_type
+        )
+    except Exception as e:
+        logger.exception("SEARCH ERROR for query=%s: %s", query_string, e)
+        return {"result": []}
+
+    if not hits:
+        return {"result": []}
+
+    # only consider matches with score >= 90% of the top hit's score.
+    # For very small absolute scores avoid treating them as matches.
+    top_score = float(hits[0].get("_score", 0.0))
+    threshold = top_score * 0.9
+
+    results = []
+
+    for h in hits:
+        source = h["_source"]
+
+        label = (
+            (source.get("prefLabels") or [None])[0]
+            or (source.get("labels") or [None])[0]
+        )
+
+        if not label:
+            continue
+
+        score = float(h.get("_score", 0.0))
+
+        type_classes = source.get("typeClasses") or []
+        types = []
+
+        for t in type_classes:
+            if isinstance(t, dict):
+                types.append({
+                    "id": t.get("id") or t.get("name"),
+                    "name": t.get("name") or t.get("id")
+                })
+            else:
+                types.append({
+                    "id": t,
+                    "name": t
+                })
+        
+        description = source.get("description")
+
+        if not description:
+            descs = source.get("descriptions")
+            if isinstance(descs, list) and descs:
+                description = descs[0]
+            elif isinstance(descs, str):
+                description = descs
+
+
+        result = {
+            "id": h["_id"],
+            "name": label,
+            "type": types,
+            "score": score,
+            "match": score >= threshold
+        }
+
+        if description:
+            result["description"] = description
+
+        results.append(result)
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+
+    return {"result": results[:limit]}
+
+
+@app.get("/preview")
+async def preview(id: str):
+
+    index = getattr(app.state, "opensearch_index", None)
+    endpoint = getattr(app.state, "opensearch_url", None)
+
+    if not index or not endpoint:
+        return HTMLResponse("<p>Server not configured</p>")
+
+    source = None
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+
+        # direct lookup by _id
+        url_get = endpoint.rstrip("/") + f"/{index}/_doc/{id}"
+
+        try:
+            r = await client.get(url_get)
+            if r.status_code == 200:
+                doc = r.json()
+                source = doc.get("_source")
+        except Exception:
+            pass
+
+        # fallback to search by uri field
+        if not source:
+            url_search = endpoint.rstrip("/") + f"/{index}/_search"
+
+            body = {
+                "size": 1,
+                "query": {
+                    "term": {
+                        "uri": id
+                    }
+                }
+            }
+
+            try:
+                r = await client.post(url_search, json=body)
+                r.raise_for_status()
+                hits = r.json().get("hits", {}).get("hits", [])
+                if hits:
+                    source = hits[0].get("_source")
+            except Exception:
+                pass
+
+    if not source:
+        return HTMLResponse(f"<p>No data for {html.escape(id)}</p>")
+
+    # extract fields
+    label = (
+        (source.get("prefLabels") or [None])[0]
+        or (source.get("labels") or [None])[0]
+        or "Unknown"
+    )
+
+    description = (
+        source.get("description")
+        or (source.get("descriptions") or [None])[0]
+        or ""
+    )
+
+    types = ", ".join([
+        t.get("name") if isinstance(t, dict) else str(t)
+        for t in (source.get("typeClasses") or [])
+    ])
+
+    # escape for safe HTML rendering
+    label = html.escape(label)
+    description = html.escape(description)
+    types = html.escape(types)
+    id_safe = html.escape(id)
+    
+    html_content = f"""
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <style>
+          body {{
+            font-family: sans-serif;
+            font-size: 14px;
+            margin: 10px;
+          }}
+          h3 {{
+            margin: 0 0 5px 0;
+          }}
+          .meta {{
+            color: #555;
+            font-size: 12px;
+          }}
+        </style>
+      </head>
+      <body>
+        <h3>{label}</h3>
+        <div class="meta">{types}</div>
+        <p>{description}</p>
+        <div class="meta">{id_safe}</div>
+      </body>
+    </html>
+    """
+
+    return HTMLResponse(content=html_content)
+
+@app.get("/suggest/entity")
+async def suggest_entity(prefix: str = "", limit: int = 5):
+
+    if not prefix:
+        return {"result": []}
+
+    hits = await run_search(query=prefix, datasets=None, limit=20)
+
+    results = []
+    prefix_lower = prefix.lower()
+
+    for hit in hits:
+        source = hit.get("_source", {})
+        label = (
+            (source.get("prefLabels") or [None])[0]
+            or (source.get("labels") or [None])[0]
+        )
+
+        if not label:
+            continue
+
+        label_lower = label.lower()
+        entity_id = hit.get("_id", "")
+
+        # match label OR id
+        if not (
+            label_lower.startswith(prefix_lower)
+            or prefix_lower in label_lower
+            or prefix_lower in entity_id.lower()
+        ):
+            continue
+
+        # description
+        description = (
+            source.get("description")
+            or (source.get("descriptions") or [None])[0]
+            or ""
+        )
+
+        # notable types
+        type_classes = source.get("typeClasses") or []
+        notable = [
+            {"id": t, "name": t} if not isinstance(t, dict) else {
+                "id": t.get("id") or t.get("name"),
+                "name": t.get("name") or t.get("id")
+            }
+            for t in type_classes[:2]  # keep small number of types for suggestions
+        ]
+
+        results.append({
+            "id": entity_id,
+            "name": label,
+            "description": description,
+            "notable": notable
+        })
+
+        if len(results) >= limit:
+            break
+
+    return {"result": results}
+
+
+@app.get("/suggest/type")
+async def suggest_type(prefix: str = Query(""), limit: int = 5):
+
+    types = await get_type_classes()
+    prefix_lower = prefix.lower()
+
+    results = [
+        t for t in types
+        if prefix_lower in t["name"].lower()
+    ]
+
+    return {"result": results[:limit]}
+
+
+
+
+@app.get("/suggest/property")
+async def suggest_property(prefix: str = Query(""), limit: int = 5):
+
+    properties = [
+        {
+            "id": "dataset",
+            "name": "Dataset",
+            "description": "Filter results by dataset/source"
+        }
+    ]
+
+    prefix_lower = prefix.lower()
+
+    results = [
+        p for p in properties
+        if prefix_lower in p["name"].lower()
+    ]
+
+    return {"result": results[:limit]}
+
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+async def run_search(
+    query: str,
+    datasets: Optional[List[str]],
+    limit: int,
+    typeclass_filter: Optional[str] = None
+):
+    endpoint = app.state.opensearch_url
+    index = app.state.opensearch_index
+
+    url = endpoint.rstrip("/") + "/_msearch"
+
+    # Normalize the single `typeclass_filter` string (if provided) into a
+    # list so callers can pass either a single type or let it be None.
+    requested_typeclasses = [typeclass_filter] if typeclass_filter else None
+
+    payload = build_msearch_query(
+        q=query,
+        config=app.state.config,
+        total_limit=limit,
+        index=index,
+        typeclass_filters=requested_typeclasses,
+        requested_datasets=datasets
+    )
+
+    headers = {"Content-Type": "application/x-ndjson"}
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        r = await client.post(url, content=payload, headers=headers)
+        r.raise_for_status()
+        raw = r.json()
+
+    hits = []
+    for resp in raw.get("responses", []):
+        hits.extend(resp.get("hits", {}).get("hits", []))
+
+    return [
+        {
+            "_id": h.get("_id"),
+            "_score": h.get("_score", 0.0),
+            "_source": h.get("_source", {})
+        }
+        for h in hits
+    ]
+
 
 @app.post("/search")
 async def search(body: SearchRequest) -> Any:
