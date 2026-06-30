@@ -2,6 +2,7 @@ datasets:
 
   aat:
     name: AAT
+    description: Getty Art & Architecture Thesaurus
     source:
       - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
         process:
