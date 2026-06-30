@@ -143,21 +143,14 @@
   content: ", ";
 }
 
-// Related records and external links share one query; hide whichever
-// section has no matching rows for this record.
-.detail-section--related:not(:has(.detail-related-record)),
-.detail-section--external:not(:has(.detail-external-item)) {
-  display: none;
-}
-
 .detail-resource-link {
-  display: inline-block;
-  margin-top: 1rem;
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-top: 2rem;
+  border: 1px solid @col-black;
   color: @col-black;
   font-weight: 500;
-  text-decoration: underline;
-
-  &:hover {
-    text-decoration: none;
-  }
+  text-align: center;
+  text-decoration: none;
 }
