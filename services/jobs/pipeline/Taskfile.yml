@@ -34,6 +34,7 @@ tasks:
       - task: restart-qlever
       - task: supplement-wikidata-type-mappings
       - task: add-data-to-search-index
+      - task: generate-frontend-configuration
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
@@ -119,6 +120,11 @@ tasks:
           FILE_FORMAT: "{{.FILE_FORMAT}}"
           GRAPH: "{{.GRAPH}}"
   
+  generate-frontend-configuration:
+    desc: Generate configuration for the frontend
+    cmds:
+      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --output-file /apps/rds/assets/no_auth/config/datasets.json
+
   generate-type-mappings:
     desc: Generate type mappings for RDS entities
     vars:
