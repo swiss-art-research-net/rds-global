@@ -76,63 +76,60 @@ class RdsNavLink extends HTMLElement {
 
 customElements.define('rds-nav-link', RdsNavLink);
 
-const RDS_DATASET_LABELS = {
-  aat: 'AAT',
-  bso: 'BSO',
-  geonames: 'GeoNames',
-  gnd: 'GND',
-  sikart: 'SIKART',
-  thesarchesp: 'ThesArchESP',
-  thesobjmob: 'ThesObjMob',
-  ulan: 'ULAN',
-  wikidata: 'WD'
-};
+const RDS_CONFIG = fetch('/assets/no_auth/config/datasets.json')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`Could not load RDS frontend configuration (${response.status})`);
+    }
+    return response.json();
+  })
+  .catch(error => {
+    console.error(error);
+    return { datasets: {}, types: [] };
+  });
 
-const RDS_TYPE_LABELS = {
-  Artwork: 'Artwork',
-  BibliographicItem: 'Bibliographic Item',
-  Event: 'Event',
-  Group: 'Group',
-  Person: 'Person',
-  Place: 'Place',
-  Type: 'Type'
-};
-
-function getDatasetLabel(key) {
-  return RDS_DATASET_LABELS[key] || key;
+function getDatasetLabel(config, key) {
+  return config.datasets?.[key]?.name || key;
 }
 
 function getTypeLabel(key) {
-  return RDS_TYPE_LABELS[key] || key;
+  return key;
 }
 
 class RdsDatasetLabel extends HTMLElement {
-  connectedCallback() {
+  async connectedCallback() {
     const key = this.getAttribute('key');
-    this.textContent = getDatasetLabel(key);
+    this.textContent = key || '';
+    const config = await RDS_CONFIG;
+    this.textContent = getDatasetLabel(config, key);
   }
 }
 
 customElements.define('rds-dataset-label', RdsDatasetLabel);
 
 class RdsFilterSelection extends HTMLElement {
-  connectedCallback() {
+  async connectedCallback() {
     const params = new URLSearchParams(window.location.search);
     const paramName = this.getAttribute('param');
     if (!paramName) return;
+    const config = await RDS_CONFIG;
 
     const values = (params.get(paramName) || '')
       .split(',')
       .map(value => value.trim())
       .filter(Boolean);
 
-    this.replaceChildren(...values.map(value => this._createBadge(value, values, params, paramName)));
+    this.replaceChildren(
+      ...values.map(value => this._createBadge(value, values, params, paramName, config))
+    );
   }
 
-  _createBadge(value, values, params, paramName) {
+  _createBadge(value, values, params, paramName, config) {
     const badge = document.createElement('span');
     badge.className = 'rds-badge';
-    const label = paramName === 'dataset' ? getDatasetLabel(value) : getTypeLabel(value);
+    const label = paramName === 'dataset'
+      ? getDatasetLabel(config, value)
+      : getTypeLabel(value);
     badge.appendChild(document.createTextNode(label));
 
     const remaining = values.filter(selectedValue => selectedValue !== value);

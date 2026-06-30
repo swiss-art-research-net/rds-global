@@ -21,6 +21,7 @@ services:
     volumes:
       - ${DIRECTORY_QLEVER_INDEX:-./binds/qlever}:/index:rw
       - ${DIRECTORY_QLEVER_DATA:-./data}:/data:delegated
+      - ./services/platform/apps:/apps
       - ./services/jobs/pipeline:/pipeline
       - ./config:/config
 
