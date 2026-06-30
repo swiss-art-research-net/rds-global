@@ -26,7 +26,7 @@ def generateFrontendConfiguration(*, config: str, datasets: str, output_file: st
             datasets_configuration[key]["description"] = info["description"]
         if "types" in info:
             types_available.extend(info["types"].keys())
-    types_available = list(set(types_available)) 
+    types_available = sorted(set(types_available))
 
     configuration = {
         "datasets": datasets_configuration,
