@@ -4,6 +4,14 @@ from pathlib import Path
 from lib.utils import load_config
 
 def generateFrontendConfiguration(*, config: str, datasets: str, output_file: str):
+    """
+    Generate a JSON configuration file for the frontend based on the provided YAML configuration.
+
+    Args:
+        config (str): Path to the YAML configuration file.
+        datasets (str): Comma-separated list of active datasets. If not provided, all configured datasets will be used.
+        output_file (str): Path to the output JSON file.
+    """
     config_path = Path(config)
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config}")
