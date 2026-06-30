@@ -137,6 +137,7 @@
 }
 .page-resulttable .single-row-dataset {
   margin-left: -14px;
+  min-width: 100px;
 }
 .page-resulttable .single-row-heading {
   margin-bottom: 8px;
@@ -162,4 +163,35 @@
 .page-resulttable .single-row-link:focus {
   color: #000000;
   text-decoration: underline;
+}
+.page-resulttable .single-row-type-list {
+  min-width: 0;
+  word-break: break-word;
+}
+.page-resulttable .single-row-related {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+.page-resulttable .related-records {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dotted #000000;
+}
+.page-resulttable .related-records-list {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  column-gap: var(--result-table-column-gap);
+  row-gap: 8px;
+  align-items: baseline;
+}
+.page-resulttable .related-record {
+  display: contents;
+}
+.page-resulttable .related-record > .rds-badge {
+  justify-self: start;
+}
+.page-resulttable .related-record-label,
+.page-resulttable .related-record-uri {
+  min-width: 0;
+  word-break: break-word;
 }

@@ -1,10 +1,10 @@
 <semantic-data-table
   id='grid-result-table'
-  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference WHERE {
+  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types WHERE {
     BIND(REPLACE(STR(?subject), "^.*[/#]", "") AS ?recordId)
     BIND(ROUND(?score * 10) / 10 AS ?scoreDisplay)
     BIND(IF(?subject = ?reference, 1, 0) AS ?isReference)
-  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference
+  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types
   ORDER BY DESC(?score) DESC(?isReference) ?reference'
   number-of-displayed-rows="4"
   options='{
@@ -60,7 +60,9 @@
       </div>
       <div class="group-row-datasets">
         {{#each rows}}
-          <span class="rds-badge" data-ds="{{dataset.value}}">{{dataset.value}}</span>
+          <span class="rds-badge" data-ds="{{dataset.value}}">
+            <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+          </span>
         {{/each}}
       </div>
       <div class="group-row-type">{{rows.0.typeClass.value}}</div>
@@ -82,7 +84,9 @@
         {{#each rows}}
           <div class="single-row">
             <div class="single-row-dataset">
-              <span class="rds-badge" data-ds="{{dataset.value}}">{{dataset.value}}</span>
+              <span class="rds-badge" data-ds="{{dataset.value}}">
+                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+              </span>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Label</div>
@@ -102,12 +106,54 @@
               <div>{{recordId.value}}</div>
             </div>
             <div class="single-row-field">
-              <div class="single-row-heading">Type(s)</div>
-              <div>{{typeClass.value}}</div>
+              <div class="single-row-heading">Source Type(s)</div>
+
+              {{#each (arraySplit types.value)}}
+                  <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+                {{/each}}
             </div>
             <div class="single-row-field single-row-description">
               <div class="single-row-heading">Description</div>
               <div>{{description.value}}</div>
+            </div>
+            <div class="single-row-related">
+              <semantic-query
+                query='SELECT DISTINCT ?related ?dataset ?datasetLabel ?label WHERE {
+                  VALUES (?related) {
+                    {{#each (arraySplit matches.value)}}
+                      (<{{this}}>)
+                    {{/each}}
+                  }
+
+                  ?related a ?type .
+
+                  [[> partial:valuesDatasetLabels]]
+
+                  FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                  OPTIONAL { ?related rds:label ?label }
+                }
+                LIMIT 12'
+                template="{{> relatedRecordsTemplate}}"
+              >
+                <template id="relatedRecordsTemplate">
+                  {{#if bindings}}
+                    <div class="related-records">
+                      <div class="single-row-heading">Related records</div>
+                      <div class="related-records-list">
+                        {{#each bindings}}
+                          <div class="related-record">
+                            <span class="rds-badge" data-ds="{{dataset.value}}">
+                              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                            </span>
+                            <span class="related-record-label">{{label.value}}</span>
+                            <span class="related-record-uri">{{related.value}}</span>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </template>
+              </semantic-query>
             </div>
           </div>
         {{/each}}
