@@ -122,8 +122,11 @@ tasks:
   
   generate-frontend-configuration:
     desc: Generate configuration for the frontend
+    vars:
+      OUTPUT_FILE: /apps/rds/assets/no_auth/config/datasets.json
     cmds:
-      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --output-file /apps/rds/assets/no_auth/config/datasets.json
+      - mkdir -p $(dirname "{{.OUTPUT_FILE}}")
+      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-file "{{.OUTPUT_FILE}}"
 
   generate-type-mappings:
     desc: Generate type mappings for RDS entities
