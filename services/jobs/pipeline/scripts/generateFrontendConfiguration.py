@@ -20,6 +20,7 @@ def generateFrontendConfiguration(*, config: str, datasets: str, output_app: str
     configuration = generateDatasetJSON(config_data, datasets)
 
     writeJSONconfiguration(configuration, output_app)
+    writeValueDatasetLabels(config_data, configuration["datasets"], output_app, namespace)
     writeValueTypeLabels(config_data, configuration["types"], output_app, namespace)
     
 def generateDatasetJSON(config, datasets = None):
@@ -54,6 +55,29 @@ def writeJSONconfiguration(configuration, output_app):
     with open(output_path, "w") as f:
         json.dump(configuration, f, indent=4)
 
+def writeValueDatasetLabels(config, datasets_available, output_app, namespace):
+    namespace_urlencoded = namespace.replace(":", "%3A").replace("/", "%2F")
+    filename = f"{namespace_urlencoded}valueDatasetLabels.html"
+    valueSet = ""
+    for dataset_id in datasets_available:
+        if dataset_id in config.get("datasets", {}):
+            dataset_label = config["datasets"][dataset_id].get("name", dataset_id)
+            try:
+                dataset_prefix = config["datasets"][dataset_id]["namespace"]
+            except KeyError:
+                raise KeyError(f"Missing 'namespace' for dataset '{dataset_id}' in configuration.")
+            valueSet += f'("{dataset_id}", "{dataset_label}", "{dataset_prefix}")\n'
+    valuesClause = f"""
+        VALUES (?dataset ?datasetLabel ?datasetPrefix) {{
+            {valueSet}
+        }}
+    """
+
+    output_path = Path(output_app) / "data" / "templates" / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        f.write(valuesClause)
+
 def writeValueTypeLabels(config, types_available, output_app, namespace):
     namespace_urlencoded = namespace.replace(":", "%3A").replace("/", "%2F")
     filename = f"{namespace_urlencoded}valueTypeLabels.html"
@@ -64,7 +88,7 @@ def writeValueTypeLabels(config, types_available, output_app, namespace):
             valueSet += f'("{type_id}", "{type_label}")\n'
     valuesClause = f"""
         VALUES (?type ?typeLabel) {{
-            {{valueSet}}
+            {valueSet}
         }}
     """
 

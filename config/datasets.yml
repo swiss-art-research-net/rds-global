@@ -222,6 +222,7 @@ datasets:
         file_format: ttl
     file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
@@ -245,6 +246,7 @@ datasets:
         file_format: ttl
     file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
