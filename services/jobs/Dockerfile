@@ -19,4 +19,6 @@ RUN sh -c "$(curl -ssL https://taskfile.dev/install.sh)" -- -d
 RUN mkdir -p /data /pipeline
 VOLUME /data
 WORKDIR /pipeline
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
