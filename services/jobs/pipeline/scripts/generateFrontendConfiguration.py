@@ -57,7 +57,7 @@ def writeJSONconfiguration(configuration, output_app):
 
 def writeValueDatasetLabels(config, datasets_available, output_app, namespace):
     namespace_urlencoded = namespace.replace(":", "%3A").replace("/", "%2F")
-    filename = f"{namespace_urlencoded}valueDatasetLabels.html"
+    filename = f"{namespace_urlencoded}valuesDatasetLabels.html"
     valueSet = ""
     for dataset_id in datasets_available:
         if dataset_id in config.get("datasets", {}):
