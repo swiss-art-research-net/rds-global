@@ -3,25 +3,34 @@ import json
 from pathlib import Path
 from lib.utils import load_config
 
-def generateFrontendConfiguration(*, config: str, datasets: str, output_file: str):
+def generateFrontendConfiguration(*, config: str, datasets: str, output_app: str):
     """
-    Generate a JSON configuration file for the frontend based on the provided YAML configuration.
+    Generate the templates and configuration files for the frontend based on the provided YAML configuration.
 
     Args:
         config (str): Path to the YAML configuration file.
         datasets (str): Comma-separated list of active datasets. If not provided, all configured datasets will be used.
-        output_file (str): Path to the output JSON file.
+        output_app (str): Path to the app to write the configuration to.
     """
     config_path = Path(config)
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config}")
     config_data = load_config(config_path)
 
+    configuration = generateDatasetJSON(config_data, datasets)
+
+    output_path = Path(output_app) / "assets" / "no_auth" / "config" / "datasets.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, "w") as f:
+        json.dump(configuration, f, indent=4)
+
+def generateDatasetJSON(config, datasets = None):
     if datasets:
         active_datasets = set(datasets.split(","))
-        filtered_datasets = {k: v for k, v in config_data['datasets'].items() if k in active_datasets}
+        filtered_datasets = {k: v for k, v in config['datasets'].items() if k in active_datasets}
     else:
-        filtered_datasets = config_data['datasets']
+        filtered_datasets = config['datasets']
 
     datasets_configuration = {}
     types_available = []
@@ -40,19 +49,14 @@ def generateFrontendConfiguration(*, config: str, datasets: str, output_file: st
         "datasets": datasets_configuration,
         "types": types_available
     }
-
-    output_path = Path(output_file)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_path, "w") as f:
-        json.dump(configuration, f, indent=4)
+    return configuration
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate frontend dataset and type configuration")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--datasets", required=False, help="Comma-separated list of active datasets. Defaults to all configured datasets.")
-    parser.add_argument("--output-file", required=True, help="Path to the output JSON file")
+    parser.add_argument("--output-app", required=True, help="Path to the app to write the configuration to.")
 
     args = parser.parse_args()
 
-    generateFrontendConfiguration(config=args.config, datasets=args.datasets, output_file=args.output_file)
+    generateFrontendConfiguration(config=args.config, datasets=args.datasets, output_app=args.output_app)
