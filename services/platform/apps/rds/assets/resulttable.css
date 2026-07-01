@@ -191,6 +191,10 @@
   row-gap: 8px;
   align-items: baseline;
 }
+.page-resulttable .related-records-list > .rds-item-truncate-toggle {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
 .page-resulttable .related-record {
   display: contents;
 }

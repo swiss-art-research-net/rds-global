@@ -145,7 +145,7 @@
                   {{#if bindings}}
                     <div class="related-records">
                       <div class="single-row-heading">Related records</div>
-                      <div class="related-records-list">
+                      <rds-item-truncate class="related-records-list" limit="3">
                         {{#each bindings}}
                           <div class="related-record">
                             <span class="rds-badge" data-ds="{{dataset.value}}">
@@ -155,7 +155,7 @@
                             <span class="related-record-uri">{{related.value}}</span>
                           </div>
                         {{/each}}
-                      </div>
+                      </rds-item-truncate>
                     </div>
                   {{/if}}
                 </template>
