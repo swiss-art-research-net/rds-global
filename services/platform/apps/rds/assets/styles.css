@@ -70,27 +70,36 @@
   width: 0;
   max-height: calc(100vh - 102px);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border: 1px solid #000000;
   background: #F9FAFB;
 }
 .detail-col:has(.detail-panel) {
   width: min(40%, 520px);
-  overflow-y: auto;
-  overscroll-behavior: none;
 }
 .detail-panel {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 .detail-panel-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0.25rem;
+  background: #F9FAFB;
+  flex-shrink: 0;
 }
 .detail-panel-header h3 {
   margin: 0;
   font-size: 28px;
   font-weight: 400;
+}
+.detail-panel-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: none;
 }
 .detail-panel-heading {
   display: flex;
@@ -108,17 +117,28 @@
   cursor: pointer;
 }
 .detail-panel-section {
-  margin-top: 1rem;
+  padding: 20px;
+  border-bottom: 1px solid #000000;
+}
+.detail-panel-section:last-of-type {
+  border: none;
 }
 .detail-section-title {
-  margin: 1rem 0;
-  font-size: 20px;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
 }
 .detail-row {
   display: flex;
   gap: 0.5rem;
   padding: 1rem 0;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px dotted #000000;
+}
+.detail-row:last-of-type {
+  border: none;
+  padding-bottom: 0;
 }
 .detail-property {
   flex: 0 0 40%;
@@ -140,14 +160,11 @@
 .detail-related-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
 }
 .detail-related-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   align-items: start;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px dotted #000000;
 }
 .detail-related-record .rds-badge {
   justify-self: start;
@@ -180,13 +197,18 @@
 .detail-resource-link {
   display: block;
   width: 100%;
-  padding: 0.75rem 1rem;
-  margin-top: 2rem;
-  border: 1px solid #000000;
+  padding: 1.4rem 20px;
+  border-top: 1px solid #000000;
   color: #000000;
   font-weight: 500;
   text-align: center;
   text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.2s ease-in-out;
+}
+.detail-resource-link:hover {
+  background-color: #000000;
+  color: #F9FAFB;
 }
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;

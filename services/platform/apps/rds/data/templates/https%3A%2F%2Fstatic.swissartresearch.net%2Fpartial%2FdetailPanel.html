@@ -2,7 +2,8 @@
   <template id="detail-panel-template">
     {{#if subjectUri}}
       <div class="detail-panel">
-        <div class="detail-panel-header">
+
+        <div class="detail-panel-section detail-panel-header">
           <div class="detail-panel-heading">
             <h3>{{prefLabel}}</h3>
             <div class="detail-panel-uri"><span>URI: </span>{{subjectUri}}</div>
@@ -19,78 +20,81 @@
           </mp-event-trigger>
         </div>
 
-        <div class="detail-panel-section">
-          <div class="detail-row">
-            <span class="detail-property">Dataset</span>
-            <span class="detail-value">
-              <span class="rds-badge" data-ds="{{dataset}}">{{dataset}}</span>
-            </span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-property">RDS type</span>
-            <span class="detail-value">{{rdsType}}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-property">Source type(s)</span>
-            <span class="detail-value">
-              {{#each sourceTypes}}
-                <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
-              {{/each}}
-            </span>
-          </div>
-        </div>
+        <div class="detail-panel-content">
 
-        {{#ifCond dataset "==" "gnd"}}
-          <semantic-query query='[[> partial:queryGnd]]' template="{{> detail-fields}}" no-result-template="">
-            [[> detailFieldsTemplate]]
-          </semantic-query>
-        {{/ifCond}}
-
-        {{#if matches}}
-          <semantic-query
-            query='SELECT DISTINCT ?related ?dataset ?label WHERE {
-              VALUES (?related) {
-                {{#each matches}}
-                  (<{{this}}>)
+          <div class="detail-panel-section">
+            <div class="detail-row">
+              <span class="detail-property">Dataset</span>
+              <span class="detail-value">
+                <span class="rds-badge" data-ds="{{dataset}}">{{dataset}}</span>
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-property">RDS type</span>
+              <span class="detail-value">{{rdsType}}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-property">Source type(s)</span>
+              <span class="detail-value">
+                {{#each sourceTypes}}
+                  <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
                 {{/each}}
+              </span>
+            </div>
+          </div>
+
+          {{#ifCond dataset "==" "gnd"}}
+            <semantic-query query='[[> partial:queryGnd]]' template="{{> detail-fields}}" no-result-template="">
+              [[> detailFieldsTemplate]]
+            </semantic-query>
+          {{/ifCond}}
+
+          {{#if matches}}
+            <semantic-query
+              query='SELECT DISTINCT ?related ?dataset ?label WHERE {
+                VALUES (?related) {
+                  {{#each matches}}
+                    (<{{this}}>)
+                  {{/each}}
+                }
+
+                ?related a ?type .
+
+                [[> partial:valuesDatasetLabels]]
+
+                FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                OPTIONAL { ?related rds:label ?label }
+              }'
+              template="{{> related-records}}"
+              no-result-template=""
+            >
+              [[> relatedRecordsTemplate]]
+            </semantic-query>
+          {{/if}}
+
+          <semantic-query
+            query='SELECT DISTINCT ?related ?external WHERE {
+              BIND(<{{subjectUri}}> AS ?subject)
+
+              GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+                ?subject rds:related ?related .
               }
 
-              ?related a ?type .
+              FILTER(?related != ?subject)
 
-              [[> partial:valuesDatasetLabels]]
+              FILTER NOT EXISTS {
+                [[> partial:valuesDatasetLabels]]
+                FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+              }
 
-              FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-              OPTIONAL { ?related rds:label ?label }
+              BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
             }'
-            template="{{> related-records}}"
+            template="{{> external-links}}"
             no-result-template=""
           >
-            [[> relatedRecordsTemplate]]
+            [[> externalLinksTemplate]]
           </semantic-query>
-        {{/if}}
-
-        <semantic-query
-          query='SELECT DISTINCT ?related ?external WHERE {
-            BIND(<{{subjectUri}}> AS ?subject)
-
-            GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
-              ?subject rds:related ?related .
-            }
-
-            FILTER(?related != ?subject)
-
-            FILTER NOT EXISTS {
-              [[> partial:valuesDatasetLabels]]
-              FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-            }
-
-            BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
-          }'
-          template="{{> external-links}}"
-          no-result-template=""
-        >
-          [[> externalLinksTemplate]]
-        </semantic-query>
+        </div>
 
         <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
           Open full record
@@ -130,7 +134,7 @@
         <div class="detail-section-title">Related records</div>
         <div class="detail-related-list">
           {{#each bindings}}
-            <div class="detail-related-record">
+            <div class="detail-row detail-related-record">
               <span class="rds-badge" data-ds="{{dataset.value}}">
                 <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
               </span>
