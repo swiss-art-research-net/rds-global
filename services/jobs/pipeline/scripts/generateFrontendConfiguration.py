@@ -80,7 +80,7 @@ def writeValueDatasetLabels(config, datasets_available, output_app, namespace):
 
 def writeValueTypeLabels(config, types_available, output_app, namespace):
     namespace_urlencoded = namespace.replace(":", "%3A").replace("/", "%2F")
-    filename = f"{namespace_urlencoded}valueTypeLabels.html"
+    filename = f"{namespace_urlencoded}valuesTypeLabels.html"
     valueSet = ""
     for type_id in types_available:
         if type_id in config.get("types", {}):
