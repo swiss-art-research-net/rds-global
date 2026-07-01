@@ -19,6 +19,11 @@ includes:
     flatten: true
 tasks:
 
+  startup:
+    desc: Tasks that run on container startup
+    cmds:
+      - task: generate-frontend-configuration
+
   default:
     desc: Run entire pipeline
     interactive: True
@@ -34,11 +39,6 @@ tasks:
       - task: restart-qlever
       - task: supplement-wikidata-type-mappings
       - task: add-data-to-search-index
-
-  startup:
-    desc: Tasks that run on container startup
-    cmds:
-      - task: generate-frontend-configuration
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
