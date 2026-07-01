@@ -222,6 +222,7 @@ datasets:
         file_format: ttl
     file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
@@ -245,6 +246,7 @@ datasets:
         file_format: ttl
     file_format: ttl
     graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
@@ -341,4 +343,19 @@ datasets:
         FILTER(LANG(?value) = "en")
       matches: |
         ?subject owl:sameAs ?value .
-      
+
+types:
+  Artwork:
+    name: Artwork
+  BibliographicItem:
+    name: Bibliographic Item
+  Event:
+    name: Event
+  Group:
+    name: Group
+  Person:
+    name: Person
+  Place:
+    name: Place
+  Type:
+    name: Type
