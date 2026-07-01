@@ -215,7 +215,7 @@ datasets:
     wikidata_match_property: P781
 
   thesarchesp:
-    name: ThesArchESP
+    name: ThesArchEsp
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
         type: http_file
@@ -239,7 +239,7 @@ datasets:
         ?subject skos:exactMatch ?value .
 
   thesobjmob:
-    name: ThesObjMOB
+    name: ThesObjMob
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
         type: http_file
