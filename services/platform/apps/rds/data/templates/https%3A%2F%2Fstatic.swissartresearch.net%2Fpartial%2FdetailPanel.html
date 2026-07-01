@@ -132,7 +132,7 @@
     {{#if bindings}}
       <div class="detail-panel-section detail-section--related">
         <div class="detail-section-title">Related records</div>
-        <div class="detail-related-list">
+        <rds-item-truncate class="detail-related-list" limit="3">
           {{#each bindings}}
             <div class="detail-row detail-related-record">
               <span class="rds-badge" data-ds="{{dataset.value}}">
@@ -148,7 +148,7 @@
               </div>
             </div>
           {{/each}}
-        </div>
+        </rds-item-truncate>
       </div>
     {{/if}}
   </template>
@@ -159,13 +159,9 @@
     {{#if bindings}}
       <div class="detail-panel-section detail-section--external">
         <div class="detail-section-title">External links</div>
-        <div class="detail-external-list">
-          {{#each bindings}}
-            <span class="detail-external-item">
-              <a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a>
-            </span>
-          {{/each}}
-        </div>
+        <rds-item-truncate class="detail-external-list" limit="8">
+          {{#each bindings}}<span class="detail-external-item"><a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a></span>{{/each}}
+        </rds-item-truncate>
       </div>
     {{/if}}
   </template>

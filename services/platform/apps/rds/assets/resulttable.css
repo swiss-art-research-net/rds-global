@@ -46,14 +46,14 @@
   justify-self: end;
   align-self: end;
   display: inline-flex;
-  gap: 2px;
+  gap: 4px;
   border: none;
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
 }
 .page-resulttable .group-row-toggle-chevron {
-  width: 18px;
+  width: 24px;
   height: auto;
   transition: transform 0.2s ease;
   margin-top: 8px;

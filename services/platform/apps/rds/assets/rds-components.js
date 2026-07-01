@@ -187,3 +187,64 @@ class RdsRecordDeselect extends HTMLElement {
 customElements.define('rds-record-deselect', RdsRecordDeselect);
 
 customElements.define('rds-record-select', RdsRecordSelect);
+
+class RdsItemTruncate extends HTMLElement {
+  connectedCallback() {
+    if (this._toggleButton) return;
+
+    this._limit = Number.parseInt(this.getAttribute('limit'), 10) || 3;
+    this._items = Array.from(this.children);
+    this._originalDisplay = new Map(
+      this._items.map(item => [
+        item,
+        {
+          value: item.style.getPropertyValue('display'),
+          priority: item.style.getPropertyPriority('display')
+        }
+      ])
+    );
+
+    if (this._items.length <= this._limit) return;
+
+    this._expanded = false;
+    this._toggleButton = document.createElement('button');
+    this._toggleButton.type = 'button';
+    this._toggleButton.className = 'rds-item-truncate-toggle';
+
+    this._toggleLabel = document.createElement('span');
+    this._toggleButton.append(this._toggleLabel);
+
+    this._toggleButton.addEventListener('click', () => {
+      this._expanded = !this._expanded;
+      this._render();
+    });
+
+    this.appendChild(this._toggleButton);
+    this._render();
+  }
+
+  _render() {
+    this._items.forEach((item, index) => {
+      const isHidden = !this._expanded && index >= this._limit;
+      item.hidden = isHidden;
+      if (isHidden) {
+        item.style.display = 'none';
+      } else {
+        const originalDisplay = this._originalDisplay.get(item);
+        if (originalDisplay.value) {
+          item.style.setProperty('display', originalDisplay.value, originalDisplay.priority);
+        } else {
+          item.style.removeProperty('display');
+        }
+      }
+    });
+
+    this._toggleLabel.textContent = this._expanded
+      ? 'Show less'
+      : `Show all ${this._items.length}`;
+    this._toggleButton.classList.toggle('is-expanded', this._expanded);
+    this._toggleButton.setAttribute('aria-expanded', String(this._expanded));
+  }
+}
+
+customElements.define('rds-item-truncate', RdsItemTruncate);

@@ -351,6 +351,30 @@ rds-filter-selection {
   line-height: 1;
   cursor: pointer;
 }
+.rds-item-truncate-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  margin-top: 1rem;
+  border: 0;
+  background: none;
+  color: #000000;
+  cursor: pointer;
+}
+.rds-item-truncate-toggle::before {
+  content: '';
+  width: 17px;
+  height: 10px;
+  background: url('/assets/no-auth/chevron.svg') center / contain no-repeat;
+  transition: transform 0.2s ease;
+}
+.rds-item-truncate-toggle:hover {
+  text-decoration: underline;
+}
+.rds-item-truncate-toggle.is-expanded::before {
+  transform: rotate(180deg);
+}
 /* results table */
 .main-panel {
   display: grid;
