@@ -24,6 +24,6 @@ node_modules
 services/jobs/pipeline/scripts/sameAsProcessing/processing_db
 services/jobs/pipeline/tmp
 services/jobs/pipeline/.task
-services/platform/apps/rds/assets/no_auth/config/
+services/platform/apps/rds-config/assets/no_auth/config/
 services/qlever-datasets/scripts/endpoints.csv
 services/search-evaluation/output/*
