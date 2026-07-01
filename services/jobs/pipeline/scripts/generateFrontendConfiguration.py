@@ -66,7 +66,7 @@ def writeValueDatasetLabels(config, datasets_available, output_app, namespace):
                 dataset_prefix = config["datasets"][dataset_id]["namespace"]
             except KeyError:
                 raise KeyError(f"Missing 'namespace' for dataset '{dataset_id}' in configuration.")
-            valueSet += f'("{dataset_id}", "{dataset_label}", "{dataset_prefix}")\n'
+            valueSet += f'("{dataset_id}" "{dataset_label}" "{dataset_prefix}")\n'
     valuesClause = f"""
         VALUES (?dataset ?datasetLabel ?datasetPrefix) {{
             {valueSet}
@@ -85,7 +85,7 @@ def writeValueTypeLabels(config, types_available, output_app, namespace):
     for type_id in types_available:
         if type_id in config.get("types", {}):
             type_label = config["types"][type_id].get("name", type_id)
-            valueSet += f'("{type_id}", "{type_label}")\n'
+            valueSet += f'("{type_id}" "{type_label}")\n'
     valuesClause = f"""
         VALUES (?type ?typeLabel) {{
             {valueSet}
