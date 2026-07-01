@@ -19,6 +19,11 @@ includes:
     flatten: true
 tasks:
 
+  startup:
+    desc: Tasks that run on container startup
+    cmds:
+      - task: generate-frontend-configuration
+
   default:
     desc: Run entire pipeline
     interactive: True
@@ -34,7 +39,6 @@ tasks:
       - task: restart-qlever
       - task: supplement-wikidata-type-mappings
       - task: add-data-to-search-index
-      - task: generate-frontend-configuration
 
   add-data-to-search-index:
     desc: Add all data to OpenSearch index
@@ -123,10 +127,9 @@ tasks:
   generate-frontend-configuration:
     desc: Generate configuration for the frontend
     vars:
-      OUTPUT_FILE: /apps/rds/assets/no_auth/config/datasets.json
+      OUTPUT_DIRECTORY: /apps/rds-config/
     cmds:
-      - mkdir -p $(dirname "{{.OUTPUT_FILE}}")
-      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-file "{{.OUTPUT_FILE}}"
+      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-app "{{.OUTPUT_DIRECTORY}}"
 
   generate-type-mappings:
     desc: Generate type mappings for RDS entities
