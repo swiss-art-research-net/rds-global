@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from lib.utils import load_config
 
-def generateFrontendConfiguration(*, config: str, datasets: str, output_app: str):
+def generateFrontendConfiguration(*, config: str, datasets: str, output_app: str, namespace: str = "https://static.swissartresearch.net/partial/") -> None:
     """
     Generate the templates and configuration files for the frontend based on the provided YAML configuration.
 
@@ -19,12 +19,9 @@ def generateFrontendConfiguration(*, config: str, datasets: str, output_app: str
 
     configuration = generateDatasetJSON(config_data, datasets)
 
-    output_path = Path(output_app) / "assets" / "no_auth" / "config" / "datasets.json"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_path, "w") as f:
-        json.dump(configuration, f, indent=4)
-
+    writeJSONconfiguration(configuration, output_app)
+    writeValueTypeLabels(config_data, configuration["types"], output_app, namespace)
+    
 def generateDatasetJSON(config, datasets = None):
     if datasets:
         active_datasets = set(datasets.split(","))
@@ -51,12 +48,38 @@ def generateDatasetJSON(config, datasets = None):
     }
     return configuration
 
+def writeJSONconfiguration(configuration, output_app):
+    output_path = Path(output_app) / "assets" / "no_auth" / "config" / "datasets.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(configuration, f, indent=4)
+
+def writeValueTypeLabels(config, types_available, output_app, namespace):
+    namespace_urlencoded = namespace.replace(":", "%3A").replace("/", "%2F")
+    filename = f"{namespace_urlencoded}valueTypeLabels.html"
+    valueSet = ""
+    for type_id in types_available:
+        if type_id in config.get("types", {}):
+            type_label = config["types"][type_id].get("name", type_id)
+            valueSet += f'("{type_id}", "{type_label}")\n'
+    valuesClause = f"""
+        VALUES (?type ?typeLabel) {{
+            {{valueSet}}
+        }}
+    """
+
+    output_path = Path(output_app) / "data" / "templates" / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        f.write(valuesClause)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate frontend dataset and type configuration")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
     parser.add_argument("--datasets", required=False, help="Comma-separated list of active datasets. Defaults to all configured datasets.")
     parser.add_argument("--output-app", required=True, help="Path to the app to write the configuration to.")
+    parser.add_argument("--namespace", required=False, default="https://static.swissartresearch.net/partial/", help="Namespace for the frontend templates.")
 
     args = parser.parse_args()
 
-    generateFrontendConfiguration(config=args.config, datasets=args.datasets, output_app=args.output_app)
+    generateFrontendConfiguration(config=args.config, datasets=args.datasets, output_app=args.output_app, namespace=args.namespace)

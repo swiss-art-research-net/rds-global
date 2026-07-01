@@ -341,4 +341,17 @@ datasets:
         FILTER(LANG(?value) = "en")
       matches: |
         ?subject owl:sameAs ?value .
-      
+
+types:
+  BiblioGraphicItem:
+    name: Bibliographic Item
+  Event:
+    name: Event
+  Group:
+    name: Group
+  Person:
+    name: Person
+  Place:
+    name: Place
+  Type:
+    name: Type      
