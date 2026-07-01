@@ -345,7 +345,9 @@ datasets:
         ?subject owl:sameAs ?value .
 
 types:
-  BiblioGraphicItem:
+  Artwork:
+    name: Artwork
+  BibliographicItem:
     name: Bibliographic Item
   Event:
     name: Event
@@ -356,4 +358,4 @@ types:
   Place:
     name: Place
   Type:
-    name: Type      
+    name: Type
