@@ -9,6 +9,7 @@ services:
       LETSENCRYPT_HOST: ${RECONCILE_HOST_NAME}
       VIRTUAL_HOST: ${RECONCILE_HOST_NAME}
       VIRTUAL_PORT: 8000
+      X_FRAME_OPTIONS: "off"
     networks:
       - internal
       - proxy
