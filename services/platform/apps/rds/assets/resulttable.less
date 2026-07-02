@@ -198,7 +198,8 @@
   }
 
   .single-row-link {
-    display: inline;
+    display: inline-flex;
+    align-items: center;
     margin: 0;
     padding: 0;
     border: 0;
@@ -209,12 +210,30 @@
     text-align: left;
     text-decoration: underline;
     cursor: pointer;
+
+    &::after {
+      content: '';
+      flex: 0 0 auto;
+      width: 16px;
+      height: 10px;
+      margin-left: 5px;
+      background: url('/assets/no-auth/detail-arrow.svg') center / contain no-repeat;
+      opacity: 0;
+      transform: translateX(-3px);
+      transition:
+        opacity 0.2s ease-in-out,
+        transform 0.2s ease-in-out;
+    }
   }
 
   .single-row-link:hover,
   .single-row-link:focus {
     color: @col-black;
-    text-decoration: underline;
+
+    &::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .single-row-type-list {

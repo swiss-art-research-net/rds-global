@@ -106,7 +106,11 @@
                   "matches": [{{#each (arraySplit matches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}], 
                   "sourceTypes": [{{#each (arraySplit types.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]}'
               >
-                <rds-record-select class="single-row-link">{{prefLabel.value}}</rds-record-select>
+                <rds-record-select
+                  class="single-row-link"
+                  aria-label="Open details for {{prefLabel.value}}"
+                >{{prefLabel.value}}
+                </rds-record-select>
               </mp-event-trigger>
             </div>
             <div class="single-row-field">

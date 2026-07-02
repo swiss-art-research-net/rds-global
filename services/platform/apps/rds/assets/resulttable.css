@@ -154,7 +154,8 @@
   text-transform: uppercase;
 }
 .page-resulttable .single-row-link {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
   margin: 0;
   padding: 0;
   border: 0;
@@ -166,10 +167,25 @@
   text-decoration: underline;
   cursor: pointer;
 }
+.page-resulttable .single-row-link::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 16px;
+  height: 10px;
+  margin-left: 5px;
+  background: url('/assets/no-auth/detail-arrow.svg') center / contain no-repeat;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
 .page-resulttable .single-row-link:hover,
 .page-resulttable .single-row-link:focus {
   color: #000000;
-  text-decoration: underline;
+}
+.page-resulttable .single-row-link:hover::after,
+.page-resulttable .single-row-link:focus::after {
+  opacity: 1;
+  transform: translateX(0);
 }
 .page-resulttable .single-row-type-list {
   min-width: 0;

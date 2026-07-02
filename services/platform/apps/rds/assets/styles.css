@@ -439,6 +439,10 @@ rds-copy-popover > .rds-badge[aria-expanded='true'] {
 }
 .rds-copy-popover-action span {
   overflow-wrap: anywhere;
+  font-family: 'Familjen Grotesk', Arial, sans-serif;
+}
+.rds-copy-popover-action strong {
+  color: #5F5F5F;
 }
 .rds-copy-popover-action:hover,
 .rds-copy-popover-action:focus {
