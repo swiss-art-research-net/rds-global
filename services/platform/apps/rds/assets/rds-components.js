@@ -248,3 +248,184 @@ class RdsItemTruncate extends HTMLElement {
 }
 
 customElements.define('rds-item-truncate', RdsItemTruncate);
+
+class RdsCopyPopover extends HTMLElement {
+  static active = null;
+
+  connectedCallback() {
+    if (this._initialized) return;
+    this._initialized = true;
+
+    const values = {
+      URI: this.getAttribute('uri'),
+      ID: this.getAttribute('record-id')
+    };
+
+    this._trigger = this.querySelector('button');
+    if (!this._trigger || !Object.values(values).some(Boolean)) return;
+
+    this._popup = document.createElement('div');
+    this._popup.className = 'rds-copy-popover';
+    this._popup.hidden = true;
+    this._popup.setAttribute('role', 'dialog');
+    this._popup.setAttribute('aria-label', 'Copy identifier');
+
+    Object.entries(values).forEach(([label, value]) => {
+      if (!value) return;
+      this._popup.appendChild(this._createCopyButton(label, value));
+    });
+
+    this._status = document.createElement('div');
+    this._status.className = 'rds-copy-popover-status';
+    this._status.setAttribute('role', 'status');
+    this._status.setAttribute('aria-live', 'polite');
+
+    this._popup.appendChild(this._status);
+    this._isPortaled = this.getAttribute('placement') === 'left';
+    if (this._isPortaled) {
+      this._popup.classList.add('rds-copy-popover--left');
+      document.body.appendChild(this._popup);
+      this._popup.addEventListener('click', event => this._handleClick(event));
+    } else {
+      this.appendChild(this._popup);
+    }
+
+    this._trigger.setAttribute('aria-haspopup', 'dialog');
+    this._trigger.setAttribute('aria-expanded', 'false');
+    this.addEventListener('click', event => this._handleClick(event));
+  }
+
+  disconnectedCallback() {
+    clearTimeout(this._closeTimer);
+    if (this._isPortaled) this._popup?.remove();
+    if (RdsCopyPopover.active === this) RdsCopyPopover.active = null;
+  }
+
+  _createCopyButton(label, value) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'rds-copy-popover-action';
+    button.dataset.copyValue = value;
+    button.dataset.copyLabel = label;
+
+    const icon = document.createElement('img');
+    icon.src = '/assets/no-auth/copy-icon.svg';
+    icon.alt = '';
+
+    const name = document.createElement('strong');
+    name.textContent = label;
+
+    const text = document.createElement('span');
+    text.textContent = value;
+
+    button.append(icon, name, text);
+    return button;
+  }
+
+  _handleClick(event) {
+    event.stopPropagation();
+
+    const action = event.target.closest('[data-copy-value]');
+    if (action) {
+      this._copy(action, action.dataset.copyLabel, action.dataset.copyValue);
+    } else if (this._trigger.contains(event.target)) {
+      this._popup.hidden ? this.open() : this.close();
+    }
+  }
+
+  open() {
+    RdsCopyPopover.active?.close();
+    clearTimeout(this._closeTimer);
+    this._status.textContent = '';
+    this._popup.style.width = '';
+    this._popup.hidden = false;
+    this._popup.style.width = `${this._popup.getBoundingClientRect().width}px`;
+    if (this._isPortaled) this._positionPortaledPopup();
+    this._trigger.setAttribute('aria-expanded', 'true');
+    RdsCopyPopover.active = this;
+  }
+
+  _positionPortaledPopup() {
+    const triggerRect = this._trigger.getBoundingClientRect();
+    const popupRect = this._popup.getBoundingClientRect();
+    const viewportMargin = 16;
+
+    this._popup.style.left =
+      `${Math.max(viewportMargin, triggerRect.left - popupRect.width - 12)}px`;
+    this._popup.style.top =
+      `${Math.min(
+        window.innerHeight - popupRect.height - viewportMargin,
+        Math.max(
+          viewportMargin,
+          triggerRect.top + (triggerRect.height - popupRect.height) / 2
+        )
+      )}px`;
+  }
+
+  close() {
+    if (!this._popup) return;
+    clearTimeout(this._closeTimer);
+    this._status.textContent = '';
+    this._resetActions();
+    this._popup.hidden = true;
+    this._trigger.setAttribute('aria-expanded', 'false');
+    if (RdsCopyPopover.active === this) RdsCopyPopover.active = null;
+  }
+
+  _resetActions() {
+    this._popup.querySelectorAll('[data-copy-value]').forEach(action => {
+      action.classList.remove('is-copied');
+      action.querySelector('span').textContent = action.dataset.copyValue;
+    });
+  }
+
+  async _copy(action, label, value) {
+    clearTimeout(this._closeTimer);
+
+    try {
+      await this._writeToClipboard(value);
+      this._resetActions();
+      action.classList.add('is-copied');
+      action.querySelector('span').textContent = 'copied';
+      this._status.textContent = `${label} copied`;
+      this._closeTimer = setTimeout(() => this.close(), 900);
+    } catch (error) {
+      console.error('Could not copy to clipboard', error);
+      this._status.textContent = `Could not copy ${label}`;
+    }
+  }
+
+  async _writeToClipboard(value) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      const copied = document.execCommand('copy');
+      textarea.remove();
+      if (!copied) throw new Error('Clipboard access was denied');
+    }
+  }
+}
+
+customElements.define('rds-copy-popover', RdsCopyPopover);
+
+document.addEventListener('click', event => {
+  const active = RdsCopyPopover.active;
+  const clickedInside =
+    active?.contains(event.target) || active?._popup?.contains(event.target);
+  if (active && !clickedInside) active.close();
+}, true);
+
+document.addEventListener('keydown', event => {
+  const active = RdsCopyPopover.active;
+  if (event.key !== 'Escape' || !active) return;
+  active.close();
+  active._trigger.focus();
+});

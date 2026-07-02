@@ -60,9 +60,11 @@
       </div>
       <div class="group-row-datasets">
         {{#each rows}}
-          <span class="rds-badge" data-ds="{{dataset.value}}">
-            <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-          </span>
+          <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
+            <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+            </button>
+          </rds-copy-popover>
         {{/each}}
       </div>
       <div class="group-row-type">{{rows.0.typeClass.value}}</div>
@@ -84,9 +86,11 @@
         {{#each rows}}
           <div class="single-row">
             <div class="single-row-dataset">
-              <span class="rds-badge" data-ds="{{dataset.value}}">
-                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-              </span>
+              <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
+                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                </button>
+              </rds-copy-popover>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Label</div>
@@ -95,6 +99,7 @@
                 targets='["detail-panel"]'
                 data='{
                   "subjectUri": "{{subject.value}}", 
+                  "recordId": "{{recordId.value}}",
                   "prefLabel": "{{prefLabel.value}}", 
                   "dataset": "{{dataset.value}}", 
                   "rdsType": "{{typeClass.value}}", 
@@ -148,9 +153,11 @@
                       <rds-item-truncate class="related-records-list" limit="3">
                         {{#each bindings}}
                           <div class="related-record">
-                            <span class="rds-badge" data-ds="{{dataset.value}}">
-                              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                            </span>
+                            <rds-copy-popover uri="{{related.value}}">
+                              <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                              </button>
+                            </rds-copy-popover>
                             <span class="related-record-label">{{label.value}}</span>
                             <span class="related-record-uri">{{related.value}}</span>
                           </div>

@@ -26,7 +26,9 @@
             <div class="detail-row">
               <span class="detail-property">Dataset</span>
               <span class="detail-value">
-                <span class="rds-badge" data-ds="{{dataset}}">{{dataset}}</span>
+                <rds-copy-popover uri="{{subjectUri}}" record-id="{{recordId}}" placement="left">
+                  <button type="button" class="rds-badge" data-ds="{{dataset}}">{{dataset}}</button>
+                </rds-copy-popover>
               </span>
             </div>
             <div class="detail-row">
@@ -135,9 +137,11 @@
         <rds-item-truncate class="detail-related-list" limit="3">
           {{#each bindings}}
             <div class="detail-row detail-related-record">
-              <span class="rds-badge" data-ds="{{dataset.value}}">
-                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-              </span>
+              <rds-copy-popover uri="{{related.value}}">
+                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                </button>
+              </rds-copy-popover>
               <div class="detail-related-content">
                 {{#if label.value}}
                   <div class="detail-related-label">{{label.value}}</div>

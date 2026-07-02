@@ -198,7 +198,7 @@
 .page-resulttable .related-record {
   display: contents;
 }
-.page-resulttable .related-record > .rds-badge {
+.page-resulttable .related-record > rds-copy-popover {
   justify-self: start;
 }
 .page-resulttable .related-record-label,

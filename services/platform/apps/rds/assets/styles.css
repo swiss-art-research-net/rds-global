@@ -351,6 +351,127 @@ rds-filter-selection {
   line-height: 1;
   cursor: pointer;
 }
+rds-copy-popover {
+  position: relative;
+  display: inline-flex;
+}
+rds-copy-popover > .rds-badge {
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+rds-copy-popover > .rds-badge:hover,
+rds-copy-popover > .rds-badge[aria-expanded='true'] {
+  background-color: #000000;
+  color: #F9FAFB;
+}
+.rds-copy-popover {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 12px);
+  left: 0;
+  display: grid;
+  width: max-content;
+  min-width: 320px;
+  max-width: min(480px, calc(100vw - 32px));
+  border: 1px solid #000000;
+  background: #ECF0F3;
+  box-shadow: 4px 4px 0px 0px #00000012;
+  box-sizing: border-box;
+}
+.rds-copy-popover[hidden] {
+  display: none;
+}
+.rds-copy-popover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 14px;
+  z-index: 0;
+  width: 16px;
+  height: 16px;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  background: #ECF0F3;
+  transform: translateY(-8px) rotate(45deg);
+}
+.rds-copy-popover--left {
+  position: fixed;
+  z-index: 1070;
+  right: auto;
+  bottom: auto;
+}
+.rds-copy-popover--left::after {
+  top: 50%;
+  left: 100%;
+  border: 0;
+  border-top: 1px solid #000000;
+  border-right: 1px solid #000000;
+  transform: translate(-8px, -50%) rotate(45deg);
+}
+.rds-copy-popover-action {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 14px 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px dotted #000000;
+  background: transparent;
+  color: #000000;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+.rds-copy-popover-action:last-of-type {
+  border-bottom: 0;
+}
+.rds-copy-popover-action img {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+}
+.rds-copy-popover-action span {
+  overflow-wrap: anywhere;
+}
+.rds-copy-popover-action:hover,
+.rds-copy-popover-action:focus {
+  background: #DEE7ED;
+}
+.rds-copy-popover-action.is-copied {
+  background: #86f39634;
+}
+.rds-copy-popover-action.is-copied img {
+  display: none;
+}
+.rds-copy-popover-action.is-copied::before {
+  content: '';
+  justify-self: center;
+  align-self: center;
+  width: 8px;
+  height: 5px;
+  margin-top: -2px;
+  border-bottom: 2px solid #000000;
+  border-left: 2px solid #000000;
+  transform: rotate(-45deg);
+}
+.rds-copy-popover-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .rds-item-truncate-toggle {
   display: flex;
   align-items: center;
