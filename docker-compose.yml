@@ -34,7 +34,7 @@ services:
       - ./config:/config
     networks:
       - internal
-    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}"]
+    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}", "--reconciliation-base-url", "${RECONCILIATION_BASE_URL}"]
 
   opensearch-node:
     image: opensearchproject/opensearch:3.6.0
