@@ -367,7 +367,8 @@ async def get_manifest(request: Request):
         types = [{"id": "Entity", "name": "All Entities"}]  
     types.sort(key=lambda t: t["name"])
 
-    base_url = str(request.base_url).rstrip("/")
+    configured_base_url = getattr(app.state, "reconciliation_base_url", None)
+    base_url = configured_base_url.strip().rstrip("/") if configured_base_url else str(request.base_url).rstrip("/")
     
     return {
         "versions": ["0.2"],
@@ -980,6 +981,7 @@ def main() -> None:
     parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits; use 0 to disable shared-match grouping")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--reconciliation-base-url", default=None, help="Base URL for reconciliation service. If not provided, it will be inferred from the request.")
     args = parser.parse_args()
 
     if args.max_limit < 1:
@@ -996,6 +998,7 @@ def main() -> None:
     app.state.max_limit = args.max_limit
     app.state.min_shared_matches = args.min_shared_matches
     app.state.type_classes = asyncio.run(load_type_classes())  # Load type classes at startup
+    app.state.reconciliation_base_url = args.reconciliation_base_url
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:
