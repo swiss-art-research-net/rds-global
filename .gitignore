@@ -24,5 +24,7 @@ node_modules
 services/jobs/pipeline/scripts/sameAsProcessing/processing_db
 services/jobs/pipeline/tmp
 services/jobs/pipeline/.task
+services/platform/apps/rds-config/
+!services/platform/apps/rds-config/plugin.properties
 services/qlever-datasets/scripts/endpoints.csv
 services/search-evaluation/output/*

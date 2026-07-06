@@ -4,6 +4,15 @@ services:
 
   opensearch-connector:
     restart: unless-stopped
+    environment:
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      LETSENCRYPT_HOST: ${RECONCILE_HOST_NAME}
+      VIRTUAL_HOST: ${RECONCILE_HOST_NAME}
+      VIRTUAL_PORT: 8000
+      X_FRAME_OPTIONS: "off"
+    networks:
+      - internal
+      - proxy
 
   opensearch-node:
     restart: unless-stopped
@@ -14,10 +23,10 @@ services:
     restart: unless-stopped
     environment:
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
-      LETSENCRYPT_HOST: ${HOST_NAME}
-      VIRTUAL_HOST: ${HOST_NAME}
+      LETSENCRYPT_HOST: ${PLATFORM_HOST_NAME}
+      VIRTUAL_HOST: ${PLATFORM_HOST_NAME}
       VIRTUAL_PORT: 8080
-      CONTENT_SECURITY_POLICY: "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: ; img-src 'self' https: data: blob:; connect-src 'self'; style-src-elem 'self' 'unsafe-inline';"
+      CONTENT_SECURITY_POLICY: "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: ; img-src 'self' https: data: blob:; connect-src 'self'; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
     networks:
       - internal
       - proxy

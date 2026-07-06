@@ -1,0 +1,163 @@
+<semantic-data-table
+  id='grid-result-table'
+  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types WHERE {
+    BIND(REPLACE(STR(?subject), "^.*[/#]", "") AS ?recordId)
+    BIND(ROUND(?score * 10) / 10 AS ?scoreDisplay)
+    BIND(IF(?subject = ?reference, 1, 0) AS ?isReference)
+  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types
+  ORDER BY DESC(?score) DESC(?isReference) ?reference'
+  number-of-displayed-rows="4"
+  options='{
+    "showFilter": false,
+    "enableSort": false,
+    "enableGrouping": true,
+    "groupingOptions": {
+      "groupedBy": ["reference"],
+      "expandByDefault": true,
+      "groupRowTemplate": "{{> groupRowTemplate}}",
+      "groupMemberRowsTemplate": "{{> groupMemberRowsTemplate}}",
+      "showGroupRowToggle": false,
+      "toggleGroupRowOnClick": true
+    }
+  }'
+  no-result-template="Nothing found"
+  column-configuration='[
+    {
+      "variableName": "reference",
+      "displayName": "ref",
+      "visible": false
+    },
+    {
+      "variableName": "scoreDisplay",
+      "displayName": "Score"
+    },
+    {
+      "variableName": "prefLabel",
+      "displayName": "Reference Record"
+    },
+    {
+      "variableName": "dataset",
+      "displayName": "Datasets"
+    },
+    {
+      "variableName": "typeClass",
+      "displayName": "Type"
+    },
+    {
+      "variableName": "description",
+      "displayName": "Description"
+    }
+  ]'
+>
+  <template id="groupRowTemplate">
+    <div class="group-row">
+      <div class="group-row-score">{{rows.0.scoreDisplay.value}}</div>
+      <div class="group-row-label">
+        <div class="group-row-label-text">{{rows.0.prefLabel.value}}</div>
+        <div class="group-row-reference-uri">
+          <span>URI: </span>{{rows.0.subject.value}}
+        </div>
+      </div>
+      <div class="group-row-datasets">
+        {{#each rows}}
+          <span class="rds-badge" data-ds="{{dataset.value}}">
+            <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+          </span>
+        {{/each}}
+      </div>
+      <div class="group-row-type">{{rows.0.typeClass.value}}</div>
+      <div class="group-row-description">{{rows.0.description.value}}</div>
+      <button type="button" class="rs-row-toggle group-row-toggle{{#if isExpanded}} is-expanded{{/if}}" aria-label="Toggle grouped records">
+        <span class="group-row-toggle-count">{{memberCount}}</span>
+        <img class="group-row-toggle-chevron" src="/assets/no-auth/chevron.svg" alt="" />
+      </button>
+    </div>
+  </template>
+
+  <template id="groupMemberRowsTemplate">
+    <div class="group-members">
+      <div class="group-members-summary">
+        <div class="group-members-count">{{memberCount}} equivalent records</div>
+        <div class="group-members-label">{{rows.0.prefLabel.value}}</div>
+      </div>
+      <div class="group-members-list">
+        {{#each rows}}
+          <div class="single-row">
+            <div class="single-row-dataset">
+              <span class="rds-badge" data-ds="{{dataset.value}}">
+                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+              </span>
+            </div>
+            <div class="single-row-field">
+              <div class="single-row-heading">Label</div>
+              <mp-event-trigger
+                type="Component.TemplateUpdate"
+                targets='["detail-panel"]'
+                data='{"subjectUri": "{{subject.value}}", "prefLabel": "{{prefLabel.value}}", "dataset": "{{dataset.value}}"}'>
+                <button class="single-row-link" type="button">{{prefLabel.value}}</button>
+              </mp-event-trigger>
+            </div>
+            <div class="single-row-field">
+              <div class="single-row-heading">URI</div>
+              <div>{{subject.value}}</div>
+            </div>
+            <div class="single-row-field">
+              <div class="single-row-heading">ID</div>
+              <div>{{recordId.value}}</div>
+            </div>
+            <div class="single-row-field">
+              <div class="single-row-heading">Source Type(s)</div>
+
+              {{#each (arraySplit types.value)}}
+                  <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+                {{/each}}
+            </div>
+            <div class="single-row-field single-row-description">
+              <div class="single-row-heading">Description</div>
+              <div>{{description.value}}</div>
+            </div>
+            <div class="single-row-related">
+              <semantic-query
+                query='SELECT DISTINCT ?related ?dataset ?datasetLabel ?label WHERE {
+                  VALUES (?related) {
+                    {{#each (arraySplit matches.value)}}
+                      (<{{this}}>)
+                    {{/each}}
+                  }
+
+                  ?related a ?type .
+
+                  [[> partial:valuesDatasetLabels]]
+
+                  FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                  OPTIONAL { ?related rds:label ?label }
+                }
+                LIMIT 12'
+                template="{{> relatedRecordsTemplate}}"
+              >
+                <template id="relatedRecordsTemplate">
+                  {{#if bindings}}
+                    <div class="related-records">
+                      <div class="single-row-heading">Related records</div>
+                      <div class="related-records-list">
+                        {{#each bindings}}
+                          <div class="related-record">
+                            <span class="rds-badge" data-ds="{{dataset.value}}">
+                              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                            </span>
+                            <span class="related-record-label">{{label.value}}</span>
+                            <span class="related-record-uri">{{related.value}}</span>
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </template>
+              </semantic-query>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  </template>
+</semantic-data-table>

@@ -359,7 +359,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 # --- Dynamic manifest generator
-async def get_manifest():
+async def get_manifest(request: Request):
 
     types = await get_type_classes()
 
@@ -367,8 +367,8 @@ async def get_manifest():
         types = [{"id": "Entity", "name": "All Entities"}]  
     types.sort(key=lambda t: t["name"])
 
-    base_url = app.state.reconciliation_base_url
-
+    base_url = str(request.base_url).rstrip("/")
+    
     return {
         "versions": ["0.2"],
         "name": "RDS Reconciliation Service",
@@ -459,7 +459,7 @@ async def root(request: Request):
 
     # GET without queries: MANIFEST
     if request.method == "GET" and "queries" not in request.query_params:
-        return JSONResponse(content=await get_manifest())
+        return JSONResponse(content=await get_manifest(request))
 
     # GET with queries: RECONCILIATION
     if request.method == "GET":
@@ -978,7 +978,6 @@ def main() -> None:
     parser.add_argument("--datasets", help="Comma-separated list of dataset names to include in search (must be defined in config)")
     parser.add_argument("--max-limit", type=int, default=DEFAULT_MAX_LIMIT, help="Maximum total result limit accepted from client requests")
     parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits; use 0 to disable shared-match grouping")
-    parser.add_argument("--reconciliation-base-url", help="Base URL for reconciliation service")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
@@ -996,7 +995,6 @@ def main() -> None:
     app.state.datasets = [dataset.strip() for dataset in args.datasets.split(",") if dataset.strip()] if args.datasets else None
     app.state.max_limit = args.max_limit
     app.state.min_shared_matches = args.min_shared_matches
-    app.state.reconciliation_base_url = args.reconciliation_base_url
     app.state.type_classes = asyncio.run(load_type_classes())  # Load type classes at startup
 
     # Load additional configuration from YAML file
