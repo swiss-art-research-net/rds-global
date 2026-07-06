@@ -367,7 +367,8 @@ async def get_manifest(request: Request):
         types = [{"id": "Entity", "name": "All Entities"}]  
     types.sort(key=lambda t: t["name"])
 
-    base_url = str(request.base_url).rstrip("/")
+    configured_base_url = getattr(app.state, "reconciliation_base_url", None)
+    base_url = configured_base_url.strip().rstrip("/") if configured_base_url else str(request.base_url).rstrip("/")
     
     return {
         "versions": ["0.2"],
