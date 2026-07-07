@@ -17,7 +17,7 @@
       "groupRowTemplate": "{{> groupRowTemplate}}",
       "groupMemberRowsTemplate": "{{> groupMemberRowsTemplate}}",
       "showGroupRowToggle": false,
-      "toggleGroupRowOnClick": true
+      "toggleGroupRowOnClick": false
     }
   }'
   no-result-template="Nothing found"
@@ -55,7 +55,10 @@
       <div class="group-row-label">
         <div class="group-row-label-text">{{rows.0.prefLabel.value}}</div>
         <div class="group-row-reference-uri">
-          <span>URI: </span>{{rows.0.subject.value}}
+          <span>URI: </span>
+          <rds-copy-value value="{{rows.0.subject.value}}">
+            {{rows.0.subject.value}}
+          </rds-copy-value>
         </div>
       </div>
       <div class="group-row-datasets">
@@ -115,7 +118,11 @@
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">URI</div>
-              <div>{{subject.value}}</div>
+              <div>
+                <rds-copy-value value="{{subject.value}}">
+                  {{subject.value}}
+                </rds-copy-value>
+              </div>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">ID</div>
@@ -163,7 +170,9 @@
                               </button>
                             </rds-copy-popover>
                             <span class="related-record-label">{{label.value}}</span>
-                            <span class="related-record-uri">{{related.value}}</span>
+                            <rds-copy-value class="related-record-uri" value="{{related.value}}">
+                              {{related.value}}
+                            </rds-copy-value>
                           </div>
                         {{/each}}
                       </rds-item-truncate>

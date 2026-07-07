@@ -280,7 +280,7 @@ rds-copy-popover {
   }
 
   &:hover,
-  &:focus {
+  &:focus-visible {
     background: @col-highlight-dark;
   }
 
@@ -303,6 +303,10 @@ rds-copy-popover {
       transform: rotate(-45deg);
     }
   }
+
+  &.suppress-copy-icon img {
+    opacity: 0;
+  }
 }
 
 .rds-copy-popover-status {
@@ -315,6 +319,93 @@ rds-copy-popover {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+rds-copy-value {
+  position: relative;
+  display: inline;
+
+  .rds-copy-value-text {
+    display: inline;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .rds-copy-value-actions {
+    position: relative;
+    top: -1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .rds-copy-value-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .rds-copy-value-copy-icon {
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+  }
+
+  .rds-copy-value-open {
+    display: inline-flex;
+    align-items: center;
+
+    img {
+      width: 11px;
+      height: 12px;
+    }
+  }
+
+  &:hover .rds-copy-value-text,
+  &:focus-within .rds-copy-value-text {
+    text-decoration: underline;
+  }
+
+  &:hover .rds-copy-value-actions,
+  &:focus-within .rds-copy-value-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.is-copied {
+    .rds-copy-value-copy-icon {
+      display: none;
+    }
+
+    .rds-copy-value-copy::after {
+      content: '';
+      width: 8px;
+      height: 5px;
+      margin: 0 2px 2px;
+      border-bottom: 2px solid @col-grey;
+      border-left: 2px solid @col-grey;
+      transform: rotate(-45deg);
+    }
+
+    .rds-copy-value-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
 }
 
 .rds-item-truncate-toggle {

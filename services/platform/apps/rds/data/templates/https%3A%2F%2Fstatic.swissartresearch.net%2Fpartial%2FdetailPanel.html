@@ -6,7 +6,7 @@
         <div class="detail-panel-section detail-panel-header">
           <div class="detail-panel-heading">
             <h3>{{prefLabel}}</h3>
-            <div class="detail-panel-uri"><span>URI: </span>{{subjectUri}}</div>
+            <div class="detail-panel-uri"><span>URI: </span><rds-copy-value value="{{subjectUri}}">{{subjectUri}}</rds-copy-value></div>
           </div>
           <mp-event-trigger
             type="Component.TemplateUpdate"
@@ -146,9 +146,9 @@
                 {{#if label.value}}
                   <div class="detail-related-label">{{label.value}}</div>
                 {{/if}}
-                <semantic-link class="detail-related-uri" iri="{{related.value}}" target="_blank">
+                <rds-copy-value class="detail-related-uri" value="{{related.value}}">
                   {{related.value}}
-                </semantic-link>
+                </rds-copy-value>
               </div>
             </div>
           {{/each}}

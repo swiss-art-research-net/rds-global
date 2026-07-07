@@ -73,8 +73,12 @@
 .page-resulttable .group-row-reference-uri {
   word-break: break-all;
 }
-.page-resulttable .group-row-reference-uri span {
+.page-resulttable .group-row-reference-uri > span {
+  margin-right: 0.25em;
   font-weight: 700;
+}
+.page-resulttable .group-row-reference-uri > div {
+  display: inline;
 }
 .page-resulttable .group-row-datasets {
   display: flex;

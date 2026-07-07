@@ -249,6 +249,23 @@ class RdsItemTruncate extends HTMLElement {
 
 customElements.define('rds-item-truncate', RdsItemTruncate);
 
+async function writeToClipboard(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+  } catch {
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    const copied = document.execCommand('copy');
+    textarea.remove();
+    if (!copied) throw new Error('Clipboard access was denied');
+  }
+}
+
 class RdsCopyPopover extends HTMLElement {
   static active = null;
 
@@ -383,7 +400,7 @@ class RdsCopyPopover extends HTMLElement {
     clearTimeout(this._closeTimer);
 
     try {
-      await this._writeToClipboard(value);
+      await writeToClipboard(value);
       this._resetActions();
       action.classList.add('is-copied');
       action.querySelector('span').textContent = 'copied';
@@ -394,27 +411,85 @@ class RdsCopyPopover extends HTMLElement {
       this._status.textContent = `Could not copy ${label}`;
     }
   }
-
-  async _writeToClipboard(value) {
-    try {
-      await navigator.clipboard.writeText(value);
-      return;
-    } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      const copied = document.execCommand('copy');
-      textarea.remove();
-      if (!copied) throw new Error('Clipboard access was denied');
-    }
-  }
 }
 
 customElements.define('rds-copy-popover', RdsCopyPopover);
+
+class RdsCopyValue extends HTMLElement {
+  connectedCallback() {
+    if (this._initialized) return;
+    this._initialized = true;
+
+    this._value = this.getAttribute('value');
+    if (!this._value) return;
+
+    const valueText = document.createElement('span');
+    valueText.className = 'rds-copy-value-text';
+    valueText.textContent = this.textContent.trim() || this._value;
+
+    const openLink = document.createElement('a');
+    openLink.className = 'rds-copy-value-open';
+    openLink.href = this._value;
+    openLink.target = '_blank';
+    openLink.rel = 'noopener noreferrer';
+    openLink.setAttribute('aria-label', `Open URI in a new tab: ${this._value}`);
+
+    const openIcon = document.createElement('img');
+    openIcon.src = '/assets/no-auth/arrow.svg';
+    openIcon.alt = '';
+    openLink.appendChild(openIcon);
+
+    const copyIcon = document.createElement('img');
+    copyIcon.className = 'rds-copy-value-copy-icon';
+    copyIcon.src = '/assets/no-auth/copy-icon.svg';
+    copyIcon.alt = '';
+
+    this._copyIconButton = document.createElement('button');
+    this._copyIconButton.type = 'button';
+    this._copyIconButton.className = 'rds-copy-value-copy';
+    this._copyIconButton.setAttribute('aria-label', `Copy URI ${this._value}`);
+    this._copyIconButton.appendChild(copyIcon);
+
+    const actions = document.createElement('span');
+    actions.className = 'rds-copy-value-actions';
+    actions.append(openLink, this._copyIconButton);
+
+    this.replaceChildren(valueText, actions);
+
+    this._copyIconButton.addEventListener('click', event => {
+      event.stopPropagation();
+      this._copy();
+    });
+
+    openLink.addEventListener('click', event => {
+      event.stopPropagation();
+    });
+  }
+
+  async _copy() {
+    clearTimeout(this._resetTimer);
+
+    try {
+      await writeToClipboard(this._value);
+      this.classList.add('is-copied');
+      this._copyIconButton.blur();
+      this._copyIconButton.setAttribute('aria-label', 'URI copied');
+      this._resetTimer = setTimeout(() => {
+        this.classList.remove('is-copied');
+        this._copyIconButton.setAttribute('aria-label', `Copy URI ${this._value}`);
+      }, 900);
+    } catch (error) {
+      console.error('Could not copy URI', error);
+      this._copyIconButton.setAttribute('aria-label', 'Could not copy URI');
+    }
+  }
+
+  disconnectedCallback() {
+    clearTimeout(this._resetTimer);
+  }
+}
+
+customElements.define('rds-copy-value', RdsCopyValue);
 
 document.addEventListener('click', event => {
   const active = RdsCopyPopover.active;

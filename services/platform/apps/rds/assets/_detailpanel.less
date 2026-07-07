@@ -17,7 +17,7 @@
   background: @col-bg;
 
   &:has(.detail-panel) {
-    width: min(40%, 520px);
+    width: 600px;
   }
 }
 
@@ -57,10 +57,16 @@
 }
 
 .detail-panel-uri {
+  display: inline;
   word-break: break-all;
 
-  span {
+  > span {
+    margin-right: 0.25em;
     font-weight: 700;
+  }
+
+  > div {
+    display: inline;
   }
 }
 
@@ -145,7 +151,6 @@
 .detail-related-uri {
   color: @col-black;
   word-break: break-all;
-  text-decoration: underline;
 }
 
 .detail-external-list {
