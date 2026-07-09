@@ -226,7 +226,7 @@ tasks:
   process-sameas-statements:
     desc: Process SameAs statements
     sources:
-      - /data/sameAsStatements/*.ttl
+      - /data/sameAsStatements/sources/*.ttl
     cmds:
       - mkdir -p /data/sameAsStatements/combined
       - rm -rf /pipeline/scripts/sameAsProcessing/processing_db
