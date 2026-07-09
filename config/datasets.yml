@@ -171,6 +171,58 @@ datasets:
         }
     wikidata_match_property: P227
 
+  grp:
+    name: GRP
+    description: Gta Research Portal
+    graph: https://data.gta.arch.ethz.ch/graph/
+    namespace: https://resource.gta.arch.ethz.ch/
+    prefixes:
+      aat: http://vocab.getty.edu/aat/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      type: https://data.gta.arch.ethz.ch/type/
+    source:
+      - endpoint: https://researchportal.gta.arch.ethz.ch/sparql
+        type: construct_query
+        page_size: 1000
+        query: |
+          CONSTRUCT {
+            ?s a ?type ;
+              rdfs:label ?label ;
+              crm:P1_is_identified_by ?identifier, ?primaryIdentifier ;
+              crmdig:L54_is_same-as ?sameas .
+            ?identifier crm:P2_has_type ?identifierType ;
+              crm:P190_has_symbolic_content ?identifierValue .
+          } WHERE {
+            VALUES (?type) { (crm:E21_Person) (crm:E74_Group) }
+            ?s a ?type ;
+              rdfs:label ?label ;
+              crm:P1_is_identified_by ?identifier, ?primaryIdentifier ;
+              crmdig:L54_is_same-as ?sameas .
+            ?identifier crm:P2_has_type ?identifierType ;
+              crm:P190_has_symbolic_content ?identifierValue .
+          }
+        process:
+          - gunzip   
+    types:
+      Group:
+        - crm:E74_Group
+      Person:
+        - crm:E21_Person
+    queries:
+      prefLabel: |
+        ?subject crm:P1_is_identified_by ?identifier .
+        ?identifier crm:P2_has_type aat:300404670 ;
+          crm:P190_has_symbolic_content ?value .
+      labels: |
+        ?subject rdfs:label ?label .
+      description: |
+        ?subject crm:P67i_is_referred_to_by ?statement .
+        ?statement crm:P2_has_type type:4149527 ;
+          crm:P190_has_symbolic_content ?value .
+      matches: |
+        ?subject crmdig:L54_is_same-as ?value .
+
   lcnaf:
     name: LCNAF
     description: Library of Congress Name Authority File
