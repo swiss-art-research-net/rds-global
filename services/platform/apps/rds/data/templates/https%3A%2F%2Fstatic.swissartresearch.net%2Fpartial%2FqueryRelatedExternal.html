@@ -1,0 +1,27 @@
+SELECT DISTINCT ?related ?dataset ?label ?external WHERE {
+  BIND(<{{subjectUri}}> AS ?subject)
+
+  GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+    ?subject rds:related ?related .
+  }
+
+  FILTER(?related != ?subject)
+  BIND(STR(?related) AS ?uri)
+
+  BIND(
+    IF(STRSTARTS(?uri, "http://vocab.getty.edu/aat/"), "aat",
+    IF(STRSTARTS(?uri, "https://resource.swissartresearch.net"), "bso",
+    IF(STRSTARTS(?uri, "https://sws.geonames.org/"), "geonames",
+    IF(STRSTARTS(?uri, "https://d-nb.info/gnd/"), "gnd",
+    IF(STRSTARTS(?uri, "https://recherche.sik-isea.ch/"), "sikart",
+    IF(STRSTARTS(?uri, "http://data.culture.fr/thesaurus/resource/ark:/67717/T96"), "thesarchesp",
+    IF(STRSTARTS(?uri, "http://data.culture.fr/thesaurus/resource/ark:/67717/T69"), "thesobjmob",
+    IF(STRSTARTS(?uri, "http://vocab.getty.edu/ulan/"), "ulan",
+    IF(STRSTARTS(?uri, "http://www.wikidata.org/entity/"), "wikidata",
+    "")))))))))
+    AS ?dataset)
+
+  OPTIONAL { GRAPH <http://schema.swissartresearch.net/rds/graph/labels> { ?related rds:label ?label } }
+
+  BIND(IF(?dataset = "", REPLACE(?uri, "^https?://([^/?#]+).*$", "$1"), "") AS ?external)
+}

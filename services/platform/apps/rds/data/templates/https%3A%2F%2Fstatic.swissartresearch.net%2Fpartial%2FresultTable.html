@@ -17,7 +17,7 @@
       "groupRowTemplate": "{{> groupRowTemplate}}",
       "groupMemberRowsTemplate": "{{> groupMemberRowsTemplate}}",
       "showGroupRowToggle": false,
-      "toggleGroupRowOnClick": true
+      "toggleGroupRowOnClick": false
     }
   }'
   no-result-template="Nothing found"
@@ -55,14 +55,19 @@
       <div class="group-row-label">
         <div class="group-row-label-text">{{rows.0.prefLabel.value}}</div>
         <div class="group-row-reference-uri">
-          <span>URI: </span>{{rows.0.subject.value}}
+          <span>URI: </span>
+          <rds-copy-value value="{{rows.0.subject.value}}">
+            {{rows.0.subject.value}}
+          </rds-copy-value>
         </div>
       </div>
       <div class="group-row-datasets">
         {{#each rows}}
-          <span class="rds-badge" data-ds="{{dataset.value}}">
-            <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-          </span>
+          <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
+            <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+            </button>
+          </rds-copy-popover>
         {{/each}}
       </div>
       <div class="group-row-type">{{rows.0.typeClass.value}}</div>
@@ -84,22 +89,40 @@
         {{#each rows}}
           <div class="single-row">
             <div class="single-row-dataset">
-              <span class="rds-badge" data-ds="{{dataset.value}}">
-                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-              </span>
+              <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
+                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                </button>
+              </rds-copy-popover>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Label</div>
               <mp-event-trigger
                 type="Component.TemplateUpdate"
                 targets='["detail-panel"]'
-                data='{"subjectUri": "{{subject.value}}", "prefLabel": "{{prefLabel.value}}", "dataset": "{{dataset.value}}"}'>
-                <button class="single-row-link" type="button">{{prefLabel.value}}</button>
+                data='{
+                  "subjectUri": "{{subject.value}}", 
+                  "recordId": "{{recordId.value}}",
+                  "prefLabel": "{{prefLabel.value}}", 
+                  "dataset": "{{dataset.value}}", 
+                  "rdsType": "{{typeClass.value}}", 
+                  "matches": [{{#each (arraySplit matches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}], 
+                  "sourceTypes": [{{#each (arraySplit types.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]}'
+              >
+                <rds-record-select
+                  class="single-row-link"
+                  aria-label="Open details for {{prefLabel.value}}"
+                >{{prefLabel.value}}
+                </rds-record-select>
               </mp-event-trigger>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">URI</div>
-              <div>{{subject.value}}</div>
+              <div>
+                <rds-copy-value value="{{subject.value}}">
+                  {{subject.value}}
+                </rds-copy-value>
+              </div>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">ID</div>
@@ -107,8 +130,7 @@
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Source Type(s)</div>
-
-              {{#each (arraySplit types.value)}}
+                {{#each (arraySplit types.value)}}
                   <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
                 {{/each}}
             </div>
@@ -139,17 +161,21 @@
                   {{#if bindings}}
                     <div class="related-records">
                       <div class="single-row-heading">Related records</div>
-                      <div class="related-records-list">
+                      <rds-item-truncate class="related-records-list" limit="3">
                         {{#each bindings}}
                           <div class="related-record">
-                            <span class="rds-badge" data-ds="{{dataset.value}}">
-                              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                            </span>
+                            <rds-copy-popover uri="{{related.value}}">
+                              <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                              </button>
+                            </rds-copy-popover>
                             <span class="related-record-label">{{label.value}}</span>
-                            <span class="related-record-uri">{{related.value}}</span>
+                            <rds-copy-value class="related-record-uri" value="{{related.value}}">
+                              {{related.value}}
+                            </rds-copy-value>
                           </div>
                         {{/each}}
-                      </div>
+                      </rds-item-truncate>
                     </div>
                   {{/if}}
                 </template>

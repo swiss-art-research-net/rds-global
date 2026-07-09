@@ -3,6 +3,7 @@
 
 @import '_tokens.less';
 @import '_header.less';
+@import '_detailpanel.less';
 
 body {
   font-family: @font-body;
@@ -14,6 +15,7 @@ body {
 .rs-application {
   max-width: 100vw;
   overflow-x: hidden;
+  overscroll-behavior: none;
 }
 
 .page {
@@ -38,14 +40,13 @@ ol.page-breadcrumb {
 
 .filter-search-bar {
   display: flex;
-  gap: 1rem;
+  gap: 4rem;
   margin-bottom: 2.5rem;
 }
 
 .filter-container {
   display: flex;
   gap: 2rem;
-  align-items: center;
   flex: 1;
 }
 
@@ -172,27 +173,292 @@ rds-filter-selection {
   }
 }
 
+rds-copy-popover {
+  position: relative;
+  display: inline-flex;
+
+  > .rds-badge {
+    background: transparent;
+    color: @col-black;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+
+    &:hover,
+    &[aria-expanded='true'] {
+      background-color: @col-black;
+      color: @col-bg;
+    }
+  }
+
+}
+
+.rds-copy-popover {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 12px);
+  left: 0;
+  display: grid;
+  width: max-content;
+  min-width: 320px;
+  max-width: min(480px, calc(100vw - 32px));
+  border: 1px solid @col-black;
+  background: @col-highlight;
+  box-shadow: 4px 4px 0px 0px #00000012;
+  box-sizing: border-box;
+
+  &[hidden] {
+    display: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 14px;
+    z-index: 0;
+    width: 16px;
+    height: 16px;
+    border-right: 1px solid @col-black;
+    border-bottom: 1px solid @col-black;
+    background: @col-highlight;
+    transform: translateY(-8px) rotate(45deg);
+  }
+}
+
+.rds-copy-popover--left {
+  position: fixed;
+  z-index: 1070;
+  right: auto;
+  bottom: auto;
+
+  &::after {
+    top: 50%;
+    left: 100%;
+    border: 0;
+    border-top: 1px solid @col-black;
+    border-right: 1px solid @col-black;
+    transform: translate(-8px, -50%) rotate(45deg);
+  }
+}
+
+.rds-copy-popover-action {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 14px 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px dotted @col-black;
+  background: transparent;
+  color: @col-black;
+  font-family: @font-data;
+  font-size: 16px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+
+  &:last-of-type {
+    border-bottom: 0;
+  }
+
+  img {
+    width: 12px;
+    height: 12px;
+    margin-top: 4px;
+  }
+
+  span {
+    overflow-wrap: anywhere;
+    font-family: @font-body;
+  }
+
+  strong {
+    color: @col-grey;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: @col-highlight-dark;
+  }
+
+  &.is-copied {
+    background: #86f39634;
+
+    img {
+      display: none;
+    }
+
+    &::before {
+      content: '';
+      justify-self: center;
+      align-self: center;
+      width: 8px;
+      height: 5px;
+      margin-top: -2px;
+      border-bottom: 2px solid @col-black;
+      border-left: 2px solid @col-black;
+      transform: rotate(-45deg);
+    }
+  }
+
+  &.suppress-copy-icon img {
+    opacity: 0;
+  }
+}
+
+.rds-copy-popover-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+rds-copy-value {
+  position: relative;
+  display: inline;
+
+  .rds-copy-value-text {
+    display: inline;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .rds-copy-value-actions {
+    position: relative;
+    top: -1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .rds-copy-value-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .rds-copy-value-copy-icon {
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+  }
+
+  .rds-copy-value-open {
+    display: inline-flex;
+    align-items: center;
+
+    img {
+      width: 11px;
+      height: 12px;
+    }
+  }
+
+  &:hover .rds-copy-value-text,
+  &:focus-within .rds-copy-value-text {
+    text-decoration: underline;
+  }
+
+  &:hover .rds-copy-value-actions,
+  &:focus-within .rds-copy-value-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.is-copied {
+    .rds-copy-value-copy-icon {
+      display: none;
+    }
+
+    .rds-copy-value-copy::after {
+      content: '';
+      width: 8px;
+      height: 5px;
+      margin: 0 2px 2px;
+      border-bottom: 2px solid @col-grey;
+      border-left: 2px solid @col-grey;
+      transform: rotate(-45deg);
+    }
+
+    .rds-copy-value-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+.rds-item-truncate-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  margin-top: 1rem;
+  border: 0;
+  background: none;
+  color: @col-black;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    width:17px;
+    height: 10px;
+    background: url('/assets/no-auth/chevron.svg') center / contain no-repeat;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &.is-expanded::before {
+    transform: rotate(180deg);
+  }
+}
+
 /* results table */
 
 .main-panel {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: flex-start;
   margin-top: 2.5rem;
 }
 
 .facets-col {
-  flex: 0 0 48px;
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
-}
-
-.facets-col:has(.show-facet-button__hide) {
-  flex-basis: auto;
-  width: auto;
   min-width: 0;
 }
 
+.facets-col:has(.show-facet-button__hide) {
+  width: auto;
+}
+
 .results-col {
-  flex: 2;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
 }
 
@@ -278,66 +544,6 @@ td[role="cell"]:empty {
     transform: rotate(135deg);
     margin-right: -5px;
   }
-}
-
-/* detail panel */
-
-.detail-col {
-  flex: 0 0 0;
-  overflow: hidden;
-
-  &:has(.detail-panel) {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.detail-panel {
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-}
-
-.detail-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0.25rem;
-
-  h3 {
-    margin: 0;
-  }
-}
-
-.detail-close {
-  border: 0;
-  background: none;
-  cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 0 0 0.5rem;
-  color: #666;
-
-  &:hover {
-    color: #0a0a0a;
-  }
-}
-
-.detail-row {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.detail-property {
-  color: #666;
-  flex: 0 0 40%;
-  word-break: break-all;
-}
-
-.detail-value {
-  flex: 1;
-  word-break: break-all;
 }
 
 .record-label {

@@ -1,0 +1,172 @@
+<mp-event-target-template-render id="detail-panel" template="{{> detail-panel-template}}">
+  <template id="detail-panel-template">
+    {{#if subjectUri}}
+      <div class="detail-panel">
+
+        <div class="detail-panel-section detail-panel-header">
+          <div class="detail-panel-heading">
+            <h3>{{prefLabel}}</h3>
+            <div class="detail-panel-uri"><span>URI: </span><rds-copy-value value="{{subjectUri}}">{{subjectUri}}</rds-copy-value></div>
+          </div>
+          <mp-event-trigger
+            type="Component.TemplateUpdate"
+            targets='["detail-panel"]'
+            data='{}'>
+            <rds-record-deselect class="detail-close">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="currentColor"/>
+              </svg>
+            </rds-record-deselect>
+          </mp-event-trigger>
+        </div>
+
+        <div class="detail-panel-content">
+
+          <div class="detail-panel-section">
+            <div class="detail-row">
+              <span class="detail-property">Dataset</span>
+              <span class="detail-value">
+                <rds-copy-popover uri="{{subjectUri}}" record-id="{{recordId}}" placement="left">
+                  <button type="button" class="rds-badge" data-ds="{{dataset}}">{{dataset}}</button>
+                </rds-copy-popover>
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-property">RDS type</span>
+              <span class="detail-value">{{rdsType}}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-property">Source type(s)</span>
+              <span class="detail-value">
+                {{#each sourceTypes}}
+                  <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+                {{/each}}
+              </span>
+            </div>
+          </div>
+
+          {{#ifCond dataset "==" "gnd"}}
+            <semantic-query query='[[> partial:queryGnd]]' template="{{> detail-fields}}" no-result-template="">
+              [[> detailFieldsTemplate]]
+            </semantic-query>
+          {{/ifCond}}
+
+          {{#if matches}}
+            <semantic-query
+              query='SELECT DISTINCT ?related ?dataset ?label WHERE {
+                VALUES (?related) {
+                  {{#each matches}}
+                    (<{{this}}>)
+                  {{/each}}
+                }
+
+                ?related a ?type .
+
+                [[> partial:valuesDatasetLabels]]
+
+                FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                OPTIONAL { ?related rds:label ?label }
+              }'
+              template="{{> related-records}}"
+              no-result-template=""
+            >
+              [[> relatedRecordsTemplate]]
+            </semantic-query>
+          {{/if}}
+
+          <semantic-query
+            query='SELECT DISTINCT ?related ?external WHERE {
+              BIND(<{{subjectUri}}> AS ?subject)
+
+              GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+                ?subject rds:related ?related .
+              }
+
+              FILTER(?related != ?subject)
+
+              FILTER NOT EXISTS {
+                [[> partial:valuesDatasetLabels]]
+                FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+              }
+
+              BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
+            }'
+            template="{{> external-links}}"
+            no-result-template=""
+          >
+            [[> externalLinksTemplate]]
+          </semantic-query>
+        </div>
+
+        <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
+          Open full record
+        </semantic-link>
+      </div>
+    {{/if}}
+  </template>
+</mp-event-target-template-render>
+
+[[#*inline "detailFieldsTemplate"]]
+  <template id="detail-fields">
+    {{#if bindings}}
+      <div class="detail-panel-section">
+        <div class="detail-section-title">Details</div>
+        {{#each bindings}}
+          <div class="detail-row">
+            <span class="detail-property">{{field.value}}</span>
+            <mp-text-truncate 
+              class="detail-value"
+              lines=3 
+              expand='<div class="detail-value-expand"> ...<a>show more</a></div>' 
+              collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
+            >
+              {{value.value}}
+            </mp-text-truncate>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}}
+  </template>
+[[/inline]]
+
+[[#*inline "relatedRecordsTemplate"]]
+  <template id="related-records">
+    {{#if bindings}}
+      <div class="detail-panel-section detail-section--related">
+        <div class="detail-section-title">Related records</div>
+        <rds-item-truncate class="detail-related-list" limit="3">
+          {{#each bindings}}
+            <div class="detail-row detail-related-record">
+              <rds-copy-popover uri="{{related.value}}">
+                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                </button>
+              </rds-copy-popover>
+              <div class="detail-related-content">
+                {{#if label.value}}
+                  <div class="detail-related-label">{{label.value}}</div>
+                {{/if}}
+                <rds-copy-value class="detail-related-uri" value="{{related.value}}">
+                  {{related.value}}
+                </rds-copy-value>
+              </div>
+            </div>
+          {{/each}}
+        </rds-item-truncate>
+      </div>
+    {{/if}}
+  </template>
+[[/inline]]
+
+[[#*inline "externalLinksTemplate"]]
+  <template id="external-links">
+    {{#if bindings}}
+      <div class="detail-panel-section detail-section--external">
+        <div class="detail-section-title">External links</div>
+        <rds-item-truncate class="detail-external-list" limit="8">
+          {{#each bindings}}<span class="detail-external-item"><a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a></span>{{/each}}
+        </rds-item-truncate>
+      </div>
+    {{/if}}
+  </template>
+[[/inline]]

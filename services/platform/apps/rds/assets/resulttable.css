@@ -46,14 +46,14 @@
   justify-self: end;
   align-self: end;
   display: inline-flex;
-  gap: 2px;
+  gap: 4px;
   border: none;
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
 }
 .page-resulttable .group-row-toggle-chevron {
-  width: 18px;
+  width: 24px;
   height: auto;
   transition: transform 0.2s ease;
   margin-top: 8px;
@@ -73,8 +73,12 @@
 .page-resulttable .group-row-reference-uri {
   word-break: break-all;
 }
-.page-resulttable .group-row-reference-uri span {
+.page-resulttable .group-row-reference-uri > span {
+  margin-right: 0.25em;
   font-weight: 700;
+}
+.page-resulttable .group-row-reference-uri > div {
+  display: inline;
 }
 .page-resulttable .group-row-datasets {
   display: flex;
@@ -129,6 +133,12 @@
 .page-resulttable .single-row + .single-row {
   border-top: 1px solid #000000;
 }
+.page-resulttable .single-row.is-selected {
+  background: #DEE7ED;
+  transform: translate(-8px, -8px);
+  border: 1px solid;
+  box-shadow: 4px 4px 0px 0px #00000012;
+}
 .page-resulttable .single-row-field,
 .page-resulttable .single-row-dataset,
 .page-resulttable .single-row-description {
@@ -148,7 +158,8 @@
   text-transform: uppercase;
 }
 .page-resulttable .single-row-link {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
   margin: 0;
   padding: 0;
   border: 0;
@@ -158,11 +169,27 @@
   line-height: inherit;
   text-align: left;
   text-decoration: underline;
+  cursor: pointer;
+}
+.page-resulttable .single-row-link::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 16px;
+  height: 10px;
+  margin-left: 5px;
+  background: url('/assets/no-auth/detail-arrow.svg') center / contain no-repeat;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 .page-resulttable .single-row-link:hover,
 .page-resulttable .single-row-link:focus {
   color: #000000;
-  text-decoration: underline;
+}
+.page-resulttable .single-row-link:hover::after,
+.page-resulttable .single-row-link:focus::after {
+  opacity: 1;
+  transform: translateX(0);
 }
 .page-resulttable .single-row-type-list {
   min-width: 0;
@@ -184,10 +211,14 @@
   row-gap: 8px;
   align-items: baseline;
 }
+.page-resulttable .related-records-list > .rds-item-truncate-toggle {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
 .page-resulttable .related-record {
   display: contents;
 }
-.page-resulttable .related-record > .rds-badge {
+.page-resulttable .related-record > rds-copy-popover {
   justify-self: start;
 }
 .page-resulttable .related-record-label,

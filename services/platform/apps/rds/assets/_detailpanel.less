@@ -1,0 +1,188 @@
+// main: styles.less
+
+.detail-col {
+  grid-column: 2;
+  grid-row: 1;
+  position: fixed;
+  top: 82px;
+  justify-self: end;
+  align-self: start;
+  z-index: 2;
+  width: 0;
+  max-height: calc(100vh - 102px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid @col-black;
+  background: @col-bg;
+
+  &:has(.detail-panel) {
+    width: 600px;
+  }
+}
+
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+.detail-panel-header {
+  display: flex;
+  justify-content: space-between;
+  background: @col-bg;
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-size: @font-size-large;
+    font-weight: 400;
+  }
+}
+
+.detail-panel-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: none;
+}
+
+.detail-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-panel-uri {
+  display: inline;
+  word-break: break-all;
+
+  > span {
+    margin-right: 0.25em;
+    font-weight: 700;
+  }
+
+  > div {
+    display: inline;
+  }
+}
+
+.detail-close {
+  cursor: pointer;
+}
+
+.detail-panel-section {
+  padding: 20px;
+  border-bottom: 1px solid @col-black;
+
+  &:last-of-type {
+    border: none;
+  }
+}
+
+.detail-section-title {
+  font-family: 'Geist Mono', 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px dotted @col-black;
+
+  &:last-of-type {
+    border: none;
+    padding-bottom: 0;
+  }
+}
+
+.detail-property {
+  flex: 0 0 40%;
+  word-break: break-all;
+}
+
+.detail-value {
+  flex: 1;
+  word-break: break-all;
+}
+
+.detail-value-expand,
+.detail-value-collapse {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.detail-inline-list {
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.detail-related-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-related-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: start;
+
+  .rds-badge {
+    justify-self: start;
+  }
+}
+
+.detail-related-content {
+  min-width: 0;
+}
+
+.detail-related-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.detail-related-uri {
+  color: @col-black;
+  word-break: break-all;
+}
+
+.detail-external-list {
+  line-height: 1.5;
+  margin-top: 0.4rem;
+}
+
+.detail-external-name {
+  color: @col-black;
+  min-width: 0;
+  word-break: break-word;
+  text-decoration: underline;
+}
+
+.detail-external-item + .detail-external-item::before {
+  content: ", ";
+}
+
+.detail-resource-link {
+  display: block;
+  width: 100%;
+  padding: 1.4rem 20px;
+  border-top: 1px solid @col-black;
+  color: @col-black;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: @col-black;
+    color: @col-bg;
+  }
+}

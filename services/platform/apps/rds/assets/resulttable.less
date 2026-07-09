@@ -67,7 +67,7 @@
     justify-self: end;
     align-self: end;
     display: inline-flex;
-    gap: 2px;
+    gap: 4px;
     border: none;
     font-size: @font-size-large;
     line-height: 1;
@@ -75,7 +75,7 @@
   }
 
   .group-row-toggle-chevron {
-    width: 18px;
+    width: 24px;
     height: auto;
     transition: transform 0.2s ease;
     margin-top: 8px;
@@ -98,8 +98,14 @@
 
   .group-row-reference-uri {
     word-break: break-all;
-    span {
+
+    > span {
+      margin-right: 0.25em;
       font-weight: 700;
+    }
+
+    > div {
+      display: inline;
     }
   }
 
@@ -169,6 +175,13 @@
     border-top: 1px solid @col-black;
   }
 
+  .single-row.is-selected {
+    background: @col-highlight-dark;
+    transform: translate(-8px, -8px);
+    border: 1px solid;
+    box-shadow: 4px 4px 0px 0px #00000012;
+  }
+
   .single-row-field,
   .single-row-dataset,
   .single-row-description {
@@ -181,7 +194,6 @@
     min-width: 100px;
   }
 
-
   .single-row-heading {
     margin-bottom: 8px;
     color: @col-grey;
@@ -192,7 +204,8 @@
   }
 
   .single-row-link {
-    display: inline;
+    display: inline-flex;
+    align-items: center;
     margin: 0;
     padding: 0;
     border: 0;
@@ -202,12 +215,31 @@
     line-height: inherit;
     text-align: left;
     text-decoration: underline;
+    cursor: pointer;
+
+    &::after {
+      content: '';
+      flex: 0 0 auto;
+      width: 16px;
+      height: 10px;
+      margin-left: 5px;
+      background: url('/assets/no-auth/detail-arrow.svg') center / contain no-repeat;
+      opacity: 0;
+      transform: translateX(-3px);
+      transition:
+        opacity 0.2s ease-in-out,
+        transform 0.2s ease-in-out;
+    }
   }
 
   .single-row-link:hover,
   .single-row-link:focus {
     color: @col-black;
-    text-decoration: underline;
+
+    &::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .single-row-type-list {
@@ -234,11 +266,16 @@
     align-items: baseline;
   }
 
+  .related-records-list > .rds-item-truncate-toggle {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
   .related-record {
     display: contents;
   }
 
-  .related-record > .rds-badge {
+  .related-record > rds-copy-popover {
     justify-self: start;
   }
 
