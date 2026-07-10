@@ -243,10 +243,13 @@ datasets:
     queries:
       description: |
         ?subject skos:note ?value .
+        FILTER(isiri(?subject))
       prefLabel: |
         ?subject skos:prefLabel ?value .
+        FILTER(isiri(?subject))
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
+        FILTER(isiri(?subject))
       matches: |
         ?subject skos:exactMatch ?value .
     wikidata_match_property: P244
