@@ -191,13 +191,14 @@ datasets:
       aat: http://vocab.getty.edu/aat/
       crmdig: http://www.ics.forth.gr/isl/CRMdig/
       crm: http://www.cidoc-crm.org/cidoc-crm/
+      grp: https://ontology.gta.arch.ethz.ch/
       rdfs: http://www.w3.org/2000/01/rdf-schema#
       type: https://data.gta.arch.ethz.ch/type/
     types:
       Group:
-        - crm:E74_Group
+        - grp:Group
       Person:
-        - crm:E21_Person
+        - grp:Person
     queries:
       prefLabel: |
         ?subject crm:P1_is_identified_by ?identifier .
