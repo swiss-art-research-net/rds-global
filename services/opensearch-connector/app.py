@@ -497,7 +497,7 @@ async def root(request: Request):
 async def _reconcile_single(q: Dict[str, Any]):
 
     query_string = (q.get("query") or "").strip()
-    limit = q.get("limit", 5)
+    limit = int(q.get("limit", 5))
 
     entity_type = q.get("type")
     if isinstance(entity_type, list):
