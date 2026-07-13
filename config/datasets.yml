@@ -174,36 +174,25 @@ datasets:
   grp:
     name: GRP
     description: Gta Research Portal
-    graph: https://data.gta.arch.ethz.ch/graph/
+    source:
+      - type: http_file
+        url: https://github.com/user-attachments/files/29960050/person_dump.nt.gz
+        file_format: nt
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/user-attachments/files/29960049/group_dump.nt.gz
+        file_format: nt
+        process:
+          - gunzip
+    graph: https://data.gta.arch.ethz.ch/graph
     namespace: https://resource.gta.arch.ethz.ch/
     prefixes:
       aat: http://vocab.getty.edu/aat/
       crmdig: http://www.ics.forth.gr/isl/CRMdig/
       crm: http://www.cidoc-crm.org/cidoc-crm/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
       type: https://data.gta.arch.ethz.ch/type/
-    source:
-      - endpoint: https://researchportal.gta.arch.ethz.ch/sparql
-        type: construct_query
-        page_size: 1000
-        query: |
-          CONSTRUCT {
-            ?s a ?type ;
-              rdfs:label ?label ;
-              crm:P1_is_identified_by ?identifier, ?primaryIdentifier ;
-              crmdig:L54_is_same-as ?sameas .
-            ?identifier crm:P2_has_type ?identifierType ;
-              crm:P190_has_symbolic_content ?identifierValue .
-          } WHERE {
-            VALUES (?type) { (crm:E21_Person) (crm:E74_Group) }
-            ?s a ?type ;
-              rdfs:label ?label ;
-              crm:P1_is_identified_by ?identifier, ?primaryIdentifier ;
-              crmdig:L54_is_same-as ?sameas .
-            ?identifier crm:P2_has_type ?identifierType ;
-              crm:P190_has_symbolic_content ?identifierValue .
-          }
-        process:
-          - gunzip   
     types:
       Group:
         - crm:E74_Group
