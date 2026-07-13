@@ -46,7 +46,7 @@
           </div>
 
           {{#ifCond dataset "==" "gnd"}}
-            <semantic-query query='[[> partial:queryGnd]]' template="{{> detail-fields}}" no-result-template="">
+            <semantic-query query='[[> partial:queryGnd subject="{{subjectUri}}"]]' template="{{> detail-fields}}" no-result-template="">
               [[> detailFieldsTemplate]]
             </semantic-query>
           {{/ifCond}}

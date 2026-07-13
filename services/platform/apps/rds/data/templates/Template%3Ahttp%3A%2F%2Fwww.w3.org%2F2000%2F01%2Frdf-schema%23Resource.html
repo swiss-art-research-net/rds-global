@@ -8,37 +8,32 @@
   </li>
 </ol>
 --]]
-<style>
-  #tabs .tab-ontodia {
-    margin: 0px;
-    padding: 2px 0px 0px;
-    width: 100%;
-    height: calc(100vh - 300px);
-  }
-</style>
 
-<div class="page__section-container">
+<div>
 	[[#if (ask "ASK { {SELECT * WHERE {?? ?p ?o}LIMIT 1}UNION {SELECT * WHERE {?s ?? ?o}LIMIT 1}UNION {SELECT * WHERE {?s ?p ??}LIMIT 1}UNION{ {SELECT * WHERE {?a ?p ?o. FILTER(??=<Template:http://www.w3.org/2000/01/rdf-schema#Resource> )} LIMIT 1} } }")]]
     <div>
       [[> Platform:DefaultResourceHeader]]
     </div>
-    <bs-tabs id="tabs" unmount-on-exit=true>
-      <bs-tab event-key="0" class="tab-ontodia" title="Knowledge Graph">
-        <ontodia id='ontodia' 
-            hide-toolbar=true 
-            hide-panels=true 
-            hide-scroll-bars=true 
-            hide-navigation-confirmation=true 
-            auto-zoom=true 
-            settings=nostats 
-            iri='[[this]]' 
-            provider-settings='{"filterTypePattern": "?inst a ?instType. ?instType rdfs:subClassOf ?class"}'
-        ></ontodia>
-      </bs-tab>
-      <bs-tab event-key="1" title="Source">
-        [[> Platform:SourceStatements]]
-      </bs-tab>
-    </bs-tabs>
+    <div class="resource-layout">
+      <main class="resource-main">
+        <bs-tabs id="tabs" unmount-on-exit=true>
+          <bs-tab event-key="0" title="Overview">
+            [[> tab-overview]]
+          </bs-tab>
+          <bs-tab event-key="1" class="tab-ontodia" title="Knowledge Graph">
+            [[> tab-knowledge-graph]]
+          </bs-tab>
+          <bs-tab event-key="2" title="Statements">
+            [[> tab-statements]]
+          </bs-tab>
+        </bs-tabs>
+      </main>
+
+      <aside class="resource-panel">
+        [[> query-related-records]]
+        [[> query-external-links]]
+      </aside>
+    </div>
   [[else]]
   <div class='page__body'>
     <p>
@@ -50,3 +45,143 @@
   </div>
   [[/if]]
 </div>
+
+[[#*inline "tab-overview"]]
+  <div class="detail-panel-section">
+    <div class="detail-row">
+      <span class="detail-property">URI</span>
+      <span class="detail-value">
+        <rds-copy-value value="[[this]]">[[this]]</rds-copy-value>
+      </span>
+    </div>
+  </div>
+
+  <semantic-query
+    query='[[> partial:queryGnd subject=this]]'
+    template="{{> overview-fields}}"
+    no-result-template=""
+  >
+    <template id="overview-fields">
+      {{#if bindings}}
+        <div class="detail-panel-section">
+          <div class="detail-section-title">Details</div>
+          {{#each bindings}}
+            <div class="detail-row">
+              <span class="detail-property">{{field.value}}</span>
+              <mp-text-truncate
+                class="detail-value"
+                lines=3
+                expand='<div class="detail-value-expand"> ...<a>show more</a></div>'
+                collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
+              >
+                {{value.value}}
+              </mp-text-truncate>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
+    </template>
+  </semantic-query>
+[[/inline]]
+
+[[#*inline "tab-knowledge-graph"]]
+  <ontodia id='ontodia'
+    hide-toolbar=true
+    hide-panels=true
+    hide-scroll-bars=true
+    hide-navigation-confirmation=true
+    auto-zoom=true
+    settings=nostats
+    iri='[[this]]'
+    provider-settings='{"filterTypePattern": "?inst a ?instType. ?instType rdfs:subClassOf ?class"}'
+  ></ontodia>
+[[/inline]]
+
+[[#*inline "tab-statements"]]
+  [[> Platform:SourceStatements]]
+[[/inline]]
+
+[[#*inline "query-related-records"]]
+  <semantic-query
+    query='SELECT DISTINCT ?related ?dataset ?label WHERE {
+      BIND(?? AS ?subject)
+
+      GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+        ?subject rds:related ?related .
+      }
+
+      FILTER(?related != ?subject)
+      ?related a ?type .
+
+      [[> partial:valuesDatasetLabels]]
+
+      FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+      OPTIONAL { ?related rds:label ?label }
+    }
+    ORDER BY ?dataset ?label
+    LIMIT 12'
+    template="{{> related-records}}"
+    no-result-template=""
+  >
+    <template id="related-records">
+      {{#if bindings}}
+        <div class="detail-panel-section detail-section--related">
+          <div class="detail-section-title">Related records</div>
+          <rds-item-truncate class="detail-related-list" limit="3">
+            {{#each bindings}}
+              <div class="detail-row detail-related-record">
+                <rds-copy-popover uri="{{related.value}}">
+                  <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                    <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                  </button>
+                </rds-copy-popover>
+                <div class="detail-related-content">
+                  {{#if label.value}}
+                    <div class="detail-related-label">{{label.value}}</div>
+                  {{/if}}
+                  <rds-copy-value class="detail-related-uri" value="{{related.value}}">
+                    {{related.value}}
+                  </rds-copy-value>
+                </div>
+              </div>
+            {{/each}}
+          </rds-item-truncate>
+        </div>
+      {{/if}}
+    </template>
+  </semantic-query>
+[[/inline]]
+
+[[#*inline "query-external-links"]]
+  <semantic-query
+    query='SELECT DISTINCT ?related ?external WHERE {
+      BIND(?? AS ?subject)
+
+      GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
+        ?subject rds:related ?related .
+      }
+
+      FILTER(?related != ?subject)
+
+      FILTER NOT EXISTS {
+        [[> partial:valuesDatasetLabels]]
+        FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+      }
+
+      BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
+    }'
+    template="{{> external-links}}"
+    no-result-template=""
+  >
+    <template id="external-links">
+      {{#if bindings}}
+        <div class="detail-panel-section detail-section--external">
+          <div class="detail-section-title">External links</div>
+          <rds-item-truncate class="detail-external-list" limit="8">
+            {{#each bindings}}<span class="detail-external-item"><a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a></span>{{/each}}
+          </rds-item-truncate>
+        </div>
+      {{/if}}
+    </template>
+  </semantic-query>
+[[/inline]]

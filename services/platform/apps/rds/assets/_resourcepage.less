@@ -1,0 +1,24 @@
+// main: styles.less
+
+.resource-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) @detail-panel-width;
+  gap: 32px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+.resource-main {
+  min-width: 0;
+}
+
+.resource-panel {
+  min-width: 0;
+}
+
+#tabs .tab-ontodia {
+  margin: 0;
+  padding: 2px 0 0;
+  width: 100%;
+  height: calc(100vh - 300px);
+}

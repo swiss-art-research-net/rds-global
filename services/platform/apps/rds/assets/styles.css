@@ -214,6 +214,25 @@
   background-color: #000000;
   color: #F9FAFB;
 }
+.resource-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 600px;
+  gap: 32px;
+  align-items: start;
+  margin-top: 24px;
+}
+.resource-main {
+  min-width: 0;
+}
+.resource-panel {
+  min-width: 0;
+}
+#tabs .tab-ontodia {
+  margin: 0;
+  padding: 2px 0 0;
+  width: 100%;
+  height: calc(100vh - 300px);
+}
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
   font-size: 16px;
