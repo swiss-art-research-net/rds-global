@@ -138,9 +138,20 @@ When querying the `opensearch` repository through `SERVICE`, use the dedicated s
 - `os:searchDataset` to restrict the search to one or more datasets as a comma-separated string, for example `"gnd"` or `"aat,gnd"`
 - `os:searchTypeClass` to restrict the search to one or more type classes as a comma-separated string, for example `"Person"` or `"Person,Group"`
 - `os:searchLimit` to control the total number of results requested from the connector
-- `os:hasTypeClass` to filter by type class
+- `os:searchTypeClass` to filter by type class
 
 Note that the outer SPARQL `LIMIT` is not passed through to the OpenSearch. If you need to control how many results the connector fetches, use `os:searchLimit` explicitly.
+
+The available predicates for the output are:
+- `os:hasDataset` for the dataset
+- `os:hasDescription` for the description
+- `os:hasLocalMatches` for the local matches (the matches that are defined in the dataset of the result)
+- `os:hasMatches` for all the matches
+- `os:hasPrefLabel` for the preferred label
+- `os:hasReference` for the reference id (shared by all equivalent entities)
+- `os:hasScore` for the score (shared by all equivalent entities)
+- `os:hasSubject` for the subject (the URI of the entity)
+- `os:hasTypeClass` for the type class
 
 Example:
 
