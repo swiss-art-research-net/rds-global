@@ -165,7 +165,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     type_constraint_block = _build_type_constraint_block(dataset_config.get("types", []))
 
     queries = dataset_config.get("queries", {})
-    missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
+    missing = [k for k in ("prefLabel", "labels", "description", "matches") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
