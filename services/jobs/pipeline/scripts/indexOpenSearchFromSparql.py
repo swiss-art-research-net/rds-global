@@ -63,6 +63,7 @@ SELECT
   (GROUP_CONCAT(DISTINCT STR(?prefLabel); SEPARATOR="||") AS ?prefLabels)
   (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="||") AS ?labels)
   (GROUP_CONCAT(DISTINCT STR(?description_raw); SEPARATOR=" ") AS ?description)
+  (GROUP_CONCAT(DISTINCT STR(?localMatch); SEPARATOR="||") AS ?localMatches)
 WHERE {{
     VALUES ?subject {{
         {subject_values}
@@ -90,6 +91,12 @@ WHERE {{
     OPTIONAL {{
         GRAPH <{dataset_graph}> {{
             {labels_block}
+        }}
+    }}
+
+    OPTIONAL {{
+        GRAPH <{dataset_graph}> {{
+            {local_matches_block}
         }}
     }}
 }}
@@ -158,13 +165,14 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     type_constraint_block = _build_type_constraint_block(dataset_config.get("types", []))
 
     queries = dataset_config.get("queries", {})
-    missing = [k for k in ("prefLabel", "labels", "description") if not queries.get(k)]
+    missing = [k for k in ("prefLabel", "labels", "description", "matches") if not queries.get(k)]
     if missing:
         raise ValueError(f"Dataset queries missing required parts: {', '.join(missing)}")
 
     pref_label_block = f"?subject <{RDS_ONTOLOGY_NAMESPACE}label> ?prefLabel ."
     labels_block = queries["labels"].replace("?value", "?label")
     description_block = queries["description"].replace("?value", "?description_raw")
+    local_matches_block = queries["matches"].replace("?value", "?localMatch")
     types_graph = RDS_GRAPH_NAMESPACE + "types"
     labels_graph = RDS_GRAPH_NAMESPACE + "labels"
 
@@ -177,6 +185,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
         "pref_label_block": pref_label_block,
         "labels_block": labels_block,
         "description_block": description_block,
+        "local_matches_block": local_matches_block,
     }
 
 def build_count_query(dataset_config: Dict[str, Any]) -> str:
@@ -281,11 +290,13 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         type_classes_concat = _get_binding_value(b, "typeClasses") or ""
         labels_concat = _get_binding_value(b, "labels") or ""
         description = _get_binding_value(b, "description")
+        local_matches_concat = _get_binding_value(b, "localMatches") or ""
 
         types = [t for t in types_concat.split("||") if t] if types_concat else []
         type_classes = [tc for tc in type_classes_concat.split("||") if tc] if type_classes_concat else []
         labels = [l for l in labels_concat.split("||") if l] if labels_concat else []
         pref_labels = [pl for pl in pref_labels_concat.split("||") if pl] if pref_labels_concat else []
+        local_matches = [m for m in local_matches_concat.split("||") if m] if local_matches_concat else []
 
         if not subject:
             continue
@@ -299,6 +310,7 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "typeClasses": type_classes,
                 "description": description,
                 "matches": [],
+                "localMatches": local_matches,
                 "numMatches": 0,
             }
         )
@@ -379,9 +391,6 @@ def make_os_client(
     )
 
 def ensure_index(os_client: OpenSearch, index_name: str) -> None:
-    if os_client.indices.exists(index=index_name):
-        return
-
     body = {
         "settings": {
             "index": {
@@ -400,12 +409,18 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
                 "types": {"type": "keyword"},
                 "typeClasses": {"type": "keyword"},
                 "matches": {"type": "keyword"},
+                "localMatches": {"type": "keyword"},
                 "dataset": {"type": "keyword"},
                 "description": {"type": "text"},
                 "numMatches": {"type": "integer"},
             }
         },
     }
+
+    if os_client.indices.exists(index=index_name):
+        os_client.indices.put_mapping(index=index_name, body=body["mappings"])
+        return
+
     os_client.indices.create(index=index_name, body=body)
 
 def iter_bulk_actions(index_name: str, rows: Iterable[Dict[str, Any]]) -> Iterable[Dict[str, Any]]:
