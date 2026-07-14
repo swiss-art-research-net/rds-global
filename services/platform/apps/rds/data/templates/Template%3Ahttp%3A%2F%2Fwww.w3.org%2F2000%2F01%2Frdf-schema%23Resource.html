@@ -9,31 +9,31 @@
 </ol>
 --]]
 
-<div>
-	[[#if (ask "ASK { {SELECT * WHERE {?? ?p ?o}LIMIT 1}UNION {SELECT * WHERE {?s ?? ?o}LIMIT 1}UNION {SELECT * WHERE {?s ?p ??}LIMIT 1}UNION{ {SELECT * WHERE {?a ?p ?o. FILTER(??=<Template:http://www.w3.org/2000/01/rdf-schema#Resource> )} LIMIT 1} } }")]]
+<div class="rds-resource-page">
+	[[#if (ask "ASK { { ?? ?p ?o . } UNION { ?s ?? ?o . } UNION { ?s ?p ?? . } UNION { FILTER(?? = <Template:http://www.w3.org/2000/01/rdf-schema#Resource>) } }")]]
     <div>
-      [[> Platform:DefaultResourceHeader]]
+      [[> resource-header]]
     </div>
-    <div class="resource-layout">
-      <main class="resource-main">
-        <bs-tabs id="tabs" unmount-on-exit=true>
-          <bs-tab event-key="0" title="Overview">
+    <bs-tabs id="tabs" unmount-on-exit=true>
+      <bs-tab event-key="0" title="Overview">
+        <div class="resource-layout">
+          <main class="resource-main">
             [[> tab-overview]]
-          </bs-tab>
-          <bs-tab event-key="1" class="tab-ontodia" title="Knowledge Graph">
-            [[> tab-knowledge-graph]]
-          </bs-tab>
-          <bs-tab event-key="2" title="Statements">
-            [[> tab-statements]]
-          </bs-tab>
-        </bs-tabs>
-      </main>
+          </main>
 
-      <aside class="resource-panel">
-        [[> query-related-records]]
-        [[> query-external-links]]
-      </aside>
-    </div>
+          <aside class="resource-panel">
+            [[> query-related-records]]
+            [[> query-external-links]]
+          </aside>
+        </div>
+      </bs-tab>
+      <bs-tab event-key="1" class="tab-ontodia" title="Knowledge Graph">
+        [[> tab-knowledge-graph]]
+      </bs-tab>
+      <bs-tab event-key="2" title="Statements">
+        [[> tab-statements]]
+      </bs-tab>
+    </bs-tabs>
   [[else]]
   <div class='page__body'>
     <p>
@@ -46,16 +46,81 @@
   [[/if]]
 </div>
 
-[[#*inline "tab-overview"]]
-  <div class="detail-panel-section">
-    <div class="detail-row">
-      <span class="detail-property">URI</span>
-      <span class="detail-value">
+[[#*inline "resource-header"]]
+  <div class="rds-resource-header">
+    <div class="rds-resource-header-top">
+      <div class="rds-resource-title-row">
+        <h1><mp-label iri="[[this]]"></mp-label></h1>
+        <semantic-query
+          query='SELECT ?dataset WHERE {
+            BIND(?? AS ?subject)
+            [[> partial:valuesDatasetLabels]]
+            FILTER(STRSTARTS(STR(?subject), ?datasetPrefix))
+          }
+          LIMIT 1'
+          template="{{> dataset-badge}}"
+          no-result-template=""
+        >
+          <template id="dataset-badge">
+            {{#each bindings}}
+              <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+              </button>
+            {{/each}}
+          </template>
+        </semantic-query>
+      </div>
+    </div>
+    <div class="rds-resource-meta">
+      <span class="rds-resource-meta-key">URI:</span>
+      <span class="rds-resource-meta-value">
         <rds-copy-value value="[[this]]">[[this]]</rds-copy-value>
       </span>
     </div>
+    <semantic-query
+      query='SELECT DISTINCT ?rdsType WHERE {
+        ?? a ?rdsType .
+        FILTER(STRSTARTS(STR(?rdsType), "http://schema.swissartresearch.net/ontology/rds#"))
+      }
+      LIMIT 1'
+      template="{{> rds-type}}"
+      no-result-template=""
+    >
+      <template id="rds-type">
+        {{#each bindings}}
+          <div class="rds-resource-meta">
+            <span class="rds-resource-meta-key">RDS type:</span>
+            <span class="rds-resource-meta-value"><mp-label iri="{{rdsType.value}}"></mp-label></span>
+          </div>
+        {{/each}}
+      </template>
+    </semantic-query>
+    <semantic-query
+      query='SELECT DISTINCT ?sourceType WHERE {
+        ?? a ?sourceType .
+      }
+      ORDER BY ?sourceType
+      LIMIT 12'
+      template="{{> source-types}}"
+      no-result-template=""
+    >
+      <template id="source-types">
+        {{#if bindings}}
+          <div class="rds-resource-meta">
+            <span class="rds-resource-meta-key">Source type(s):</span>
+            <span class="rds-resource-meta-value">
+            {{#each bindings}}
+              <span><mp-label iri="{{sourceType.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+            {{/each}}
+            </span>
+          </div>
+        {{/if}}
+      </template>
+    </semantic-query>
   </div>
+[[/inline]]
 
+[[#*inline "tab-overview"]]
   <semantic-query
     query='[[> partial:queryGnd subject=this]]'
     template="{{> overview-fields}}"
@@ -64,7 +129,6 @@
     <template id="overview-fields">
       {{#if bindings}}
         <div class="detail-panel-section">
-          <div class="detail-section-title">Details</div>
           {{#each bindings}}
             <div class="detail-row">
               <span class="detail-property">{{field.value}}</span>
@@ -98,7 +162,9 @@
 [[/inline]]
 
 [[#*inline "tab-statements"]]
-  [[> Platform:SourceStatements]]
+  <div class="statements">
+      [[> Platform:SourceStatements]]
+  </div>
 [[/inline]]
 
 [[#*inline "query-related-records"]]

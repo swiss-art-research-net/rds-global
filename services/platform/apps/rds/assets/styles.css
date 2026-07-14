@@ -214,24 +214,99 @@
   background-color: #000000;
   color: #F9FAFB;
 }
+.rds-resource-page {
+  width: 100%;
+  padding: 32px 20px ;
+}
+.rds-resource-header {
+  padding-bottom: 32px;
+}
+.rds-resource-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.rds-resource-title-row h1 {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1;
+}
+.rds-resource-title-row h1 span {
+  display: block;
+  margin-top: -10px;
+}
+.rds-resource-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+  align-items: baseline;
+}
+.rds-resource-meta-key {
+  white-space: nowrap;
+  font-weight: bold;
+}
+.rds-resource-meta-value {
+  min-width: 0;
+  word-break: break-word;
+}
 .resource-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 600px;
-  gap: 32px;
-  align-items: start;
-  margin-top: 24px;
+  grid-template-columns: 2fr 1fr;
 }
 .resource-main {
   min-width: 0;
+  border-right: 1px solid #000000;
 }
 .resource-panel {
   min-width: 0;
+}
+.rds-resource-page .tab-content {
+  border: 1px solid #000000;
+}
+.rds-resource-page .tab-pane {
+  padding: 0;
+}
+.rds-resource-page #tabs > .nav-tabs {
+  margin: 0;
+}
+.rds-resource-page #tabs > .nav-tabs > li > a {
+  color: #5F5F5F;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.rds-resource-page #tabs > .nav-tabs > li.active,
+.rds-resource-page #tabs > .nav-tabs > li.active:hover,
+.rds-resource-page #tabs > .nav-tabs > li.active:focus,
+.rds-resource-page #tabs > .nav-tabs > li:hover {
+  box-shadow: none;
+}
+.rds-resource-page #tabs > .nav-tabs > li.active > a,
+.rds-resource-page #tabs > .nav-tabs > li.active > a:hover,
+.rds-resource-page #tabs > .nav-tabs > li.active > a:focus,
+.rds-resource-page #tabs > .nav-tabs > li > a:hover {
+  border: 0;
+  color: #000000;
+  background: transparent;
+  box-shadow: none;
 }
 #tabs .tab-ontodia {
   margin: 0;
   padding: 2px 0 0;
   width: 100%;
   height: calc(100vh - 300px);
+}
+.rds-resource-page .statements {
+  padding: 0 20px 20px;
+  text-decoration: none;
+}
+.rds-resource-page .statements .filter-container {
+  gap: 0;
 }
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
@@ -247,6 +322,15 @@ body {
 .page {
   padding: 20px;
   padding-top: 40px;
+}
+.component-page-toolbar {
+  display: none;
+}
+.modal-backdrop {
+  background-color: #F9FAFB;
+}
+.modal-backdrop.in {
+  opacity: 1;
 }
 .eyebrow-label {
   text-transform: uppercase;
@@ -468,7 +552,7 @@ rds-copy-popover > .rds-badge[aria-expanded='true'] {
   color: #5F5F5F;
 }
 .rds-copy-popover-action:hover,
-.rds-copy-popover-action:focus {
+.rds-copy-popover-action:focus-visible {
   background: #DEE7ED;
 }
 .rds-copy-popover-action.is-copied {
@@ -487,6 +571,9 @@ rds-copy-popover > .rds-badge[aria-expanded='true'] {
   border-bottom: 2px solid #000000;
   border-left: 2px solid #000000;
   transform: rotate(-45deg);
+}
+.rds-copy-popover-action.suppress-copy-icon img {
+  opacity: 0;
 }
 .rds-copy-popover-status {
   position: absolute;
