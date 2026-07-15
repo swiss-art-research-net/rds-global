@@ -43,6 +43,7 @@ Example request:
 """
 
 import argparse
+import asyncio
 import os
 import json
 from typing import Any, Dict, Optional, List
@@ -363,13 +364,12 @@ async def get_manifest(request: Request):
     types = await get_type_classes()
 
     if not types:
-        types = [{"id": "Entity", "name": "All Entities"}]
+        types = [{"id": "Entity", "name": "All Entities"}]  
+    types.sort(key=lambda t: t["name"])
 
-    dataset_property = get_dataset_properties()
-    base_url = str(request.base_url).rstrip("/")
-    root_path = (request.scope.get("root_path") or "").rstrip("/")
-    service_path = f"{root_path}/" if root_path else "/"
-
+    configured_base_url = getattr(app.state, "reconciliation_base_url", None)
+    base_url = configured_base_url.strip().rstrip("/") if configured_base_url else str(request.base_url).rstrip("/")
+    
     return {
         "versions": ["0.2"],
         "name": "RDS Reconciliation Service",
@@ -377,22 +377,27 @@ async def get_manifest(request: Request):
         "schemaSpace": "http://schema.swissartresearch.net/ontology/rds#",
 
         "defaultTypes": types,
-
-        "view": {"url": "{{id}}"},
-
         "preview": {
-            "url": f"{base_url}/preview?id={{{{id}}}}"
+            "url": f"{base_url}/preview?id={{{{id}}}}",
+            "width": 400,
+            "height": 250
         },
 
         "suggest": {
-            "entity": {"service_path": "/suggest/entity"},
-            "type": {"service_path": "/suggest/type"},
-            "property": {"service_path": "/suggest/property"}
+            "entity": {
+                "service_url": base_url,
+                "service_path": "/suggest/entity"
+            },
+            "type": {
+                "service_url": base_url,
+                "service_path": "/suggest/type"
+            },
+            "property": {
+                "service_url": base_url,
+                "service_path": "/suggest/property"
+            }
         },
 
-        "properties": [dataset_property],
-
-        "service_path": service_path
     }
 
 
@@ -410,11 +415,14 @@ def get_dataset_properties():
     }
 
 async def get_type_classes():
+    return getattr(app.state, "type_classes", [])
+
+async def load_type_classes():
 
     endpoint = app.state.opensearch_url
     index = app.state.opensearch_index
 
-    url = endpoint.rstrip("/") + f"/{index}/_search"
+    url = f"{endpoint.rstrip('/')}/{index}/_search"
 
     body = {
         "size": 0,
@@ -422,7 +430,7 @@ async def get_type_classes():
             "types": {
                 "terms": {
                     "field": "typeClasses",
-                    "size": 50
+                    "size": 1000
                 }
             }
         }
@@ -434,11 +442,18 @@ async def get_type_classes():
         data = r.json()
 
     buckets = data.get("aggregations", {}).get("types", {}).get("buckets", [])
+    
+    return sorted(
+        [
+            {
+                "id": bucket["key"],
+                "name": bucket["key"]
+            }
+            for bucket in buckets
+        ],
+        key=lambda t: t["name"]
+    )
 
-    return [
-        {"id": b["key"], "name": b["key"]}
-        for b in buckets
-    ]
 
 @app.api_route("/", methods=["GET", "POST"])
 async def root(request: Request):
@@ -482,7 +497,7 @@ async def root(request: Request):
 async def _reconcile_single(q: Dict[str, Any]):
 
     query_string = (q.get("query") or "").strip()
-    limit = q.get("limit", 5)
+    limit = int(q.get("limit", 5))
 
     entity_type = q.get("type")
     if isinstance(entity_type, list):
@@ -517,8 +532,12 @@ async def _reconcile_single(q: Dict[str, Any]):
 
     # only consider matches with score >= 90% of the top hit's score.
     # For very small absolute scores avoid treating them as matches.
-    top_score = float(hits[0].get("_score", 0.0))
-    threshold = top_score * 0.9
+    top_score = float(hits[0]["_score"])
+
+    threshold = max(
+        top_score * 0.9,
+        10.0
+    )
 
     results = []
 
@@ -565,7 +584,10 @@ async def _reconcile_single(q: Dict[str, Any]):
             "name": label,
             "type": types,
             "score": score,
-            "match": score >= threshold
+            "match": (
+                score >= threshold
+                and score > 0
+            )
         }
 
         if description:
@@ -744,9 +766,11 @@ async def suggest_entity(prefix: str = "", limit: int = 5):
 
 
 @app.get("/suggest/type")
-async def suggest_type(prefix: str = Query(""), limit: int = 5):
+async def suggest_type(prefix: str = Query("")): # no limit as they are a few, return all matching types
 
     types = await get_type_classes()
+    types.sort(key=lambda t: t["name"])
+    
     prefix_lower = prefix.lower()
 
     results = [
@@ -754,13 +778,13 @@ async def suggest_type(prefix: str = Query(""), limit: int = 5):
         if prefix_lower in t["name"].lower()
     ]
 
-    return {"result": results[:limit]}
+    return {"result": results}
 
 
 
 
 @app.get("/suggest/property")
-async def suggest_property(prefix: str = Query(""), limit: int = 5):
+async def suggest_property(prefix: str = Query("")): # no limit as only one, return all matching properties
 
     properties = [
         {
@@ -777,7 +801,7 @@ async def suggest_property(prefix: str = Query(""), limit: int = 5):
         if prefix_lower in p["name"].lower()
     ]
 
-    return {"result": results[:limit]}
+    return {"result": results}
 
 @app.get("/healthz")
 def healthz() -> Dict[str, str]:
@@ -957,6 +981,7 @@ def main() -> None:
     parser.add_argument("--min-shared-matches", type=int, default=1, help="Minimum number of shared match URIs required to group entity hits; use 0 to disable shared-match grouping")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--reconciliation-base-url", default=None, help="Base URL for reconciliation service. If not provided, it will be inferred from the request.")
     args = parser.parse_args()
 
     if args.max_limit < 1:
@@ -972,6 +997,8 @@ def main() -> None:
     app.state.datasets = [dataset.strip() for dataset in args.datasets.split(",") if dataset.strip()] if args.datasets else None
     app.state.max_limit = args.max_limit
     app.state.min_shared_matches = args.min_shared_matches
+    app.state.type_classes = asyncio.run(load_type_classes())  # Load type classes at startup
+    app.state.reconciliation_base_url = args.reconciliation_base_url
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:

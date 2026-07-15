@@ -171,6 +171,80 @@ datasets:
         }
     wikidata_match_property: P227
 
+  grp:
+    name: GRP
+    description: Gta Research Portal
+    source:
+      - type: http_file
+        url: https://github.com/user-attachments/files/29960050/person_dump.nt.gz
+        file_format: nt
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/user-attachments/files/29960049/group_dump.nt.gz
+        file_format: nt
+        process:
+          - gunzip
+    graph: https://data.gta.arch.ethz.ch/graph
+    namespace: https://resource.gta.arch.ethz.ch/
+    prefixes:
+      aat: http://vocab.getty.edu/aat/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      grp: https://ontology.gta.arch.ethz.ch/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      type: https://data.gta.arch.ethz.ch/type/
+    types:
+      Group:
+        - grp:Group
+      Person:
+        - grp:Person
+    queries:
+      prefLabel: |
+        ?subject crm:P1_is_identified_by ?identifier .
+        ?identifier crm:P2_has_type aat:300404670 ;
+          crm:P190_has_symbolic_content ?value .
+      labels: |
+        ?subject rdfs:label ?label .
+      description: |
+        ?subject crm:P67i_is_referred_to_by ?statement .
+        ?statement crm:P2_has_type type:4149527 ;
+          crm:P190_has_symbolic_content ?value .
+      matches: |
+        ?subject crmdig:L54_is_same-as ?value .
+
+  lcnaf:
+    name: LCNAF
+    description: Library of Congress Name Authority File
+    source:
+      - type: http_file
+        url: https://id.loc.gov/download/authorities/names.skosrdf.ttl.gz
+        file_format: ttl
+        process:
+          - gunzip
+    file_format: ttl
+    graph: http://id.loc.gov/authorities/names/graph
+    namespace: http://id.loc.gov/authorities/names/
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      Person:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:note ?value .
+        FILTER(isiri(?subject))
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+        FILTER(isiri(?subject))
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+        FILTER(isiri(?subject))
+      matches: |
+        ?subject skos:exactMatch ?value .
+    wikidata_match_property: P244
+
+
   sikart:
     name: SIKART
     source:
@@ -293,19 +367,27 @@ datasets:
     name: Wikidata
     source:
       - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.1/artists.ttl.gz
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/artists.ttl.gz
         process:
           - gunzip
       - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.1/aatTerms.ttl.gz
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/aatTerms.ttl.gz
         process:
           - gunzip
       - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.1/gndTerms.ttl.gz
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/geonamesPlaces.ttl.gz
         process:
           - gunzip
       - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.1/ulanPersons.ttl.gz
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/gndTerms.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/lcnafPersons.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/ulanPersons.ttl.gz
         process:
           - gunzip
     graph: http://www.wikidata.org/graph

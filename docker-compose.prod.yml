@@ -9,6 +9,8 @@ services:
       LETSENCRYPT_HOST: ${RECONCILE_HOST_NAME}
       VIRTUAL_HOST: ${RECONCILE_HOST_NAME}
       VIRTUAL_PORT: 8000
+      X_FRAME_OPTIONS: "off"
+    command: ["--opensearch-url", "http://opensearch-node:9200", "--index", "rds-entities", "--port", "8000", "--config", "/config/datasets.yml", "--datasets", "${DATASETS}", "--reconciliation-base-url", "https://${RECONCILE_HOST_NAME}"]
     networks:
       - internal
       - proxy
