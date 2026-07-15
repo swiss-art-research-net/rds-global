@@ -48,31 +48,14 @@ tasks:
     vars:
       OUTPUT_FILE:
         sh: echo "{{.DATASET}}SameAs.ttl"
-      GRAPH:
-        sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
-      PREFIXES:
-        sh: |
-          yq -r '.datasets.{{.DATASET}}.prefixes | to_entries[] | "PREFIX \(.key): <\(.value)>"' '{{.DATASETS_CONFIG_YML}}'
-      QUERYPART:
-        sh: yq -r ".datasets.{{.DATASET}}.queries.matches" "{{.DATASETS_CONFIG_YML}}"
-      QUERY:
-        sh: |
-          echo "{{.PREFIXES}}
-                PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                CONSTRUCT {
-                  ?subject owl:sameAs ?value .
-                } WHERE {
-                  GRAPH <{{.GRAPH}}> {
-                    {{.QUERYPART}}
-                  }
-                }"
     cmds:
-      - '{{if eq .QUERYPART "null"}}echo "Matches query is not set for dataset {{.DATASET}}" >&2; exit 1{{end}}'
-      - task: _fetch-sameas-statements-local
-        vars:
-          DATASET: "{{.DATASET}}"
-          OUTPUT_FILE: "{{.OUTPUT_FILE}}"
-          QUERY: "{{.QUERY}}"
+      - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
+      - |
+        python scripts/fetchSameAsStatements.py \
+          --dataset "{{.DATASET}}" \
+          --config "{{.DATASETS_CONFIG_YML}}" \
+          --endpoint "{{.QLEVER_ENDPOINT}}" \
+          --output-file "{{.DIRECTORY_SAMEAS_STATEMENTS}}/{{.OUTPUT_FILE}}"
           
 
   _fetch-sameas-statements-local:
