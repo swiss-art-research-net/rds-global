@@ -48,24 +48,6 @@ tasks:
     vars:
       OUTPUT_FILE:
         sh: echo "{{.DATASET}}SameAs.ttl"
-      GRAPH:
-        sh: yq -r ".datasets.{{.DATASET}}.graph" "{{.DATASETS_CONFIG_YML}}"
-      PREFIXES:
-        sh: |
-          yq -r '.datasets.{{.DATASET}}.prefixes | to_entries[] | "PREFIX \(.key): <\(.value)>"' '{{.DATASETS_CONFIG_YML}}'
-      QUERYPART:
-        sh: yq -r ".datasets.{{.DATASET}}.queries.matches" "{{.DATASETS_CONFIG_YML}}"
-      QUERY:
-        sh: |
-          echo "{{.PREFIXES}}
-                PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                CONSTRUCT {
-                  ?subject owl:sameAs ?value .
-                } WHERE {
-                  GRAPH <{{.GRAPH}}> {
-                    {{.QUERYPART}}
-                  }
-                }"
     cmds:
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
       - |
