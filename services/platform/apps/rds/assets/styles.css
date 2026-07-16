@@ -308,6 +308,15 @@
 .rds-resource-page .statements .filter-container {
   gap: 0;
 }
+.page.page-resulttable {
+  padding-top: 0;
+}
+.rds-intro-strap {
+  margin: 0 0 40px;
+  padding: 14px 0;
+  border-bottom: 1px solid #000000;
+  font-size: 18px;
+}
 .rds-intro {
   margin-top: 4rem;
 }
@@ -383,7 +392,7 @@ html.rds-search-restoring .rds-intro {
 rds-dataset-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 56px;
+  column-gap: 4rem;
   border-top: 1px solid #000000;
 }
 .rds-intro-dataset {
