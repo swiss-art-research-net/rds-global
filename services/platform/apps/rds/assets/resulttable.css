@@ -184,10 +184,15 @@
 .page-resulttable .single-row + .single-row {
   border-top: 1px solid #000000;
 }
+.page-resulttable .single-row + .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
+.page-resulttable .single-row + .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed),
+.page-resulttable .single-row + .single-row.is-selected {
+  border-top-color: transparent;
+}
 .page-resulttable .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
 .page-resulttable .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed),
 .page-resulttable .single-row.is-selected {
-  border: 1px solid;
+  outline: 1px solid #000000;
   box-shadow: 4px 4px 0px 0px #00000012;
 }
 .page-resulttable .single-row:hover:not(.is-selected):not(.is-hover-suppressed),

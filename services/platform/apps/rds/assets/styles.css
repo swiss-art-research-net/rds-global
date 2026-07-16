@@ -144,6 +144,9 @@
 .detail-panel-section:last-of-type {
   border: none;
 }
+.detail-panel-summary .detail-row:first-child {
+  padding-top: 0;
+}
 .detail-section-title {
   font-family: 'Geist Mono', 'Courier New', monospace;
   font-size: 16px;
@@ -163,6 +166,7 @@
 }
 .detail-property {
   flex: 0 0 40%;
+  color: #5F5F5F;
   word-break: break-all;
 }
 .detail-value {
@@ -536,9 +540,12 @@ ol.page-breadcrumb {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  display: flex;
+  display: none;
   align-items: center;
   cursor: pointer;
+}
+.keyword-search .input-wrap:has(input:not(:placeholder-shown)) .search-reset {
+  display: flex;
 }
 .keyword-search .keyword-search-search-input {
   background-color: transparent;
@@ -599,8 +606,8 @@ rds-filter-selection {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 3.6px 6px;
+  gap: 6px;
+  padding: 3.6px 8px;
   border: 1px solid #000000;
   border-radius: 28px;
   font-family: 'Geist Mono', 'Courier New', monospace;
@@ -620,6 +627,9 @@ rds-filter-selection {
   font: inherit;
   line-height: 1;
   cursor: pointer;
+}
+.rds-badge rds-nav-link button svg {
+  display: block;
 }
 rds-copy-popover {
   position: relative;

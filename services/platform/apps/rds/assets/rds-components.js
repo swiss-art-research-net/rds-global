@@ -211,7 +211,10 @@ class RdsFilterSelection extends HTMLElement {
     const button = document.createElement('button');
     button.type = 'button';
     button.setAttribute('aria-label', `Remove ${label}`);
-    button.textContent = 'x';
+    button.innerHTML = `
+      <svg width="10" height="10" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="currentColor"/>
+      </svg>`;
     link.appendChild(button);
     badge.appendChild(link);
 
@@ -512,22 +515,12 @@ class RdsCopyValue extends HTMLElement {
 
     this._value = this.getAttribute('value');
     if (!this._value) return;
+    this._copyLabel = this.getAttribute('copy-label') || 'URI';
+    const copyOnly = this.hasAttribute('copy-only');
 
     const valueText = document.createElement('span');
     valueText.className = 'rds-copy-value-text';
     valueText.textContent = this.textContent.trim() || this._value;
-
-    const openLink = document.createElement('a');
-    openLink.className = 'rds-copy-value-open';
-    openLink.href = this._value;
-    openLink.target = '_blank';
-    openLink.rel = 'noopener noreferrer';
-    openLink.setAttribute('aria-label', `Open URI in a new tab: ${this._value}`);
-
-    const openIcon = document.createElement('img');
-    openIcon.src = '/assets/no-auth/arrow.svg';
-    openIcon.alt = '';
-    openLink.appendChild(openIcon);
 
     const copyIcon = document.createElement('img');
     copyIcon.className = 'rds-copy-value-copy-icon';
@@ -537,12 +530,30 @@ class RdsCopyValue extends HTMLElement {
     this._copyIconButton = document.createElement('button');
     this._copyIconButton.type = 'button';
     this._copyIconButton.className = 'rds-copy-value-copy';
-    this._copyIconButton.setAttribute('aria-label', `Copy URI ${this._value}`);
+    this._copyIconButton.setAttribute('aria-label', `Copy ${this._copyLabel} ${this._value}`);
     this._copyIconButton.appendChild(copyIcon);
 
     const actions = document.createElement('span');
     actions.className = 'rds-copy-value-actions';
-    actions.append(openLink, this._copyIconButton);
+    if (!copyOnly) {
+      const openLink = document.createElement('a');
+      openLink.className = 'rds-copy-value-open';
+      openLink.href = this._value;
+      openLink.target = '_blank';
+      openLink.rel = 'noopener noreferrer';
+      openLink.setAttribute('aria-label', `Open URI in a new tab: ${this._value}`);
+
+      const openIcon = document.createElement('img');
+      openIcon.src = '/assets/no-auth/arrow.svg';
+      openIcon.alt = '';
+      openLink.appendChild(openIcon);
+      openLink.addEventListener('click', event => {
+        event.stopPropagation();
+        openLink.blur();
+      });
+      actions.appendChild(openLink);
+    }
+    actions.appendChild(this._copyIconButton);
 
     this.replaceChildren(valueText, actions);
 
@@ -551,9 +562,6 @@ class RdsCopyValue extends HTMLElement {
       this._copy();
     });
 
-    openLink.addEventListener('click', event => {
-      event.stopPropagation();
-    });
   }
 
   async _copy() {
@@ -563,14 +571,14 @@ class RdsCopyValue extends HTMLElement {
       await writeToClipboard(this._value);
       this.classList.add('is-copied');
       this._copyIconButton.blur();
-      this._copyIconButton.setAttribute('aria-label', 'URI copied');
+      this._copyIconButton.setAttribute('aria-label', `${this._copyLabel} copied`);
       this._resetTimer = setTimeout(() => {
         this.classList.remove('is-copied');
-        this._copyIconButton.setAttribute('aria-label', `Copy URI ${this._value}`);
+        this._copyIconButton.setAttribute('aria-label', `Copy ${this._copyLabel} ${this._value}`);
       }, 900);
     } catch (error) {
-      console.error('Could not copy URI', error);
-      this._copyIconButton.setAttribute('aria-label', 'Could not copy URI');
+      console.error(`Could not copy ${this._copyLabel}`, error);
+      this._copyIconButton.setAttribute('aria-label', `Could not copy ${this._copyLabel}`);
     }
   }
 

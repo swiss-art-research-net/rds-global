@@ -108,9 +108,13 @@ ol.page-breadcrumb {
       right: 12px;
       top: 50%;
       transform: translateY(-50%);
-      display: flex;
+      display: none;
       align-items: center;
       cursor: pointer;
+    }
+
+    &:has(input:not(:placeholder-shown)) .search-reset {
+      display: flex;
     }
   }
 
@@ -185,8 +189,8 @@ rds-filter-selection {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 3.6px 6px;
+  gap: 6px;
+  padding: 3.6px 8px;
   border: 1px solid @col-black;
   border-radius: 28px;
   font-family: @font-data;
@@ -206,6 +210,10 @@ rds-filter-selection {
       font: inherit;
       line-height: 1;
       cursor: pointer;
+
+      svg {
+        display: block;
+      }
     }
   }
 }
