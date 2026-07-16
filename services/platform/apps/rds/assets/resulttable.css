@@ -25,6 +25,55 @@
 .page-resulttable .semantic-data-table tbody {
   border-bottom: 1px solid #000000;
 }
+.page-resulttable .semantic-data-table-widget-holder > nav {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination {
+  display: flex;
+  margin: 0;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination > li > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 30px;
+  margin-left: 0;
+  padding: 0 8px;
+  border: 1px solid #000000;
+  border-radius: 0;
+  background: transparent;
+  color: #000000;
+  font-size: inherit;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination > li > a:hover,
+.page-resulttable .semantic-data-table-widget-holder .pagination > li > a:focus {
+  background: #ECF0F3;
+  color: #000000;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination > li:not(:first-child) > a {
+  border-left: 0;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination > li.active > a {
+  background: #000000;
+  color: white;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination > li.disabled {
+  opacity: 1;
+}
+.page-resulttable .semantic-data-table-widget-holder .pagination > li.disabled > a {
+  background: transparent;
+  color: #5F5F5F;
+  cursor: default;
+}
 .page-resulttable .group-row {
   display: grid;
   grid-template-columns: var(--result-table-header-columns);

@@ -41,6 +41,65 @@
     tbody {
       border-bottom: 1px solid @col-black;
     }
+
+    &-widget-holder > nav {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    &-widget-holder .pagination {
+      display: flex;
+      margin: 0;
+      font-family: @font-data;
+      font-size: @font-size-body;
+
+      > li {
+        > a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 28px;
+          height: 30px;
+          margin-left: 0;
+          padding: 0 8px;
+          border: 1px solid @col-black;
+          border-radius: 0;
+          background: transparent;
+          color: @col-black;
+          font-size: inherit;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 1;
+          cursor: pointer;
+
+          &:hover,
+          &:focus {
+            background: @col-highlight;
+            color: @col-black;
+          }
+        }
+
+        &:not(:first-child) > a {
+          border-left: 0;
+        }
+
+        &.active > a {
+          background: @col-black;
+          color: white;
+        }
+
+        &.disabled {
+          opacity: 1;
+
+          > a {
+            background: transparent;
+            color: @col-grey;
+            cursor: default;
+          }
+        }
+      }
+    }
   }
 
   .group-row {
