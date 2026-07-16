@@ -228,19 +228,43 @@ function clearSelectedRecord() {
 
 class RdsRecordSelect extends HTMLElement {
   connectedCallback() {
+    if (this._row) return;
+
+    this._row = this.closest('.single-row');
     this.onclick = (e) => {
-      const row = this.closest('.single-row');
+      const row = this._row;
       if (!row) return;
       if (row.classList.contains('is-selected')) {
         // Re-click on the open record: cancel RS's re-open and close the panel
         // by clicking its close button (which also clears the highlight).
         e.stopPropagation();
+        if (row.matches(':hover')) {
+          row.classList.add('is-hover-suppressed');
+          row.addEventListener(
+            'pointerleave',
+            () => row.classList.remove('is-hover-suppressed'),
+            { once: true }
+          );
+        }
         document.querySelector('.detail-close')?.click();
         return;
       }
       clearSelectedRecord();
       row.classList.add('is-selected');
     };
+
+    this._handleRowClick = (e) => {
+      if (this.contains(e.target)) return;
+      if (e.target.closest('a, button, input, select, textarea, rds-copy-popover, rds-copy-value')) return;
+      this.click();
+    };
+
+    this._row?.addEventListener('click', this._handleRowClick);
+  }
+
+  disconnectedCallback() {
+    this._row?.removeEventListener('click', this._handleRowClick);
+    this._row = null;
   }
 }
 

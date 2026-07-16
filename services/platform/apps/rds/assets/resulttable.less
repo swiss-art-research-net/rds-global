@@ -228,17 +228,33 @@
       var(--result-table-row-padding-x);
     box-sizing: border-box;
     min-height: 12rem;
+    cursor: pointer;
+    transition:
+      transform 160ms ease-out,
+      background-color 160ms ease-out,
+      box-shadow 160ms ease-out;
   }
 
   .single-row + .single-row {
     border-top: 1px solid @col-black;
   }
 
+  .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
+  .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed),
+  .single-row.is-selected {
+    border: 1px solid;
+    box-shadow: 4px 4px 0px 0px #00000012;
+  }
+
+  .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
+  .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed) {
+    background: @col-highlight;
+    transform: translate(-4px, -4px);
+  }
+
   .single-row.is-selected {
     background: @col-highlight-dark;
     transform: translate(-8px, -8px);
-    border: 1px solid;
-    box-shadow: 4px 4px 0px 0px #00000012;
   }
 
   .single-row-field,
@@ -249,7 +265,6 @@
   }
 
   .single-row-dataset {
-    margin-left: -14px;
     min-width: 100px;
   }
 
@@ -263,8 +278,7 @@
   }
 
   .single-row-link {
-    display: inline-flex;
-    align-items: center;
+    display: inline;
     margin: 0;
     padding: 0;
     border: 0;
@@ -278,21 +292,23 @@
 
     &::after {
       content: '';
-      flex: 0 0 auto;
+      display: inline-block;
       width: 16px;
       height: 10px;
       margin-left: 5px;
       background: url('/assets/no-auth/detail-arrow.svg') center / contain no-repeat;
       opacity: 0;
       transform: translateX(-3px);
+      vertical-align: middle;
       transition:
         opacity 0.2s ease-in-out,
         transform 0.2s ease-in-out;
     }
   }
 
-  .single-row-link:hover,
-  .single-row-link:focus {
+  .single-row:hover:not(.is-selected):not(.is-hover-suppressed) .single-row-link,
+  .single-row:not(.is-selected):not(.is-hover-suppressed) .single-row-link:focus,
+  .single-row.is-selected .single-row-link {
     color: @col-black;
 
     &::after {
