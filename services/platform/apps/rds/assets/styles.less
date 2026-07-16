@@ -3,6 +3,7 @@
 
 @import '_tokens.less';
 @import '_header.less';
+@import '_footer.less';
 @import '_detailpanel.less';
 @import '_resourcepage.less';
 @import '_intro.less';
@@ -12,12 +13,34 @@ body {
   font-size: @font-size-body;
   background: @col-bg;
   overscroll-behavior: none;
+
+  strong {
+    font-weight: 500;
+  }
 }
 
 .rs-application {
   max-width: 100vw;
   overflow-x: hidden;
   overscroll-behavior: none;
+}
+
+#application {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.page-container {
+  height: auto;
+}
+
+.page-holder {
+  min-height: 0;
+}
+
+#template-content {
+  height: auto;
+  min-height: calc(100vh - var(--nav-height, 63px) - var(--nav-height, 63px));
 }
 
 .page {

@@ -9,14 +9,12 @@
   border-top: none;
   border-radius: 0;
   box-shadow: none;
-  min-height: 48px;
   margin-bottom: 0;
 }
 .nav-bar .rs-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 48px;
   padding: 0;
 }
 .nav-bar .navbar-header {
@@ -47,10 +45,11 @@
   font-weight: 400;
 }
 .nav-bar .rds-nav > li > a {
+  display: flex;
+  align-items: center;
   font-size: 18px;
   color: #000000;
   padding: 0 12px;
-  line-height: 48px;
   text-decoration: none;
 }
 .navbar-default .navbar-nav.rds-nav > li > a:hover,
@@ -58,6 +57,23 @@
   background-color: transparent;
   color: #000000;
   text-decoration: underline;
+}
+.rds-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--nav-height, 63px);
+  margin: 0 20px;
+  border-top: 1px solid #000000;
+  font-size: 18px;
+}
+.rds-footer a {
+  color: #000000;
+  text-decoration: underline;
+}
+.rds-footer a:hover,
+.rds-footer a:focus {
+  color: #000000;
 }
 .detail-col {
   grid-column: 2;
@@ -406,6 +422,10 @@ rds-dataset-list {
 .rds-intro-dataset .rds-badge {
   justify-self: start;
 }
+.rds-intro-dataset:last-child,
+.rds-intro-dataset:nth-last-child(2):nth-child(odd) {
+  border-bottom: 0;
+}
 .rds-intro-dataset-content {
   min-width: 0;
 }
@@ -428,10 +448,27 @@ body {
   background: #F9FAFB;
   overscroll-behavior: none;
 }
+body strong {
+  font-weight: 500;
+}
 .rs-application {
   max-width: 100vw;
   overflow-x: hidden;
   overscroll-behavior: none;
+}
+#application {
+  height: 100vh;
+  overflow-y: auto;
+}
+.page-container {
+  height: auto;
+}
+.page-holder {
+  min-height: 0;
+}
+#template-content {
+  height: auto;
+  min-height: calc(100vh - var(--nav-height, 63px) - var(--nav-height, 63px));
 }
 .page {
   padding: 20px;

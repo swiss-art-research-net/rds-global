@@ -13,14 +13,12 @@
   border-top: none;
   border-radius: 0;
   box-shadow: none;
-  min-height: 48px;
   margin-bottom: 0;
 
   .rs-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 48px;
     padding: 0;
   }
 
@@ -56,10 +54,11 @@
     font-weight: 400;
 
     > li > a {
+      display: flex;
+      align-items: center;
       font-size: @font-size-body-large;
       color: @col-black;
       padding: 0 12px;
-      line-height: 48px;
       text-decoration: none;
     }
   }

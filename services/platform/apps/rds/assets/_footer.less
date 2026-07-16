@@ -1,0 +1,22 @@
+// main: styles.less
+@import '_tokens.less';
+
+.rds-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--nav-height, 63px);
+  margin: 0 20px;
+  border-top: 1px solid @col-black;
+  font-size: @font-size-body-large;
+
+  a {
+    color: @col-black;
+    text-decoration: underline;
+
+    &:hover,
+    &:focus {
+      color: @col-black;
+    }
+  }
+}
