@@ -1,3 +1,29 @@
+const RDS_SEARCH_STATE_PARAM = 'semanticSearch-keyword-search';
+
+if (new URLSearchParams(window.location.search).has(RDS_SEARCH_STATE_PARAM)) {
+  document.documentElement.classList.add('rds-search-restoring');
+
+  const clearRestoringState = () => {
+    document.documentElement.classList.remove('rds-search-restoring');
+    observer.disconnect();
+  };
+
+  const observer = new MutationObserver(() => {
+    if (document.querySelector('.search-meta')) clearRestoringState();
+  });
+
+  const observeSearchResults = () => {
+    observer.observe(document.body, { childList: true, subtree: true });
+    if (document.querySelector('.search-meta')) clearRestoringState();
+  };
+
+  if (document.body) {
+    observeSearchResults();
+  } else {
+    document.addEventListener('DOMContentLoaded', observeSearchResults, { once: true });
+  }
+}
+
 class RdsNavLink extends HTMLElement {
   connectedCallback() {
     this._onClick = this._handleClick.bind(this);
@@ -36,9 +62,9 @@ class RdsNavLink extends HTMLElement {
     }
 
     const currentParams = new URLSearchParams(window.location.search);
-    const searchState = currentParams.get('semanticSearch-keyword-search');
+    const searchState = currentParams.get(RDS_SEARCH_STATE_PARAM);
     if (searchState) {
-      url.searchParams.set('semanticSearch-keyword-search', searchState);
+      url.searchParams.set(RDS_SEARCH_STATE_PARAM, searchState);
     }
 
     Array.from(url.searchParams.entries()).forEach(([key, value]) => {
@@ -106,6 +132,46 @@ class RdsDatasetLabel extends HTMLElement {
 }
 
 customElements.define('rds-dataset-label', RdsDatasetLabel);
+
+class RdsDatasetList extends HTMLElement {
+  async connectedCallback() {
+    if (this._rendered) return;
+    this._rendered = true;
+
+    const config = await RDS_CONFIG;
+    const datasets = Object.entries(config.datasets || {});
+
+    this.replaceChildren(
+      ...datasets.map(([key, dataset]) => this._createDataset(key, dataset))
+    );
+  }
+
+  _createDataset(key, dataset) {
+    const item = document.createElement('div');
+    item.className = 'rds-intro-dataset';
+
+    const badge = document.createElement('span');
+    badge.className = 'rds-badge';
+    badge.textContent = dataset.name || key;
+
+    const content = document.createElement('div');
+    content.className = 'rds-intro-dataset-content';
+
+    const name = document.createElement('span');
+    name.className = 'rds-intro-dataset-name';
+    name.textContent = dataset.description || dataset.name || key;
+
+    const description = document.createElement('span');
+    description.className = 'rds-intro-dataset-description';
+    description.textContent = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+
+    content.append(name, description);
+    item.append(badge, content);
+    return item;
+  }
+}
+
+customElements.define('rds-dataset-list', RdsDatasetList);
 
 class RdsFilterSelection extends HTMLElement {
   async connectedCallback() {

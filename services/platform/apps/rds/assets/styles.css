@@ -308,6 +308,111 @@
 .rds-resource-page .statements .filter-container {
   gap: 0;
 }
+.rds-intro {
+  margin-top: 4rem;
+}
+.rds-intro .eyebrow-label {
+  margin-bottom: 1rem;
+}
+.page-resulttable:has(.search-meta) .rds-intro {
+  display: none;
+}
+html.rds-search-restoring .rds-intro {
+  display: none;
+}
+.rds-intro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+}
+.rds-intro-body,
+.rds-intro-examples {
+  padding-top: 16px;
+  border-top: 1px solid #000000;
+}
+.rds-intro-body {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+.rds-inline-term {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+.rds-intro-examples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.rds-intro-example {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 1rem;
+  border: 1px solid #000000;
+  color: #000000;
+  text-decoration: none;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+.rds-intro-example:hover,
+.rds-intro-example:focus {
+  background: #000000;
+  color: #F9FAFB;
+  text-decoration: none;
+}
+.rds-intro-example:hover .rds-intro-example-type,
+.rds-intro-example:focus .rds-intro-example-type {
+  color: #ECF0F3;
+}
+.rds-intro-example-type {
+  color: #5F5F5F;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.rds-intro-example-label {
+  font-size: 28px;
+  font-weight: 400;
+}
+.rds-intro-datasets {
+  margin-top: 56px;
+}
+rds-dataset-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 56px;
+  border-top: 1px solid #000000;
+}
+.rds-intro-dataset {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: 4rem;
+  align-items: baseline;
+  padding: 10px 0 24px 0;
+  border-bottom: 1px dotted #000000;
+}
+.rds-intro-dataset .rds-badge {
+  justify-self: start;
+}
+.rds-intro-dataset-content {
+  min-width: 0;
+}
+.rds-intro-dataset-name,
+.rds-intro-dataset-description {
+  display: block;
+}
+.rds-intro-dataset-name {
+  margin-bottom: 2px;
+  font-size: 28px;
+  font-weight: 400;
+}
+.rds-intro-dataset-description {
+  font-size: 18px;
+  line-height: 1.5;
+}
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
   font-size: 16px;

@@ -1,0 +1,34 @@
+<section class="rds-intro" aria-label="About RDS Global">
+  <div class="rds-intro-grid">
+    <div>
+      <div class="eyebrow-label">How it works</div>
+      <p class="rds-intro-body">
+        <strong>RDS</strong> provides a single search across records from several authority datasets. It uses equivalence links found in the source data, such as <code class="rds-inline-term">sameAs</code>, to link records across datasets and group records that refer to the same entity into one result. Within that group, each row represents an individual dataset record.
+        Enter a name and optionally limit the search by dataset or entity type. Expand a result to compare the available records and see how the entity is represented in each dataset.
+      </p>
+    </div>
+
+    <div>
+      <div class="eyebrow-label">Try an example query</div>
+      <div class="rds-intro-examples">
+        <a class="rds-intro-example" href="/resource/page:StartDev?type=Person&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipAFtcZABa0ANk0wBzcQgC6AX1IBXTLgCOy2gElekAAwLFpAGZU5pJLTDKx2Bkp5NsTMLWwRIlCyCZjcUpj8tDgMIAAqiAAizkwAdACyTAQARvSkAGoOCgpAA">
+          <span class="rds-intro-example-type">Person</span>
+          <span class="rds-intro-example-label">Michelangelo</span>
+        </a>
+        <a class="rds-intro-example" href="/resource/page:StartDev?type=Place&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipAC8ArklxkAFiAC6AX1KDMuAI6DaASV6QADNJmkAZlUmkktMIIA22BrJ5NsTMLWwRIlIyCbncAc0wBbWhwGEAAVRAAROyYAOgBZJgIAI3pSADVraWkgA">
+          <span class="rds-intro-example-type">Place</span>
+          <span class="rds-intro-example-label">Zurich</span>
+        </a>
+        <a class="rds-intro-example" href="/resource/page:StartDev?type=Group&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipACMmAVwAWwiAF0AvqSGZcARyG0Akr0gAGKdNIAzKhNJJaYIQBtsDGTybYmYWtgiRKhkEzO4A5pgC2tHAYQABVEABFbJgA6AFkmAn56UgA1KykpIA">
+          <span class="rds-intro-example-type">Group</span>
+          <span class="rds-intro-example-label">Bauhaus</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="rds-intro-datasets">
+    <div class="eyebrow-label">Included datasets</div>
+    <rds-dataset-list></rds-dataset-list>
+  </div>
+</section>
