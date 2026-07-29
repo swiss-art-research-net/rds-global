@@ -16,7 +16,7 @@ SELECT DISTINCT ?subject ?value WHERE {{
     }}
 }}"""
 
-BATCH_SIZE = 10000
+BATCH_SIZE = 5000
 
 def main(*, dataset, config, endpoint, output_file):
     sparql = SPARQLWrapper(endpoint)
