@@ -205,22 +205,11 @@ tasks:
     
   prepare-metadata-for-indexing:
     desc: Prepare RDS metadata for indexing
-    vars:
-      FILE: /data/source/rds-metadata/datasets.nt
-      GRAPH: http://rds.swissartresearch.net/graph/datasetMetadata
     sources:
       - /data/source/rds-metadata/datasets.nt
       - /data/source/rds-metadata/rds-ontologies-description.ttl
       - /data/source/rds-metadata/type-mapping.ttl
     cmds:
-      - task: _generate-dataset-metadata-file
-        vars:
-          FILE: "{{.FILE}}"
-      - task: _prepareFileForIndexing
-        vars:
-          FILE_FORMAT: nt
-          FILE: "{{.FILE}}"
-          GRAPH: "{{.GRAPH}}"
       - task: _prepareFileForIndexing
         vars:
           FILE_FORMAT: ttl
