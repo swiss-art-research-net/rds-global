@@ -163,7 +163,6 @@ def build_description_blocks(dataset_id: str, brief_description: str | None, lon
             long_description=format_literal(long_description),
         )
 
-    # Ensure valid Turtle even when no descriptions are provided.
     if not description_references:
         description_references.append(f"dataset:{dataset_id}-brief-description")
         brief_block = BRIEF_DESCRIPTION_TEMPLATE.substitute(
