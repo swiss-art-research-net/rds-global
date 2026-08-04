@@ -2,7 +2,12 @@ datasets:
 
   aat:
     name: AAT
-    description: Getty Art & Architecture Thesaurus
+    description: 
+      brief: Getty Art & Architecture Thesaurus
+      full: The Getty Art and Architecture Thesaurus (AAT) is a structured, multilingual controlled vocabulary used to describe fine art, architecture, decorative arts, material culture, and archival collections. It contains around 75,000 generic concept records (excluding proper names and specific iconographical subjects) organized into faceted hierarchies.
+    publisher:
+      name: The Getty Research Institute
+      url: https://www.getty.edu
     source:
       - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
         process:
@@ -29,6 +34,11 @@ datasets:
 
   bso:
     name: BSO
+    description:
+      brief: Bilder der Schweiz Online
+    publisher:
+      name: Projekt Bilder der Schweiz Online
+      url: https://www.bilder-der-schweiz.online/
     graph: http://bso.swissartresearch.net/graph
     namespace: https://resource.swissartresearch.net
     prefixes:
@@ -74,6 +84,12 @@ datasets:
   
   geonames:
     name: GeoNames
+    description:
+      brief: GeoNames
+      full: GeoNames is a free, open-source geographical database that contains over 25 million geographical names and 11.8 million unique features. It integrates global data like coordinates, population, and postal codes through web services and downloadable files.
+    publisher:
+      name: GeoNames
+      url: http://www.geonames.org/
     source:
       - url: http://download.geonames.org/all-geonames-rdf.zip
         process:
@@ -103,6 +119,12 @@ datasets:
 
   gnd:
     name: GND
+    description:
+      brief: Integrated Authority File (GND)
+      full: The Integrated Authority File (GND) is a service facilitating the collaborative use and administration of authority data. These authority data represent and describe entities, i.e. persons, corporate bodies, conferences and events, geographic entities, topics and works relating to cultural and academic collections. Libraries in particular use the GND to catalogue publications. However, archives, museums, cultural and academic institutions, and researchers involved in research projects are also increasingly working with the GND. Authority data make cataloguing easier, offer definitive search entries and forge links between different information resources.
+    publisher:
+      name: Deutsche Nationalbibliothek
+      url: https://www.dnb.de/
     source:
       - type: http_file
         url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
@@ -173,7 +195,11 @@ datasets:
 
   grp:
     name: GRP
-    description: Gta Research Portal
+    description:
+      brief: GTA Research Portal data
+    publisher:
+      name: Institut gta ETH Zürich
+      url: https://gta.arch.ethz.ch/
     source:
       - type: http_file
         url: https://github.com/user-attachments/files/29960050/person_dump.nt.gz
@@ -215,7 +241,12 @@ datasets:
 
   lcnaf:
     name: LCNAF
-    description: Library of Congress Name Authority File
+    description:
+      brief: Library of Congress Name Authority File
+      full: Library of Congress Authorities provides around 500,000 authority records for subject headings and genre/form terms, as well as over 11 million name authority records for persons, organizations, places, and meetings/conferences. Also included are bibliographic headings pulled from the Library of Congress Catalog as additional references to support the work of catalogers. Library of Congress Authorities is a free service allowing users to browse, view and download authority headings in MARC format for use in a local library system.
+    publisher:
+      name: Library of Congress
+      url: https://www.loc.gov/
     source:
       - type: http_file
         url: https://id.loc.gov/download/authorities/names.skosrdf.ttl.gz
@@ -247,6 +278,12 @@ datasets:
 
   sikart:
     name: SIKART
+    description:
+      brief: SIKART
+      full: SIKART bietet Inhalte zu historischen und zeitgenössischen Künstlerinnen und Künstlern im Bereich Kunstwerke, Ausstellungen, Literatur und Auszeichnungen. Es umfasst über 17’000 Personeneinträge und rund 1900 ausführliche monografische Lexikonartikel.
+    publisher:
+      name: Schweizerisches Institut für Kunstwissenschaft SIK-ISEA
+      url: https://www.sik-isea.ch/
     source:
       - type: github_zip
         repository: swiss-art-research-net/sikart-data
@@ -290,6 +327,12 @@ datasets:
 
   thesarchesp:
     name: ThesArchEsp
+    description:
+      brief: Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
+      full: Le Thésaurus de la désignation des œuvres architecturales et des espaces aménagés élaboré en 2011 est une refonte du Thésaurus de l'architecture édité en 2000 aux Editions du patrimoine. Onze ans plus tard, il nous a paru nécessaire de reprendre cet ouvrage pour d'une part, présenter les concepts que les nouveaux terrains d'inventaire ou les nouveaux domaines de recherche ont fait émerger, ce qui a conduit à en reprendre l'organisation ; d'autre part, à en faire un véritable outil documentaire numérique.
+    publisher:
+      name: Ministère de la culture et de la communication
+      url: https://www.culture.gouv.fr/
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
         type: http_file
@@ -314,6 +357,12 @@ datasets:
 
   thesobjmob:
     name: ThesObjMob
+    description:
+      brief: Thésaurus de la désignation des objets mobiliers
+      full: Le Thésaurus de la désignation des objets mobiliers a été mis en ligne au premier trimestre 2014. Il constitue la réédition, revue et complétée, de l'outil élaboré par l’Inventaire général des monuments et richesses artistiques de la France et édité en 2001 par les éditions du patrimoine, dans la collection Documents & méthodes. Treize ans plus tard, il a paru nécessaire de reprendre l'ouvrage pour, d'une part, introduire les concepts que les nouveaux domaines de recherche ont fait émerger, et d'autre part, en faire un véritable outil documentaire numérique.
+    publisher:
+      name: Ministère de la culture et de la communication
+      url: https://www.culture.gouv.fr/
     source:
       - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
         type: http_file
@@ -338,6 +387,12 @@ datasets:
 
   ulan:
     name: ULAN
+    description:
+      brief: Union List of Artist Names® (ULAN)
+      full: The Union List of Artist Names® (ULAN) is a structured vocabulary of artist names and biographical information.
+    publisher:
+      name: The Getty Research Institute
+      url: https://www.getty.edu
     source:
       - url: http://ulandownloads.getty.edu/VocabData/full.zip
         process:
@@ -365,6 +420,12 @@ datasets:
 
   wikidata:
     name: Wikidata
+    description:
+      brief: Wikidata
+      full: Wikidata is a free and open knowledge base that can be read and edited by both humans and machines.
+    publisher:
+      name: Wikimedia Foundation
+      url: https://wikimediafoundation.org/
     source:
       - type: http_file
         url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/artists.ttl.gz

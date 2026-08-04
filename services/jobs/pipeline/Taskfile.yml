@@ -38,6 +38,7 @@ tasks:
       - task: index-data
       - task: restart-qlever
       - task: supplement-wikidata-type-mappings
+      - task: generate-and-ingest-dataset-metadata
       - task: add-data-to-search-index
 
   add-data-to-search-index:
@@ -159,6 +160,25 @@ tasks:
           as: DATASET
         cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
+  generate-and-ingest-dataset-metadata:
+    desc: Generate dataset metadata RDF and ingest it into QLever
+    vars:
+      FILE: /data/source/rds-metadata/datasets.nt
+      GRAPH: http://rds.swissartresearch.net/graph/datasetMetadata
+    cmds:
+      - task: _generate-dataset-metadata-file
+        vars:
+          FILE: "{{.FILE}}"
+      - |
+        {
+          printf 'DROP SILENT GRAPH <{{.GRAPH}}>;\n'
+          printf 'INSERT DATA { GRAPH <{{.GRAPH}}> {\n'
+          cat "{{.FILE}}"
+          printf '\n} }\n'
+        } > /tmp/dataset-metadata.sparql
+      - qlever update --update-file /tmp/dataset-metadata.sparql --sparql-endpoint "{{.QLEVER_ENDPOINT}}" --access-token "$QLEVER_ACCESS_TOKEN" --log-level DEBUG
+      - rm -f /tmp/dataset-metadata.sparql
+
 
   ingest-data-from-folder:
     desc: Ingest data to QLever from a specified folder. The folder should be passed via CLI argument
@@ -186,15 +206,9 @@ tasks:
   prepare-metadata-for-indexing:
     desc: Prepare RDS metadata for indexing
     sources:
-      - /data/rds-metadata/_datasetsMetadata.ttl
-      - /data/rds-metadata/rds-ontologies-description.ttl
-      - /data/rds-metadata/type-mapping.ttl
+      - /data/source/rds-metadata/rds-ontologies-description.ttl
+      - /data/source/rds-metadata/type-mapping.ttl
     cmds:
-      - task: _prepareFileForIndexing
-        vars: 
-          FILE: /data/source/rds-metadata/_datasetsMetadata.ttl
-          FILE_FORMAT: ttl
-          GRAPH: http://rds.swissartresearch.net/graph/datasetMetadata
       - task: _prepareFileForIndexing
         vars:
           FILE_FORMAT: ttl
@@ -340,7 +354,7 @@ tasks:
         sh: echo "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
     cmds:
       - |
-        python /pipeline/scripts/download_datasets.py \
+        python /pipeline/scripts/downloadDatasets.py \
           --dataset "{{.DATASET}}" \
           --data_directory "{{.DATA_DIRECTORY}}" \
           --config "{{.DATASETS_CONFIG_YML}}" \

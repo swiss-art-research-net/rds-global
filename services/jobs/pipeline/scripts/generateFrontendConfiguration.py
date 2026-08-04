@@ -38,7 +38,11 @@ def generateDatasetJSON(config, datasets = None):
             "name": info.get("name", key)
         }
         if "description" in info:
-            datasets_configuration[key]["description"] = info["description"]
+            description = info["description"]
+            if isinstance(description, dict):
+                description = description.get("brief")
+            if description:
+                datasets_configuration[key]["description"] = description
         if "types" in info:
             types_available.extend(info["types"].keys())
     types_available = sorted(set(types_available))
