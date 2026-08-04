@@ -195,6 +195,14 @@ def build_dataset_turtle(dataset_id: str, dataset_info: dict) -> str:
 
 
 def generate_dataset_rdf(*, config: str, output_file: str, datasets: str | None = None) -> None:
+    """
+    Generate dataset metadata RDF based on the provided YAML configuration.
+
+    Args:
+        config (str): Path to the YAML configuration file.
+        output_file (str): Path to the RDF file to write.
+        datasets (str | None): Comma-separated list of active datasets. If not provided, all configured datasets will be used.
+    """
     config_data = load_config(config)
     configured_datasets = config_data.get("datasets", {})
 
