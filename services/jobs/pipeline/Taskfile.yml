@@ -206,7 +206,6 @@ tasks:
   prepare-metadata-for-indexing:
     desc: Prepare RDS metadata for indexing
     sources:
-      - /data/source/rds-metadata/datasets.nt
       - /data/source/rds-metadata/rds-ontologies-description.ttl
       - /data/source/rds-metadata/type-mapping.ttl
     cmds:
