@@ -24,6 +24,21 @@ PREFIXES_AND_CLASS_TEMPLATE = Template("""
 rds:Dataset a rdfs:Class ;
     rdfs:label "RDS Dataset" ;
     rdfs:comment "A dataset in the RDS platform." .
+
+aat:300028543 a crm:E55_Type ;
+    rdfs:label "Dataset" .
+
+aat:300404670 a crm:E55_Type ;
+    rdfs:label "preferred terms" .
+
+aat:300404012 a crm:E55_Type ;
+    rdfs:label "identifier" .
+
+aat:300418049 a crm:E55_Type ;
+    rdfs:label "brief description" .
+
+aat:300435416 a crm:E55_Type ;
+    rdfs:label "long description" .
 """)
 
 DATASET_TEMPLATE = Template("""
@@ -33,7 +48,6 @@ dataset:${dataset_id} a rds:Dataset , dcat:Dataset , crm:E73_Information_Object,
     dct:identifier ${dataset_identifier} ;
     dct:description ${dataset_description} ;
     dct:publisher ${publisher_reference} ;
-    dcat:landingPage <${landing_page}> ;
     crm:P1_is_identified_by dataset:${dataset_id}-name, dataset:${dataset_id}-id ;
     crm:P94i_was_created_by dataset:${dataset_id}-creation ;
     crm:P2_has_type aat:300028543 ;
@@ -164,7 +178,6 @@ def build_dataset_turtle(dataset_id: str, dataset_info: dict) -> str:
     dataset_identifier = format_literal(dataset_id)
     brief_description, long_description = get_descriptions(dataset_info)
     dataset_description = format_literal(brief_description or long_description or "")
-    landing_page = dataset_info.get("namespace") or dataset_info.get("graph") or ""
     publisher_reference, publisher_block = build_publisher(dataset_id, dataset_info)
     description_references, brief_block, long_block = build_description_blocks(dataset_id, brief_description, long_description)
 
@@ -174,7 +187,6 @@ def build_dataset_turtle(dataset_id: str, dataset_info: dict) -> str:
         dataset_identifier=dataset_identifier,
         dataset_description=dataset_description,
         publisher_reference=publisher_reference,
-        landing_page=landing_page,
         description_references=description_references,
         publisher_block=publisher_block,
         brief_description_block=brief_block,
