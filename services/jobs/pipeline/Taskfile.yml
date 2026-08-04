@@ -170,14 +170,13 @@ tasks:
         vars:
           FILE: "{{.FILE}}"
       - |
-        {
-          printf 'DROP SILENT GRAPH <{{.GRAPH}}>;\n'
-          printf 'INSERT DATA { GRAPH <{{.GRAPH}}> {\n'
-          cat "{{.FILE}}"
-          printf '\n} }\n'
-        } > /tmp/dataset-metadata.sparql
-      - qlever update --update-file /tmp/dataset-metadata.sparql --sparql-endpoint "{{.QLEVER_ENDPOINT}}" --access-token "$QLEVER_ACCESS_TOKEN" --log-level DEBUG
-      - rm -f /tmp/dataset-metadata.sparql
+        ENCODED_GRAPH=$(echo -n "{{.GRAPH}}" | jq -sRr @uri)
+        curl -s --fail-with-body --http1.1 \
+          -X PUT \
+          -H "Authorization: Bearer $QLEVER_ACCESS_TOKEN" \
+          -H "Content-Type: application/n-triples" \
+          --data-binary @"{{.FILE}}" \
+          "{{.QLEVER_ENDPOINT}}/?graph=${ENCODED_GRAPH}"
 
 
   ingest-data-from-folder:
