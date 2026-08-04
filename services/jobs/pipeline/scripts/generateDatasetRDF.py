@@ -221,7 +221,7 @@ def generate_dataset_rdf(*, config: str, output_file: str, datasets: str | None 
     graph = rdflib.Graph()
     graph.parse(data=turtle, format="turtle")
 
-    serialized = graph.serialize(format="nt")
+    serialized = graph.serialize(format="turtle")
     if isinstance(serialized, bytes):
         serialized = serialized.decode("utf-8")
 
