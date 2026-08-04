@@ -340,7 +340,7 @@ tasks:
         sh: echo "{{.DIRECTORY_SOURCE_DATA}}/{{.DATASET}}-data"
     cmds:
       - |
-        python /pipeline/scripts/download_datasets.py \
+        python /pipeline/scripts/downloadDatasets.py \
           --dataset "{{.DATASET}}" \
           --data_directory "{{.DATA_DIRECTORY}}" \
           --config "{{.DATASETS_CONFIG_YML}}" \
