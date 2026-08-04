@@ -26,11 +26,15 @@ tasks:
     internal: True
     requires:
       vars: [FILE]
+    vars:
+      DATASETS:
+        sh: echo "$DATASETS"
     cmds:
       - |
         mkdir -p "$(dirname "{{.FILE}}")"
         python scripts/generateDatasetRDF.py \
           --config "{{.DATASETS_CONFIG_YML}}" \
+          --datasets "{{.DATASETS}}" \
           --output-file "{{.FILE}}"
 
   _build_qlever_index:

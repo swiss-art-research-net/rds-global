@@ -182,12 +182,20 @@ def build_dataset_turtle(dataset_id: str, dataset_info: dict) -> str:
     )
 
 
-def generate_dataset_rdf(*, config: str, output_file: str) -> None:
+def generate_dataset_rdf(*, config: str, output_file: str, datasets: str | None = None) -> None:
     config_data = load_config(config)
-    datasets = config_data.get("datasets", {})
+    configured_datasets = config_data.get("datasets", {})
+
+    if datasets:
+        active_datasets = {dataset_id.strip() for dataset_id in datasets.split(",") if dataset_id.strip()}
+        configured_datasets = {
+            dataset_id: dataset_info
+            for dataset_id, dataset_info in configured_datasets.items()
+            if dataset_id in active_datasets
+        }
 
     turtle = PREFIXES_AND_CLASS_TEMPLATE.substitute()
-    for dataset_id, dataset_info in datasets.items():
+    for dataset_id, dataset_info in configured_datasets.items():
         turtle += "\n" + build_dataset_turtle(dataset_id, dataset_info)
 
     graph = rdflib.Graph()
@@ -205,7 +213,8 @@ def generate_dataset_rdf(*, config: str, output_file: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate dataset metadata RDF from the datasets configuration")
     parser.add_argument("--config", required=True, help="Path to YAML configuration")
+    parser.add_argument("--datasets", required=False, help="Comma-separated list of active datasets. Defaults to all configured datasets.")
     parser.add_argument("--output-file", required=True, help="Path to the RDF file to write")
 
     args = parser.parse_args()
-    generate_dataset_rdf(config=args.config, output_file=args.output_file)
+    generate_dataset_rdf(config=args.config, output_file=args.output_file, datasets=args.datasets)
