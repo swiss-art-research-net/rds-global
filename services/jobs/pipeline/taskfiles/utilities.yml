@@ -21,6 +21,18 @@ tasks:
           --page-size 1000 \
           {{.CLI_ARGS}}
 
+  _generate-dataset-metadata-file:
+    desc: Generate dataset metadata RDF from the dataset configuration
+    internal: True
+    requires:
+      vars: [FILE]
+    cmds:
+      - |
+        mkdir -p "$(dirname "{{.FILE}}")"
+        python scripts/generateDatasetRDF.py \
+          --config "{{.DATASETS_CONFIG_YML}}" \
+          --output-file "{{.FILE}}"
+
   _build_qlever_index:
     desc: Build QLever index from data
     internal: True
