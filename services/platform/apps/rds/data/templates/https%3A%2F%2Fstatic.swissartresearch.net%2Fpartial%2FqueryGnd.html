@@ -2,7 +2,7 @@ PREFIX gndo: <https://d-nb.info/standards/elementset/gnd#>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 
 SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=", ") AS ?value) ?order WHERE {
-  BIND(<{{subjectUri}}> AS ?subject)
+  BIND(<[[subject]]> AS ?subject)
   GRAPH <https://d-nb.info/gnd/authorities/graph> {
     { ?subject gndo:gndIdentifier ?rawValue .
       BIND("GND identifier" AS ?field) BIND(1 AS ?order) }

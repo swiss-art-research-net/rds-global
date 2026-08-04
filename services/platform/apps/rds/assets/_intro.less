@@ -1,0 +1,145 @@
+// main: styles.less
+
+.page.page-resulttable {
+  padding-top: 0;
+}
+
+.rds-intro-strap {
+  margin: 0 0 40px;
+  padding: 14px 0;
+  border-bottom: 1px solid @col-black;
+  font-size: @font-size-body-large;
+}
+
+.rds-intro {
+  margin-top: 4rem;
+
+  .eyebrow-label {
+    margin-bottom: 1rem;
+  }
+}
+
+.page-resulttable:has(.search-meta) .rds-intro {
+  display: none;
+}
+
+html.rds-search-restoring .rds-intro {
+  display: none;
+}
+
+.rds-intro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+}
+
+.rds-intro-body,
+.rds-intro-examples {
+  padding-top: 16px;
+  border-top: 1px solid @col-black;
+}
+
+.rds-intro-body {
+  margin: 0;
+  font-size: @font-size-body-large;
+  line-height: 1.4;
+}
+
+.rds-inline-term {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-family: @font-data;
+  font-size: 0.9em;
+}
+
+.rds-intro-examples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.rds-intro-example {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 1rem;
+  border: 1px solid @col-black;
+  color: @col-black;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+
+  &:hover,
+  &:focus {
+    background: @col-black;
+    color: @col-bg;
+    text-decoration: none;
+
+    .rds-intro-example-type {
+      color: @col-highlight;
+    }
+  }
+}
+
+.rds-intro-example-type {
+  color: @col-grey;
+  font-family: @font-data;
+  font-size: @font-size-data;
+  text-transform: uppercase;
+}
+
+.rds-intro-example-label {
+  font-size: @font-size-large;
+  font-weight: 400;
+}
+
+.rds-intro-datasets {
+  margin-top: 56px;
+}
+
+rds-dataset-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 4rem;
+  border-top: 1px solid @col-black;
+}
+
+.rds-intro-dataset {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: 4rem;
+  align-items: baseline;
+  padding: 10px 0 24px 0;
+  border-bottom: 1px dotted @col-black;
+
+  .rds-badge {
+    justify-self: start;
+  }
+}
+
+.rds-intro-dataset:last-child,
+.rds-intro-dataset:nth-last-child(2):nth-child(odd) {
+  border-bottom: 0;
+}
+
+.rds-intro-dataset-content {
+  min-width: 0;
+}
+
+.rds-intro-dataset-name,
+.rds-intro-dataset-description {
+  display: block;
+}
+
+.rds-intro-dataset-name {
+  margin-bottom: 2px;
+  font-size: @font-size-large;
+  font-weight: 400;
+}
+
+.rds-intro-dataset-description {
+  font-size: @font-size-body-large;
+  line-height: 1.5;
+}

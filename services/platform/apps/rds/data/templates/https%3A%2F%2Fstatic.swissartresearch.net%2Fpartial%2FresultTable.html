@@ -126,7 +126,11 @@
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">ID</div>
-              <div>{{recordId.value}}</div>
+              <div>
+                <rds-copy-value value="{{recordId.value}}" copy-only copy-label="ID">
+                  {{recordId.value}}
+                </rds-copy-value>
+              </div>
             </div>
             <div class="single-row-field">
               <div class="single-row-heading">Source Type(s)</div>

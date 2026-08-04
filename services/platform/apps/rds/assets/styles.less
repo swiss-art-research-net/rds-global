@@ -3,13 +3,20 @@
 
 @import '_tokens.less';
 @import '_header.less';
+@import '_footer.less';
 @import '_detailpanel.less';
+@import '_resourcepage.less';
+@import '_intro.less';
 
 body {
   font-family: @font-body;
   font-size: @font-size-body;
   background: @col-bg;
   overscroll-behavior: none;
+
+  strong {
+    font-weight: 500;
+  }
 }
 
 .rs-application {
@@ -18,9 +25,39 @@ body {
   overscroll-behavior: none;
 }
 
+#application {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.page-container {
+  height: auto;
+}
+
+.page-holder {
+  min-height: 0;
+}
+
+#template-content {
+  height: auto;
+  min-height: calc(100vh - var(--nav-height, 63px) - var(--nav-height, 63px));
+}
+
 .page {
   padding: 20px;
   padding-top: 40px;
+}
+
+.component-page-toolbar {
+  display: none;
+}
+
+.modal-backdrop {
+  background-color: @col-bg;
+}
+
+.modal-backdrop.in {
+  opacity: 1;
 }
 
 .eyebrow-label {
@@ -71,9 +108,13 @@ ol.page-breadcrumb {
       right: 12px;
       top: 50%;
       transform: translateY(-50%);
-      display: flex;
+      display: none;
       align-items: center;
       cursor: pointer;
+    }
+
+    &:has(input:not(:placeholder-shown)) .search-reset {
+      display: flex;
     }
   }
 
@@ -148,8 +189,8 @@ rds-filter-selection {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 3.6px 6px;
+  gap: 6px;
+  padding: 3.6px 8px;
   border: 1px solid @col-black;
   border-radius: 28px;
   font-family: @font-data;
@@ -169,6 +210,10 @@ rds-filter-selection {
       font: inherit;
       line-height: 1;
       cursor: pointer;
+
+      svg {
+        display: block;
+      }
     }
   }
 }

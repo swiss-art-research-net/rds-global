@@ -22,7 +22,7 @@
 
         <div class="detail-panel-content">
 
-          <div class="detail-panel-section">
+          <div class="detail-panel-section detail-panel-summary">
             <div class="detail-row">
               <span class="detail-property">Dataset</span>
               <span class="detail-value">
@@ -46,7 +46,7 @@
           </div>
 
           {{#ifCond dataset "==" "gnd"}}
-            <semantic-query query='[[> partial:queryGnd]]' template="{{> detail-fields}}" no-result-template="">
+            <semantic-query query='[[> partial:queryGnd subject="{{subjectUri}}"]]' template="{{> detail-fields}}" no-result-template="">
               [[> detailFieldsTemplate]]
             </semantic-query>
           {{/ifCond}}
@@ -110,7 +110,7 @@
   <template id="detail-fields">
     {{#if bindings}}
       <div class="detail-panel-section">
-        <div class="detail-section-title">Details</div>
+        <div class="detail-section-title">Source data</div>
         {{#each bindings}}
           <div class="detail-row">
             <span class="detail-property">{{field.value}}</span>

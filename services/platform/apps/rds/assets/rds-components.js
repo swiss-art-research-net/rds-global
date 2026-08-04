@@ -1,3 +1,29 @@
+const RDS_SEARCH_STATE_PARAM = 'semanticSearch-keyword-search';
+
+if (new URLSearchParams(window.location.search).has(RDS_SEARCH_STATE_PARAM)) {
+  document.documentElement.classList.add('rds-search-restoring');
+
+  const clearRestoringState = () => {
+    document.documentElement.classList.remove('rds-search-restoring');
+    observer.disconnect();
+  };
+
+  const observer = new MutationObserver(() => {
+    if (document.querySelector('.search-meta')) clearRestoringState();
+  });
+
+  const observeSearchResults = () => {
+    observer.observe(document.body, { childList: true, subtree: true });
+    if (document.querySelector('.search-meta')) clearRestoringState();
+  };
+
+  if (document.body) {
+    observeSearchResults();
+  } else {
+    document.addEventListener('DOMContentLoaded', observeSearchResults, { once: true });
+  }
+}
+
 class RdsNavLink extends HTMLElement {
   connectedCallback() {
     this._onClick = this._handleClick.bind(this);
@@ -36,9 +62,9 @@ class RdsNavLink extends HTMLElement {
     }
 
     const currentParams = new URLSearchParams(window.location.search);
-    const searchState = currentParams.get('semanticSearch-keyword-search');
+    const searchState = currentParams.get(RDS_SEARCH_STATE_PARAM);
     if (searchState) {
-      url.searchParams.set('semanticSearch-keyword-search', searchState);
+      url.searchParams.set(RDS_SEARCH_STATE_PARAM, searchState);
     }
 
     Array.from(url.searchParams.entries()).forEach(([key, value]) => {
@@ -107,6 +133,46 @@ class RdsDatasetLabel extends HTMLElement {
 
 customElements.define('rds-dataset-label', RdsDatasetLabel);
 
+class RdsDatasetList extends HTMLElement {
+  async connectedCallback() {
+    if (this._rendered) return;
+    this._rendered = true;
+
+    const config = await RDS_CONFIG;
+    const datasets = Object.entries(config.datasets || {});
+
+    this.replaceChildren(
+      ...datasets.map(([key, dataset]) => this._createDataset(key, dataset))
+    );
+  }
+
+  _createDataset(key, dataset) {
+    const item = document.createElement('div');
+    item.className = 'rds-intro-dataset';
+
+    const badge = document.createElement('span');
+    badge.className = 'rds-badge';
+    badge.textContent = dataset.name || key;
+
+    const content = document.createElement('div');
+    content.className = 'rds-intro-dataset-content';
+
+    const name = document.createElement('span');
+    name.className = 'rds-intro-dataset-name';
+    name.textContent = dataset.description || dataset.name || key;
+
+    const description = document.createElement('span');
+    description.className = 'rds-intro-dataset-description';
+    description.textContent = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+
+    content.append(name, description);
+    item.append(badge, content);
+    return item;
+  }
+}
+
+customElements.define('rds-dataset-list', RdsDatasetList);
+
 class RdsFilterSelection extends HTMLElement {
   async connectedCallback() {
     const params = new URLSearchParams(window.location.search);
@@ -145,7 +211,10 @@ class RdsFilterSelection extends HTMLElement {
     const button = document.createElement('button');
     button.type = 'button';
     button.setAttribute('aria-label', `Remove ${label}`);
-    button.textContent = 'x';
+    button.innerHTML = `
+      <svg width="10" height="10" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="currentColor"/>
+      </svg>`;
     link.appendChild(button);
     badge.appendChild(link);
 
@@ -162,19 +231,43 @@ function clearSelectedRecord() {
 
 class RdsRecordSelect extends HTMLElement {
   connectedCallback() {
+    if (this._row) return;
+
+    this._row = this.closest('.single-row');
     this.onclick = (e) => {
-      const row = this.closest('.single-row');
+      const row = this._row;
       if (!row) return;
       if (row.classList.contains('is-selected')) {
         // Re-click on the open record: cancel RS's re-open and close the panel
         // by clicking its close button (which also clears the highlight).
         e.stopPropagation();
+        if (row.matches(':hover')) {
+          row.classList.add('is-hover-suppressed');
+          row.addEventListener(
+            'pointerleave',
+            () => row.classList.remove('is-hover-suppressed'),
+            { once: true }
+          );
+        }
         document.querySelector('.detail-close')?.click();
         return;
       }
       clearSelectedRecord();
       row.classList.add('is-selected');
     };
+
+    this._handleRowClick = (e) => {
+      if (this.contains(e.target)) return;
+      if (e.target.closest('a, button, input, select, textarea, rds-copy-popover, rds-copy-value')) return;
+      this.click();
+    };
+
+    this._row?.addEventListener('click', this._handleRowClick);
+  }
+
+  disconnectedCallback() {
+    this._row?.removeEventListener('click', this._handleRowClick);
+    this._row = null;
   }
 }
 
@@ -422,22 +515,12 @@ class RdsCopyValue extends HTMLElement {
 
     this._value = this.getAttribute('value');
     if (!this._value) return;
+    this._copyLabel = this.getAttribute('copy-label') || 'URI';
+    const copyOnly = this.hasAttribute('copy-only');
 
     const valueText = document.createElement('span');
     valueText.className = 'rds-copy-value-text';
     valueText.textContent = this.textContent.trim() || this._value;
-
-    const openLink = document.createElement('a');
-    openLink.className = 'rds-copy-value-open';
-    openLink.href = this._value;
-    openLink.target = '_blank';
-    openLink.rel = 'noopener noreferrer';
-    openLink.setAttribute('aria-label', `Open URI in a new tab: ${this._value}`);
-
-    const openIcon = document.createElement('img');
-    openIcon.src = '/assets/no-auth/arrow.svg';
-    openIcon.alt = '';
-    openLink.appendChild(openIcon);
 
     const copyIcon = document.createElement('img');
     copyIcon.className = 'rds-copy-value-copy-icon';
@@ -447,12 +530,30 @@ class RdsCopyValue extends HTMLElement {
     this._copyIconButton = document.createElement('button');
     this._copyIconButton.type = 'button';
     this._copyIconButton.className = 'rds-copy-value-copy';
-    this._copyIconButton.setAttribute('aria-label', `Copy URI ${this._value}`);
+    this._copyIconButton.setAttribute('aria-label', `Copy ${this._copyLabel} ${this._value}`);
     this._copyIconButton.appendChild(copyIcon);
 
     const actions = document.createElement('span');
     actions.className = 'rds-copy-value-actions';
-    actions.append(openLink, this._copyIconButton);
+    if (!copyOnly) {
+      const openLink = document.createElement('a');
+      openLink.className = 'rds-copy-value-open';
+      openLink.href = this._value;
+      openLink.target = '_blank';
+      openLink.rel = 'noopener noreferrer';
+      openLink.setAttribute('aria-label', `Open URI in a new tab: ${this._value}`);
+
+      const openIcon = document.createElement('img');
+      openIcon.src = '/assets/no-auth/arrow.svg';
+      openIcon.alt = '';
+      openLink.appendChild(openIcon);
+      openLink.addEventListener('click', event => {
+        event.stopPropagation();
+        openLink.blur();
+      });
+      actions.appendChild(openLink);
+    }
+    actions.appendChild(this._copyIconButton);
 
     this.replaceChildren(valueText, actions);
 
@@ -461,9 +562,6 @@ class RdsCopyValue extends HTMLElement {
       this._copy();
     });
 
-    openLink.addEventListener('click', event => {
-      event.stopPropagation();
-    });
   }
 
   async _copy() {
@@ -473,14 +571,14 @@ class RdsCopyValue extends HTMLElement {
       await writeToClipboard(this._value);
       this.classList.add('is-copied');
       this._copyIconButton.blur();
-      this._copyIconButton.setAttribute('aria-label', 'URI copied');
+      this._copyIconButton.setAttribute('aria-label', `${this._copyLabel} copied`);
       this._resetTimer = setTimeout(() => {
         this.classList.remove('is-copied');
-        this._copyIconButton.setAttribute('aria-label', `Copy URI ${this._value}`);
+        this._copyIconButton.setAttribute('aria-label', `Copy ${this._copyLabel} ${this._value}`);
       }, 900);
     } catch (error) {
-      console.error('Could not copy URI', error);
-      this._copyIconButton.setAttribute('aria-label', 'Could not copy URI');
+      console.error(`Could not copy ${this._copyLabel}`, error);
+      this._copyIconButton.setAttribute('aria-label', `Could not copy ${this._copyLabel}`);
     }
   }
 
