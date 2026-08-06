@@ -19,7 +19,7 @@ datasets:
       skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
-      Type:
+      Concept:
         - gvp:Concept
     queries:
       description: |
@@ -151,7 +151,7 @@ datasets:
         - gnd:Person
       Place:
         - gnd:PlaceOrGeographicName
-      Type:
+      Concept:
         - gnd:SubjectHeading
     queries:
       description: |
@@ -306,7 +306,7 @@ datasets:
         - sik:SIK-PARENT_WORK
       Person:
         - sik:SIK-ACTOR
-      Type:
+      Concept:
         - sik:SIK-TYPE
     queries:
       description: |
@@ -343,7 +343,7 @@ datasets:
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      Type:
+      Concept:
         - skos:Concept
     queries:
       description: |
@@ -373,7 +373,7 @@ datasets:
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      Type:
+      Concept:
         - skos:Concept
     queries:
       description: |
@@ -474,8 +474,8 @@ datasets:
         - rds:Person
       Place:
         - rds:Place
-      Type:
-        - rds:Type
+      Concept:
+        - rds:Concept
     queries:
       prefLabel: |
         ?subject rdfs:label ?value .
@@ -501,5 +501,5 @@ types:
     name: Person
   Place:
     name: Place
-  Type:
-    name: Type
+  Concept:
+    name: Concept
