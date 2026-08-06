@@ -28,8 +28,6 @@ services:
   opensearch-connector:
     build: ./services/opensearch-connector
     container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-connector
-    depends_on:
-      - opensearch-node
     volumes:
       - ./config:/config
     networks:

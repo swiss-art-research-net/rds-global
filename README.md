@@ -21,6 +21,7 @@ This repository is designed to be run with the base compose file plus either the
 
 - Development: `COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml`
 - Production: `COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml`
+- Clustered OpenSearch (development example): `COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml:docker-compose.opensearch-cluster.yml` together with `COMPOSE_PROFILES=cluster`
 
 For development, the default values in `.env.example` can be used as a starting point. For production it is recommended to change at least `PLATFORM_HOST_NAME`, `RECONCILE_HOST_NAME`, `LETSENCRYPT_EMAIL`, and `PROXY_NETWORK_NAME`.
 
@@ -31,9 +32,13 @@ Important environment variables:
 - `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets.yml`.
 - `QLEVER_ACCESS_TOKEN`: access token used by the QLever API for authenticated update operations.
 - `COMPOSE_FILE`: selects which compose file assembly to use for the stack.
+- `COMPOSE_PROFILES`: enables optional compose profiles. Leave it unset for the default single-node setup; set it to `cluster` when using `docker-compose.opensearch-cluster.yml`.
 - `PLATFORM_HOST_NAME`: public hostname for the ResearchSpace / RDS platform.
 - `RECONCILE_HOST_NAME`: public hostname for the OpenSearch reconciliation connector.
 - `PROXY_NETWORK_NAME`: name of the external reverse-proxy network used by the production overlay.
+- `DIRECTORY_OPENSEARCH_DATA_NODE1`, `DIRECTORY_OPENSEARCH_DATA_NODE2`, `DIRECTORY_OPENSEARCH_DATA_NODE3`: data directories for the optional three-node OpenSearch cluster overlay.
+- `OPENSEARCH_CLUSTER_NAME`: cluster name used by the optional multi-node OpenSearch overlay.
+- `OPENSEARCH_CLUSTER_JAVA_OPTS`: heap settings applied to each node in the optional multi-node OpenSearch overlay.
 
 The pipeline downloads source data from external services and repositories listed in `config/datasets.yml`, and the SameAs generation queries Wikidata. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
 
@@ -54,6 +59,28 @@ With the development assembly (`docker-compose.yml:docker-compose.dev.yml`), thi
 With the production assembly (`docker-compose.yml:docker-compose.prod.yml`), the stack is attached to the configured external proxy network. The `platform` service is advertised to the reverse proxy via `PLATFORM_HOST_NAME`, and the `opensearch-connector` is advertised separately via `RECONCILE_HOST_NAME`, both using `VIRTUAL_HOST`, `LETSENCRYPT_HOST`, `LETSENCRYPT_EMAIL`, and `VIRTUAL_PORT`. In this mode, both services are expected to be reached through their configured hostnames rather than localhost port mappings.
 
 The OpenSearch connector is started as part of both compose assemblies and is used internally by the ResearchSpace OpenSearch integration. In production it can also be published independently under its own hostname for reconciliation clients.
+
+### Optional OpenSearch Cluster Overlay
+
+The default setup keeps a single OpenSearch node. When you want to test or run a three-node cluster, add `docker-compose.opensearch-cluster.yml` to `COMPOSE_FILE` and set `COMPOSE_PROFILES=cluster`.
+
+Example `.env` excerpt for local clustered search:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml:docker-compose.opensearch-cluster.yml
+COMPOSE_PROFILES=cluster
+```
+
+This overlay:
+
+- disables the default `opensearch-node` service while the `cluster` profile is active
+- starts `opensearch-node1`, `opensearch-node2`, and `opensearch-node3`
+- keeps the existing connector endpoint stable by advertising the cluster nodes on the internal `opensearch-node` alias
+- points OpenSearch Dashboards at all three nodes
+
+For convenience, the clustered overlay publishes `opensearch-node1` on `127.0.0.1:${PORT_OPENSEARCH}` so local tooling can still reach an OpenSearch HTTP endpoint.
+
+Switching an existing single-node data directory into the cluster overlay is not an in-place upgrade. Plan to reindex from source data or restore from an OpenSearch snapshot into the new cluster volumes.
 
 ### Data Pipeline
 

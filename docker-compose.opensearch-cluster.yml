@@ -1,0 +1,97 @@
+services:
+  opensearch-node:
+    profiles:
+      - single-node
+
+  opensearch-node1:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-node1
+    restart: unless-stopped
+    profiles:
+      - cluster
+    environment:
+      - cluster.name=${OPENSEARCH_CLUSTER_NAME:-rds-opensearch-cluster}
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2,opensearch-node3
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2,opensearch-node3
+      - bootstrap.memory_lock=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_CLUSTER_JAVA_OPTS:--Xms1g -Xmx1g}"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      internal:
+        aliases:
+          - opensearch-node
+    volumes:
+      - ${DIRECTORY_OPENSEARCH_DATA_NODE1:-./binds/opensearch-data-node1}:/usr/share/opensearch/data:rw
+    ports:
+      - 127.0.0.1:${PORT_OPENSEARCH:-9200}:9200
+
+  opensearch-node2:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-node2
+    restart: unless-stopped
+    profiles:
+      - cluster
+    environment:
+      - cluster.name=${OPENSEARCH_CLUSTER_NAME:-rds-opensearch-cluster}
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2,opensearch-node3
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2,opensearch-node3
+      - bootstrap.memory_lock=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_CLUSTER_JAVA_OPTS:--Xms1g -Xmx1g}"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      internal:
+        aliases:
+          - opensearch-node
+    volumes:
+      - ${DIRECTORY_OPENSEARCH_DATA_NODE2:-./binds/opensearch-data-node2}:/usr/share/opensearch/data:rw
+
+  opensearch-node3:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: ${COMPOSE_PROJECT_NAME:-rds}-opensearch-node3
+    restart: unless-stopped
+    profiles:
+      - cluster
+    environment:
+      - cluster.name=${OPENSEARCH_CLUSTER_NAME:-rds-opensearch-cluster}
+      - node.name=opensearch-node3
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2,opensearch-node3
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2,opensearch-node3
+      - bootstrap.memory_lock=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_CLUSTER_JAVA_OPTS:--Xms1g -Xmx1g}"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      internal:
+        aliases:
+          - opensearch-node
+    volumes:
+      - ${DIRECTORY_OPENSEARCH_DATA_NODE3:-./binds/opensearch-data-node3}:/usr/share/opensearch/data:rw
+
+  opensearch-dashboard:
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch-node1:9200","http://opensearch-node2:9200","http://opensearch-node3:9200"]'
