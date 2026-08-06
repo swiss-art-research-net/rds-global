@@ -92,7 +92,7 @@ INSERT {
   }
 }
 WHERE {
-  BIND(<http://www.wikidata.org/entity/Q487021> AS ?entity)
+  BIND(<http://www.wikidata.org/entity/Q487021> AS ?subject)
   GRAPH <http://www.wikidata.org/graph> {
     ?subject rdfs:label ?oldLabel ;
             schema:description ?oldDescription .
