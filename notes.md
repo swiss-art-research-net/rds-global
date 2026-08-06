@@ -78,24 +78,36 @@ curl -X POST "http://127.0.0.1:7001" \
   -H "Authorization: Bearer $QLEVER_ACCESS_TOKEN" \
   -H "Content-Type: application/sparql-update" \
   --data-binary @- <<'SPARQL'
+PREFIX rds:    <http://schema.swissartresearch.net/ontology/rds#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
 
 DELETE {
-  ?subject rdfs:label ?oldLabel ;
-           schema:description ?oldDescription .
+  GRAPH <http://www.wikidata.org/graph> {
+    ?subject rdfs:label ?oldLabel ;
+        schema:description ?oldDescription .
+  }
+  GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
+    ?subject rds:label ?oldRdsLabel .
+  }
 }
 INSERT {
   GRAPH <http://www.wikidata.org/graph> {
     ?subject rdfs:label "Bunk Johnson"@en ;
       schema:description "American musician (1879-1949)"@en .
   }
+  GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
+    ?subject rds:label "Bunk Johnson"@en .
+  }
 }
 WHERE {
   BIND(<http://www.wikidata.org/entity/Q487021> AS ?subject)
   GRAPH <http://www.wikidata.org/graph> {
     ?subject rdfs:label ?oldLabel ;
-            schema:description ?oldDescription .
+      schema:description ?oldDescription .
+  }
+  GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
+    ?subject rds:label ?oldRdsLabel .
   }
 }
 SPARQL
