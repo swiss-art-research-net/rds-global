@@ -70,4 +70,33 @@ curl -X POST 'http://127.0.0.1:9200/rds-entities/_update/http%3A%2F%2Fwww.wikida
       "labels": ["Bunk Johnson"]
     }
   }'
-  ````
+  ```
+
+Update data in QLever through SPARQL:
+```bash
+curl -X POST "http://127.0.0.1:7001" \
+  -H "Authorization: Bearer $QLEVER_ACCESS_TOKEN" \
+  -H "Content-Type: application/sparql-update" \
+  --data-binary @- <<'SPARQL'
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+DELETE {
+  ?subject rdfs:label ?oldLabel ;
+           schema:description ?oldDescription .
+}
+INSERT {
+  GRAPH <http://www.wikidata.org/graph> {
+    ?subject rdfs:label "Bunk Johnson"@en ;
+      schema:description "American musician (1879-1949)"@en .
+  }
+}
+WHERE {
+  BIND(<http://www.wikidata.org/entity/Q487021> AS ?entity)
+  GRAPH <http://www.wikidata.org/graph> {
+    ?subject rdfs:label ?oldLabel ;
+            schema:description ?oldDescription .
+  }
+}
+SPARQL
+```
