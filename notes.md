@@ -50,3 +50,24 @@
      }
    }' | jq .
 ```
+
+## Edit entries in OpenSearch
+
+e.g. to fix wrong data in Wikidata.
+
+Inspect entity:
+```bash
+curl -s 'http://127.0.0.1:9200/rds-entities/_doc/http%3A%2F%2Fwww.wikidata.org%2Fentity%2FQ487021?pretty'
+```
+
+Update entity:
+```bash
+curl -X POST 'http://127.0.0.1:9200/rds-entities/_update/http%3A%2F%2Fwww.wikidata.org%2Fentity%2FQ487021?refresh=true' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "doc": {
+      "prefLabels": ["Bunk Johnson"],
+      "labels": ["Bunk Johnson"]
+    }
+  }'
+  ````
