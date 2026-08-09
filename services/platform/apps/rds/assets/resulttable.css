@@ -221,6 +221,9 @@
   font-weight: 500;
   text-transform: uppercase;
 }
+.page-resulttable .single-row-related-heading > div {
+  display: inline;
+}
 .page-resulttable .single-row-link {
   display: inline;
   margin: 0;
@@ -262,7 +265,7 @@
   word-break: break-word;
 }
 .page-resulttable .single-row-related {
-  grid-column: 2 / -1;
+  grid-column: 1 / -1;
   min-width: 0;
 }
 .page-resulttable .related-records {
@@ -272,9 +275,9 @@
 }
 .page-resulttable .related-records-list {
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr) minmax(0, 4fr);
   column-gap: var(--result-table-column-gap);
-  row-gap: 8px;
+  row-gap: 6px;
   align-items: baseline;
 }
 .page-resulttable .related-records-list > .rds-item-truncate-toggle {
@@ -290,5 +293,11 @@
 .page-resulttable .related-record-label,
 .page-resulttable .related-record-uri {
   min-width: 0;
-  word-break: break-word;
+  word-break: break-all;
+}
+.page-resulttable .related-record-label {
+  line-height: 1.2;
+}
+.page-resulttable .related-record-label > span + span::before {
+  content: ' | ';
 }
