@@ -123,7 +123,7 @@ tasks:
     vars:
       OUTPUT_DIRECTORY: /apps/rds-config/
     cmds:
-      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-app "{{.OUTPUT_DIRECTORY}}"
+      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets "$DATASETS" --output-app "{{.OUTPUT_DIRECTORY}}"
 
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
