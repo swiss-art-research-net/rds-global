@@ -1,0 +1,32 @@
+datasets:
+  aat:
+    name: AAT
+    description: 
+      brief: Getty Art & Architecture Thesaurus
+      full: The Getty Art and Architecture Thesaurus (AAT) is a structured, multilingual controlled vocabulary used to describe fine art, architecture, decorative arts, material culture, and archival collections. It contains around 75,000 generic concept records (excluding proper names and specific iconographical subjects) organized into faceted hierarchies.
+    publisher:
+      name: The Getty Research Institute
+      url: https://www.getty.edu
+    source:
+      - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
+        process:
+        - unzip
+    graph: http://vocab.getty.edu/aat/graph
+    namespace: http://vocab.getty.edu/aat/
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      Concept:
+        - gvp:Concept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?value .
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
+      labels: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
+    wikidata_match_property: P1014

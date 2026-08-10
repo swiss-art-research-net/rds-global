@@ -1,0 +1,35 @@
+datasets:
+  geonames:
+      name: GeoNames
+      description:
+        brief: GeoNames
+        full: GeoNames is a free, open-source geographical database that contains over 25 million geographical names and 11.8 million unique features. It integrates global data like coordinates, population, and postal codes through web services and downloadable files.
+      publisher:
+        name: GeoNames
+        url: http://www.geonames.org/
+      source:
+        - url: http://download.geonames.org/all-geonames-rdf.zip
+          process:
+            - unzip
+            - rdfxml2nt
+      graph: http://sws.geonames.org/graph
+      namespace: https://sws.geonames.org/
+      prefixes:
+        gn: http://www.geonames.org/ontology#
+        owl: http://www.w3.org/2002/07/owl#
+        rdfs: http://www.w3.org/2000/01/rdf-schema#
+      types:
+        Place:
+          - gn:Feature
+      queries:
+        description: |
+          ?subject gn:parentADM1/gn:name ?adm1 .
+          ?subject gn:parentCountry/gn:name ?country .
+          BIND(CONCAT(?adm1, ", ", ?country) as ?value )
+        prefLabel: |
+          ?subject gn:name ?value .
+        labels: |
+          ?subject gn:alternateName ?value .
+        matches: |
+          ?subject rdfs:seeAlso ?value .
+      wikidata_match_property: P1566

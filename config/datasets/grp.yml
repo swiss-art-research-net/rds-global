@@ -1,0 +1,46 @@
+datasets:
+  grp:
+    name: GRP
+    description:
+      brief: GTA Research Portal data
+    publisher:
+      name: Institut gta ETH Zürich
+      url: https://gta.arch.ethz.ch/
+    source:
+      - type: http_file
+        url: https://github.com/user-attachments/files/29960050/person_dump.nt.gz
+        file_format: nt
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/user-attachments/files/29960049/group_dump.nt.gz
+        file_format: nt
+        process:
+          - gunzip
+    graph: https://data.gta.arch.ethz.ch/graph
+    namespace: https://resource.gta.arch.ethz.ch/
+    prefixes:
+      aat: http://vocab.getty.edu/aat/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      grp: https://ontology.gta.arch.ethz.ch/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      type: https://data.gta.arch.ethz.ch/type/
+    types:
+      Group:
+        - grp:Group
+      Person:
+        - grp:Person
+    queries:
+      prefLabel: |
+        ?subject crm:P1_is_identified_by ?identifier .
+        ?identifier crm:P2_has_type aat:300404670 ;
+          crm:P190_has_symbolic_content ?value .
+      labels: |
+        ?subject rdfs:label ?label .
+      description: |
+        ?subject crm:P67i_is_referred_to_by ?statement .
+        ?statement crm:P2_has_type type:4149527 ;
+          crm:P190_has_symbolic_content ?value .
+      matches: |
+        ?subject crmdig:L54_is_same-as ?value .

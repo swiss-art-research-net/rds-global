@@ -1,0 +1,50 @@
+datasets:
+  bso:
+    name: BSO
+    description:
+      brief: Bilder der Schweiz Online
+    publisher:
+      name: Projekt Bilder der Schweiz Online
+      url: https://www.bilder-der-schweiz.online/
+    graph: http://bso.swissartresearch.net/graph
+    namespace: https://resource.swissartresearch.net
+    prefixes:
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      gndo: https://d-nb.info/standards/elementset/gnd#
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
+      search: https://platform.swissartresearch.net/search/
+    source:
+      - endpoint: https://bso.swissartresearch.net/sparql
+        type: construct_query
+        page_size: 1000
+        query: |
+          CONSTRUCT {
+            ?s ?p ?o.
+            ?sameas gndo:biographicalOrHistoricalInformation ?description .
+            ?identifier rdfs:label ?label .
+          } WHERE {
+            ?s a search:Person ;
+              skos:prefLabel ?prefLabel ;
+              crm:P1_is_identified_by ?identifier ;
+              crmdig:L54_is_same-as ?sameas .
+            ?sameas gndo:biographicalOrHistoricalInformation ?description .
+            ?identifier rdfs:label ?label .
+            ?s ?p ?o.
+          }
+        process:
+          - gunzip   
+    types:
+      Person:
+        - crm:E21_Person
+    queries:
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+      labels: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      description: |
+        ?subject crmdig:L54_is_same-as/gndo:biographicalOrHistoricalInformation ?value .
+      matches: |
+        ?subject crmdig:L54_is_same-as ?value .
