@@ -10,7 +10,7 @@ datasets:
     source:
       - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
         process:
-        - unzip
+          - unzip
     graph: http://vocab.getty.edu/aat/graph
     namespace: http://vocab.getty.edu/aat/
     prefixes:
