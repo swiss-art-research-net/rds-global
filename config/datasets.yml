@@ -1,17 +1,19 @@
-datasets:
+# This file is generated from config/datasets/*.yml and config/types/types.yml.
+# Do not edit it manually.
 
+datasets:
   aat:
     name: AAT
-    description: 
+    description:
       brief: Getty Art & Architecture Thesaurus
       full: The Getty Art and Architecture Thesaurus (AAT) is a structured, multilingual controlled vocabulary used to describe fine art, architecture, decorative arts, material culture, and archival collections. It contains around 75,000 generic concept records (excluding proper names and specific iconographical subjects) organized into faceted hierarchies.
     publisher:
       name: The Getty Research Institute
       url: https://www.getty.edu
     source:
-      - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
-        process:
-        - unzip
+    - url: http://aatdownloads.getty.edu/VocabData/explicit.zip
+      process:
+      - unzip
     graph: http://vocab.getty.edu/aat/graph
     namespace: http://vocab.getty.edu/aat/
     prefixes:
@@ -20,7 +22,7 @@ datasets:
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
       Concept:
-        - gvp:Concept
+      - gvp:Concept
     queries:
       description: |
         ?subject gvp:parentStringAbbrev ?value .
@@ -31,57 +33,6 @@ datasets:
       matches: |
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
     wikidata_match_property: P1014
-
-  bso:
-    name: BSO
-    description:
-      brief: Bilder der Schweiz Online
-    publisher:
-      name: Projekt Bilder der Schweiz Online
-      url: https://www.bilder-der-schweiz.online/
-    graph: http://bso.swissartresearch.net/graph
-    namespace: https://resource.swissartresearch.net
-    prefixes:
-      crmdig: http://www.ics.forth.gr/isl/CRMdig/
-      rdfs: http://www.w3.org/2000/01/rdf-schema#
-      gndo: https://d-nb.info/standards/elementset/gnd#
-      crm: http://www.cidoc-crm.org/cidoc-crm/
-      schema: http://schema.org/
-      skos: http://www.w3.org/2004/02/skos/core#
-      search: https://platform.swissartresearch.net/search/
-    source:
-      - endpoint: https://bso.swissartresearch.net/sparql
-        type: construct_query
-        page_size: 1000
-        query: |
-          CONSTRUCT {
-            ?s ?p ?o.
-            ?sameas gndo:biographicalOrHistoricalInformation ?description .
-            ?identifier rdfs:label ?label .
-          } WHERE {
-            ?s a search:Person ;
-              skos:prefLabel ?prefLabel ;
-              crm:P1_is_identified_by ?identifier ;
-              crmdig:L54_is_same-as ?sameas .
-            ?sameas gndo:biographicalOrHistoricalInformation ?description .
-            ?identifier rdfs:label ?label .
-            ?s ?p ?o.
-          }
-        process:
-          - gunzip   
-    types:
-      Person:
-        - crm:E21_Person
-    queries:
-      prefLabel: |
-        ?subject skos:prefLabel ?value .
-      labels: |
-        ?subject crm:P1_is_identified_by/rdfs:label ?value .
-      description: |
-        ?subject crmdig:L54_is_same-as/gndo:biographicalOrHistoricalInformation ?value .
-      matches: |
-        ?subject crmdig:L54_is_same-as ?value .
-  
   geonames:
     name: GeoNames
     description:
@@ -91,10 +42,10 @@ datasets:
       name: GeoNames
       url: http://www.geonames.org/
     source:
-      - url: http://download.geonames.org/all-geonames-rdf.zip
-        process:
-          - unzip
-          - rdfxml2nt
+    - url: http://download.geonames.org/all-geonames-rdf.zip
+      process:
+      - unzip
+      - rdfxml2nt
     graph: http://sws.geonames.org/graph
     namespace: https://sws.geonames.org/
     prefixes:
@@ -103,7 +54,7 @@ datasets:
       rdfs: http://www.w3.org/2000/01/rdf-schema#
     types:
       Place:
-        - gn:Feature
+      - gn:Feature
     queries:
       description: |
         ?subject gn:parentADM1/gn:name ?adm1 .
@@ -116,7 +67,6 @@ datasets:
       matches: |
         ?subject rdfs:seeAlso ?value .
     wikidata_match_property: P1566
-
   gnd:
     name: GND
     description:
@@ -126,13 +76,13 @@ datasets:
       name: Deutsche Nationalbibliothek
       url: https://www.dnb.de/
     source:
-      - type: http_file
-        url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
-        process:
-          - gunzip   
-      - type: http_file
-        url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
-        file_format: ttl
+    - type: http_file
+      url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+      process:
+      - gunzip
+    - type: http_file
+      url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
+      file_format: ttl
     graph: https://d-nb.info/gnd/authorities/graph
     namespace: https://d-nb.info/gnd/
     prefixes:
@@ -142,40 +92,40 @@ datasets:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
       BibliographicItem:
-        - gnd:Work
+      - gnd:Work
       Event:
-        - gnd:ConferenceOrEvent
+      - gnd:ConferenceOrEvent
       Group:
-        - gnd:CorporateBody
+      - gnd:CorporateBody
       Person:
-        - gnd:Person
+      - gnd:Person
       Place:
-        - gnd:PlaceOrGeographicName
+      - gnd:PlaceOrGeographicName
       Concept:
-        - gnd:SubjectHeading
+      - gnd:SubjectHeading
     queries:
       description: |
-            OPTIONAL {
-              ?subject gnd:definition|gnd:note|gnd:biographicalOrHistoricalInformation ?bio .
-            }
-            OPTIONAL { ?subject gnd:professionOrOccupationAsLiteral ?profession }
-            
-            OPTIONAL { ?subject gnd:dateOfBirth ?bDate }
-            OPTIONAL { ?subject gnd:placeOfBirth ?pb . ?pb gnd:preferredNameForThePlaceOrGeographicName ?bPlace }
-            OPTIONAL { ?subject gnd:dateOfDeath ?dDate }
-            OPTIONAL { ?subject gnd:placeOfDeath ?pd . ?pd gnd:preferredNameForThePlaceOrGeographicName ?dPlace }
+        OPTIONAL {
+          ?subject gnd:definition|gnd:note|gnd:biographicalOrHistoricalInformation ?bio .
+        }
+        OPTIONAL { ?subject gnd:professionOrOccupationAsLiteral ?profession }
 
-            BIND(CONCAT(
-              COALESCE(?bio, ""),
-              IF(BOUND(?profession), CONCAT(" ", ?profession), ""),
-              IF(BOUND(?bDate) || BOUND(?bPlace) || BOUND(?dDate) || BOUND(?dPlace),
-                CONCAT(" (", 
-                        COALESCE(STR(?bDate), ""), IF(BOUND(?bPlace), CONCAT(", ", ?bPlace), ""),
-                        " – ", 
-                        COALESCE(STR(?dDate), ""), IF(BOUND(?dPlace), CONCAT(", ", ?dPlace), ""),
-                        ")"),
-                "")
-            ) AS ?value)
+        OPTIONAL { ?subject gnd:dateOfBirth ?bDate }
+        OPTIONAL { ?subject gnd:placeOfBirth ?pb . ?pb gnd:preferredNameForThePlaceOrGeographicName ?bPlace }
+        OPTIONAL { ?subject gnd:dateOfDeath ?dDate }
+        OPTIONAL { ?subject gnd:placeOfDeath ?pd . ?pd gnd:preferredNameForThePlaceOrGeographicName ?dPlace }
+
+        BIND(CONCAT(
+          COALESCE(?bio, ""),
+          IF(BOUND(?profession), CONCAT(" ", ?profession), ""),
+          IF(BOUND(?bDate) || BOUND(?bPlace) || BOUND(?dDate) || BOUND(?dPlace),
+            CONCAT(" (",
+                    COALESCE(STR(?bDate), ""), IF(BOUND(?bPlace), CONCAT(", ", ?bPlace), ""),
+                    " – ",
+                    COALESCE(STR(?dDate), ""), IF(BOUND(?dPlace), CONCAT(", ", ?dPlace), ""),
+                    ")"),
+            "")
+        ) AS ?value)
       prefLabel: |
         ?subject ?predicatePrefLabel ?value .
         ?predicatePrefLabel rdfs:subPropertyOf gnd:preferredName .
@@ -192,90 +142,94 @@ datasets:
           (skos:exactMatch)
         }
     wikidata_match_property: P227
-
-  grp:
-    name: GRP
+  thesarchesp:
+    name: ThesArchEsp
     description:
-      brief: GTA Research Portal data
+      brief: Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
+      full: Le Thésaurus de la désignation des œuvres architecturales et des espaces aménagés élaboré en 2011 est une refonte du Thésaurus de l'architecture édité en 2000 aux Editions du patrimoine. Onze ans plus tard, il nous a paru nécessaire de reprendre cet ouvrage pour d'une part, présenter les concepts que les nouveaux terrains d'inventaire ou les nouveaux domaines de recherche ont fait émerger, ce qui a conduit à en reprendre l'organisation ; d'autre part, à en faire un véritable outil documentaire numérique.
     publisher:
-      name: Institut gta ETH Zürich
-      url: https://gta.arch.ethz.ch/
+      name: Ministère de la culture et de la communication
+      url: https://www.culture.gouv.fr/
     source:
-      - type: http_file
-        url: https://github.com/user-attachments/files/29960050/person_dump.nt.gz
-        file_format: nt
-        process:
-          - gunzip
-      - type: http_file
-        url: https://github.com/user-attachments/files/29960049/group_dump.nt.gz
-        file_format: nt
-        process:
-          - gunzip
-    graph: https://data.gta.arch.ethz.ch/graph
-    namespace: https://resource.gta.arch.ethz.ch/
-    prefixes:
-      aat: http://vocab.getty.edu/aat/
-      crmdig: http://www.ics.forth.gr/isl/CRMdig/
-      crm: http://www.cidoc-crm.org/cidoc-crm/
-      grp: https://ontology.gta.arch.ethz.ch/
-      rdfs: http://www.w3.org/2000/01/rdf-schema#
-      type: https://data.gta.arch.ethz.ch/type/
-    types:
-      Group:
-        - grp:Group
-      Person:
-        - grp:Person
-    queries:
-      prefLabel: |
-        ?subject crm:P1_is_identified_by ?identifier .
-        ?identifier crm:P2_has_type aat:300404670 ;
-          crm:P190_has_symbolic_content ?value .
-      labels: |
-        ?subject rdfs:label ?label .
-      description: |
-        ?subject crm:P67i_is_referred_to_by ?statement .
-        ?statement crm:P2_has_type type:4149527 ;
-          crm:P190_has_symbolic_content ?value .
-      matches: |
-        ?subject crmdig:L54_is_same-as ?value .
-
-  lcnaf:
-    name: LCNAF
-    description:
-      brief: Library of Congress Name Authority File
-      full: Library of Congress Authorities provides around 500,000 authority records for subject headings and genre/form terms, as well as over 11 million name authority records for persons, organizations, places, and meetings/conferences. Also included are bibliographic headings pulled from the Library of Congress Catalog as additional references to support the work of catalogers. Library of Congress Authorities is a free service allowing users to browse, view and download authority headings in MARC format for use in a local library system.
-    publisher:
-      name: Library of Congress
-      url: https://www.loc.gov/
-    source:
-      - type: http_file
-        url: https://id.loc.gov/download/authorities/names.skosrdf.ttl.gz
-        file_format: ttl
-        process:
-          - gunzip
+    - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+      type: http_file
+      file_format: ttl
     file_format: ttl
-    graph: http://id.loc.gov/authorities/names/graph
-    namespace: http://id.loc.gov/authorities/names/
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
-      Person:
-        - skos:Concept
+      Concept:
+      - skos:Concept
     queries:
       description: |
-        ?subject skos:note ?value .
-        FILTER(isiri(?subject))
+        ?subject skos:definition ?value .
       prefLabel: |
         ?subject skos:prefLabel ?value .
-        FILTER(isiri(?subject))
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
-        FILTER(isiri(?subject))
+      matches: ?subject skos:exactMatch ?value .
+  thesobjmob:
+    name: ThesObjMob
+    description:
+      brief: Thésaurus de la désignation des objets mobiliers
+      full: Le Thésaurus de la désignation des objets mobiliers a été mis en ligne au premier trimestre 2014. Il constitue la réédition, revue et complétée, de l'outil élaboré par l’Inventaire général des monuments et richesses artistiques de la France et édité en 2001 par les éditions du patrimoine, dans la collection Documents & méthodes. Treize ans plus tard, il a paru nécessaire de reprendre l'ouvrage pour, d'une part, introduire les concepts que les nouveaux domaines de recherche ont fait émerger, et d'autre part, en faire un véritable outil documentaire numérique.
+    publisher:
+      name: Ministère de la culture et de la communication
+      url: https://www.culture.gouv.fr/
+    source:
+    - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+      type: http_file
+      file_format: ttl
+    file_format: ttl
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      Concept:
+      - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?value .
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: ?subject skos:exactMatch ?value .
+  ulan:
+    name: ULAN
+    description:
+      brief: Union List of Artist Names® (ULAN)
+      full: The Union List of Artist Names® (ULAN) is a structured vocabulary of artist names and biographical information.
+    publisher:
+      name: The Getty Research Institute
+      url: https://www.getty.edu
+    source:
+    - url: http://ulandownloads.getty.edu/VocabData/full.zip
+      process:
+      - unzip
+    graph: http://vocab.getty.edu/ulan/graph
+    namespace: http://vocab.getty.edu/ulan/
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      Person:
+      - gvp:PersonConcept
+      - gvp:UnknownPersonConcept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?value .
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
+      labels: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
       matches: |
-        ?subject skos:exactMatch ?value .
-    wikidata_match_property: P244
-
-
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
+    wikidata_match_property: P245
   sikart:
     name: SIKART
     description:
@@ -285,12 +239,12 @@ datasets:
       name: Schweizerisches Institut für Kunstwissenschaft SIK-ISEA
       url: https://www.sik-isea.ch/
     source:
-      - type: github_zip
-        repository: swiss-art-research-net/sikart-data
-        path: source/SIK_20210616_2300.ttl.zip
-        file_format: ttl
-        process:
-          - unzip
+    - type: github_zip
+      repository: swiss-art-research-net/sikart-data
+      path: source/SIK_20210616_2300.ttl.zip
+      file_format: ttl
+      process:
+      - unzip
     file_format: ttl
     graph: http://recherche.sik-isea.ch/graph
     namespace: https://recherche.sik-isea.ch/person-
@@ -301,13 +255,13 @@ datasets:
       sik: https://recherche.sik-isea.ch/
     types:
       Artwork:
-        - sik:SIK-WORK
-        - sik:SIK-WORK_GROUP
-        - sik:SIK-PARENT_WORK
+      - sik:SIK-WORK
+      - sik:SIK-WORK_GROUP
+      - sik:SIK-PARENT_WORK
       Person:
-        - sik:SIK-ACTOR
+      - sik:SIK-ACTOR
       Concept:
-        - sik:SIK-TYPE
+      - sik:SIK-TYPE
     queries:
       description: |
         ?subject crm:P67i_is_referred_to_by ?statement .
@@ -321,103 +275,8 @@ datasets:
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       labels: |
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
-      matches:
-        ?subject crmdig:L54_same_as ?value .
+      matches: ?subject crmdig:L54_same_as ?value .
     wikidata_match_property: P781
-
-  thesarchesp:
-    name: ThesArchEsp
-    description:
-      brief: Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
-      full: Le Thésaurus de la désignation des œuvres architecturales et des espaces aménagés élaboré en 2011 est une refonte du Thésaurus de l'architecture édité en 2000 aux Editions du patrimoine. Onze ans plus tard, il nous a paru nécessaire de reprendre cet ouvrage pour d'une part, présenter les concepts que les nouveaux terrains d'inventaire ou les nouveaux domaines de recherche ont fait émerger, ce qui a conduit à en reprendre l'organisation ; d'autre part, à en faire un véritable outil documentaire numérique.
-    publisher:
-      name: Ministère de la culture et de la communication
-      url: https://www.culture.gouv.fr/
-    source:
-      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
-        type: http_file
-        file_format: ttl
-    file_format: ttl
-    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
-    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/
-    prefixes:
-      skos: http://www.w3.org/2004/02/skos/core#
-    types:
-      Concept:
-        - skos:Concept
-    queries:
-      description: |
-        ?subject skos:definition ?value .
-      prefLabel: |
-        ?subject skos:prefLabel ?value .
-      labels: |
-        ?subject (skos:prefLabel | skos:altLabel) ?value .
-      matches: |
-        ?subject skos:exactMatch ?value .
-
-  thesobjmob:
-    name: ThesObjMob
-    description:
-      brief: Thésaurus de la désignation des objets mobiliers
-      full: Le Thésaurus de la désignation des objets mobiliers a été mis en ligne au premier trimestre 2014. Il constitue la réédition, revue et complétée, de l'outil élaboré par l’Inventaire général des monuments et richesses artistiques de la France et édité en 2001 par les éditions du patrimoine, dans la collection Documents & méthodes. Treize ans plus tard, il a paru nécessaire de reprendre l'ouvrage pour, d'une part, introduire les concepts que les nouveaux domaines de recherche ont fait émerger, et d'autre part, en faire un véritable outil documentaire numérique.
-    publisher:
-      name: Ministère de la culture et de la communication
-      url: https://www.culture.gouv.fr/
-    source:
-      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
-        type: http_file
-        file_format: ttl
-    file_format: ttl
-    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
-    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/
-    prefixes:
-      skos: http://www.w3.org/2004/02/skos/core#
-    types:
-      Concept:
-        - skos:Concept
-    queries:
-      description: |
-        ?subject skos:definition ?value .
-      prefLabel: |
-        ?subject skos:prefLabel ?value .
-      labels: |
-        ?subject (skos:prefLabel | skos:altLabel) ?value .
-      matches: |
-        ?subject skos:exactMatch ?value .
-
-  ulan:
-    name: ULAN
-    description:
-      brief: Union List of Artist Names® (ULAN)
-      full: The Union List of Artist Names® (ULAN) is a structured vocabulary of artist names and biographical information.
-    publisher:
-      name: The Getty Research Institute
-      url: https://www.getty.edu
-    source:
-      - url: http://ulandownloads.getty.edu/VocabData/full.zip
-        process:
-          - unzip
-    graph: http://vocab.getty.edu/ulan/graph
-    namespace: http://vocab.getty.edu/ulan/
-    prefixes:
-      gvp: http://vocab.getty.edu/ontology#
-      skos: http://www.w3.org/2004/02/skos/core#
-      xl: http://www.w3.org/2008/05/skos-xl#
-    types:
-      Person:
-        - gvp:PersonConcept
-        - gvp:UnknownPersonConcept
-    queries:
-      description: |
-        ?subject gvp:parentStringAbbrev ?value .
-      prefLabel: |
-        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
-      labels: |
-        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
-      matches: |
-        ?subject (skos:exactMatch | skos:closeMatch) ?value .
-    wikidata_match_property: P245
-
   wikidata:
     name: Wikidata
     description:
@@ -427,30 +286,30 @@ datasets:
       name: Wikimedia Foundation
       url: https://wikimediafoundation.org/
     source:
-      - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/artists.ttl.gz
-        process:
-          - gunzip
-      - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/aatTerms.ttl.gz
-        process:
-          - gunzip
-      - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/geonamesPlaces.ttl.gz
-        process:
-          - gunzip
-      - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/gndTerms.ttl.gz
-        process:
-          - gunzip
-      - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/lcnafPersons.ttl.gz
-        process:
-          - gunzip
-      - type: http_file
-        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/ulanPersons.ttl.gz
-        process:
-          - gunzip
+    - type: http_file
+      url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/artists.ttl.gz
+      process:
+      - gunzip
+    - type: http_file
+      url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/aatTerms.ttl.gz
+      process:
+      - gunzip
+    - type: http_file
+      url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/geonamesPlaces.ttl.gz
+      process:
+      - gunzip
+    - type: http_file
+      url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/gndTerms.ttl.gz
+      process:
+      - gunzip
+    - type: http_file
+      url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/lcnafPersons.ttl.gz
+      process:
+      - gunzip
+    - type: http_file
+      url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/ulanPersons.ttl.gz
+      process:
+      - gunzip
     graph: http://www.wikidata.org/graph
     namespace: http://www.wikidata.org/entity/
     prefixes:
@@ -464,18 +323,18 @@ datasets:
       skos: http://www.w3.org/2004/02/skos/core#
     types:
       BibliographicItem:
-        - rds:BibliographicItem
+      - rds:BibliographicItem
       Event:
-        - rds:Event
+      - rds:Event
       Group:
-        - rds:Group
+      - rds:Group
       Person:
-        - wd:Q5
-        - rds:Person
+      - wd:Q5
+      - rds:Person
       Place:
-        - rds:Place
+      - rds:Place
       Concept:
-        - rds:Concept
+      - rds:Concept
     queries:
       prefLabel: |
         ?subject rdfs:label ?value .
@@ -485,9 +344,51 @@ datasets:
       description: |
         ?subject schema:description ?value .
         FILTER(LANG(?value) = "en")
-      matches: |
-        ?subject owl:sameAs ?value .
-
+      matches: ?subject owl:sameAs ?value .
+  grp:
+    name: GRP
+    description:
+      brief: GTA Research Portal data
+    publisher:
+      name: Institut gta ETH Zürich
+      url: https://gta.arch.ethz.ch/
+    source:
+    - type: http_file
+      url: https://github.com/user-attachments/files/29960050/person_dump.nt.gz
+      file_format: nt
+      process:
+      - gunzip
+    - type: http_file
+      url: https://github.com/user-attachments/files/29960049/group_dump.nt.gz
+      file_format: nt
+      process:
+      - gunzip
+    graph: https://data.gta.arch.ethz.ch/graph
+    namespace: https://resource.gta.arch.ethz.ch/
+    prefixes:
+      aat: http://vocab.getty.edu/aat/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      grp: https://ontology.gta.arch.ethz.ch/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      type: https://data.gta.arch.ethz.ch/type/
+    types:
+      Group:
+      - grp:Group
+      Person:
+      - grp:Person
+    queries:
+      prefLabel: |
+        ?subject crm:P1_is_identified_by ?identifier .
+        ?identifier crm:P2_has_type aat:300404670 ;
+          crm:P190_has_symbolic_content ?value .
+      labels: |
+        ?subject rdfs:label ?label .
+      description: |
+        ?subject crm:P67i_is_referred_to_by ?statement .
+        ?statement crm:P2_has_type type:4149527 ;
+          crm:P190_has_symbolic_content ?value .
+      matches: ?subject crmdig:L54_is_same-as ?value .
 types:
   Artwork:
     name: Artwork

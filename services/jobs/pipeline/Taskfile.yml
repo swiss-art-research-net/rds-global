@@ -22,6 +22,7 @@ tasks:
   startup:
     desc: Tasks that run on container startup
     cmds:
+      - task: generate-datasets-configuration
       - task: generate-frontend-configuration
 
   default:
@@ -109,6 +110,21 @@ tasks:
       - mkdir -p "{{.DIRECTORY_WIKIDATA_ENTITIES}}"
       - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
+  generate-datasets-configuration:
+    desc: Generate the unified datasets configuration
+    vars:
+      DATASETS_DIRECTORY: /config/datasets
+      TYPES_CONFIG_YML: /config/types/types.yml
+    cmds:
+      - python /pipeline/scripts/generateDatasetsConfiguration.py --datasets-directory "{{.DATASETS_DIRECTORY}}" --types-config "{{.TYPES_CONFIG_YML}}" --output-file "{{.DATASETS_CONFIG_YML}}" --datasets "$DATASETS"
+  
+  generate-frontend-configuration:
+    desc: Generate configuration for the frontend
+    vars:
+      OUTPUT_DIRECTORY: /apps/rds-config/
+    cmds:
+      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-app "{{.OUTPUT_DIRECTORY}}"
+
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
     vars:
@@ -124,13 +140,6 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
           GRAPH: "{{.GRAPH}}"
-  
-  generate-frontend-configuration:
-    desc: Generate configuration for the frontend
-    vars:
-      OUTPUT_DIRECTORY: /apps/rds-config/
-    cmds:
-      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-app "{{.OUTPUT_DIRECTORY}}"
 
   generate-type-mappings:
     desc: Generate type mappings for RDS entities

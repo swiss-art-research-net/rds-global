@@ -28,14 +28,14 @@ For acccess to the SIKART data it is necessary to provide a GitHub Username and 
 
 Important environment variables:
 
-- `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets.yml`.
+- `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets/*.yml`, and the active subset is assembled into `config/datasets.yml` on startup.
 - `QLEVER_ACCESS_TOKEN`: access token used by the QLever API for authenticated update operations.
 - `COMPOSE_FILE`: selects which compose file assembly to use for the stack.
 - `PLATFORM_HOST_NAME`: public hostname for the ResearchSpace / RDS platform.
 - `RECONCILE_HOST_NAME`: public hostname for the OpenSearch reconciliation connector.
 - `PROXY_NETWORK_NAME`: name of the external reverse-proxy network used by the production overlay.
 
-The pipeline downloads source data from external services and repositories listed in `config/datasets.yml`, and the SameAs generation queries Wikidata. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
+The pipeline downloads source data from external services and repositories as configured in the datasets configuration, and queries Wikidata for SameAs generation. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
 
 ### Running the service
 
