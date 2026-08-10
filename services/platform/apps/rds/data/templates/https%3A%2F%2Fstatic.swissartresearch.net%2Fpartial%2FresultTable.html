@@ -107,6 +107,7 @@
                   "dataset": "{{dataset.value}}", 
                   "rdsType": "{{typeClass.value}}", 
                   "matches": [{{#each (arraySplit matches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}], 
+                  "localMatches": [{{#each (arraySplit localMatches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}],
                   "sourceTypes": [{{#each (arraySplit types.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select
@@ -146,13 +147,14 @@
               {{#ifCond localMatches.value "!==" "[]"}}
                 <semantic-query
                     query='SELECT ?related ?dataset ?datasetLabel ?sourceDataset
-                                  (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="|||") AS ?labels)
+                    (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR=" | ") AS ?labels)
                     WHERE {
                       VALUES (?related) {
                         {{#each (arraySplit localMatches.value)}}
                           (<{{this}}>)
                         {{/each}}
                       }
+                      ?related a ?type .
                       BIND("{{dataset.value}}" AS ?sourceDataset)
                       [[> partial:valuesDatasetLabels]]
                       FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
@@ -175,13 +177,9 @@
                                     <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
                                   </button>
                                 </rds-copy-popover>
-                                <rds-item-truncate class="related-record-label" limit="3">
-                                  {{#if labels.value}}
-                                    {{#each (split labels.value "|||")}}
-                                      <span>{{this}}</span>
-                                    {{/each}}
-                                  {{/if}}
-                                </rds-item-truncate>
+                                {{#if labels.value}}
+                                  <div class="related-record-label">{{labels.value}}</div>
+                                {{/if}}
                                 <rds-copy-value class="related-record-uri" value="{{related.value}}">
                                   {{related.value}}
                                 </rds-copy-value>

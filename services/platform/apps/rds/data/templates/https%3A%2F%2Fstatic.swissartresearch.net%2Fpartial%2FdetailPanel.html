@@ -51,51 +51,41 @@
             </semantic-query>
           {{/ifCond}}
 
-          {{#if matches}}
+          {{#if localMatches}}
             <semantic-query
-              query='SELECT DISTINCT ?related ?dataset ?label WHERE {
-                VALUES (?related) {
-                  {{#each matches}}
-                    (<{{this}}>)
+              query='SELECT ?related ?datasetKey ?external (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="|||") AS ?labels) WHERE {
+                VALUES ?related {
+                  {{#each localMatches}}
+                    <{{this}}>
                   {{/each}}
                 }
-
-                ?related a ?type .
-
-                [[> partial:valuesDatasetLabels]]
-
-                FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-                OPTIONAL { ?related rds:label ?label }
-              }'
-              template="{{> related-records}}"
+                OPTIONAL {
+                  SELECT DISTINCT ?related ?datasetKey WHERE {
+                    VALUES ?related {
+                      {{#each localMatches}}
+                        <{{this}}>
+                      {{/each}}
+                    }
+                    ?related a ?type .
+                    [[> partial:valuesDatasetLabels]]
+                    FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                    BIND(?dataset AS ?datasetKey)
+                  }
+                }
+                OPTIONAL {
+                  GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
+                    ?related rds:label ?label .
+                  }
+                }
+                BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
+              }
+              GROUP BY ?related ?datasetKey ?external'
+              template="{{> source-links}}"
               no-result-template=""
             >
-              [[> relatedRecordsTemplate]]
+              [[> sourceLinksTemplate]]
             </semantic-query>
           {{/if}}
-
-          <semantic-query
-            query='SELECT DISTINCT ?related ?external WHERE {
-              BIND(<{{subjectUri}}> AS ?subject)
-
-              GRAPH <http://schema.swissartresearch.net/rds/exact-match-statements> {
-                ?subject rds:related ?related .
-              }
-
-              FILTER(?related != ?subject)
-
-              FILTER NOT EXISTS {
-                [[> partial:valuesDatasetLabels]]
-                FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-              }
-
-              BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
-            }'
-            template="{{> external-links}}"
-            no-result-template=""
-          >
-            [[> externalLinksTemplate]]
-          </semantic-query>
         </div>
 
         <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
@@ -129,22 +119,30 @@
   </template>
 [[/inline]]
 
-[[#*inline "relatedRecordsTemplate"]]
-  <template id="related-records">
+[[#*inline "sourceLinksTemplate"]]
+  <template id="source-links">
     {{#if bindings}}
       <div class="detail-panel-section detail-section--related">
-        <div class="detail-section-title">Related records</div>
-        <rds-item-truncate class="detail-related-list" limit="3">
+        <div class="detail-section-title">Links from source record</div>
+        <rds-item-truncate class="detail-related-list" limit="5">
           {{#each bindings}}
             <div class="detail-row detail-related-record">
-              <rds-copy-popover uri="{{related.value}}">
-                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                </button>
-              </rds-copy-popover>
+              {{#if datasetKey.value}}
+                <rds-copy-popover uri="{{related.value}}">
+                  <button type="button" class="rds-badge" data-ds="{{datasetKey.value}}">
+                    <rds-dataset-label key="{{datasetKey.value}}"></rds-dataset-label>
+                  </button>
+                </rds-copy-popover>
+              {{else}}
+                <span class="rds-badge">{{external.value}}</span>
+              {{/if}}
               <div class="detail-related-content">
-                {{#if label.value}}
-                  <div class="detail-related-label">{{label.value}}</div>
+                {{#if labels.value}}
+                  <rds-item-truncate class="detail-related-label" limit="3">
+                    {{#each (split labels.value "|||")}}
+                      <span>{{this}}</span>
+                    {{/each}}
+                  </rds-item-truncate>
                 {{/if}}
                 <rds-copy-value class="detail-related-uri" value="{{related.value}}">
                   {{related.value}}
@@ -152,19 +150,6 @@
               </div>
             </div>
           {{/each}}
-        </rds-item-truncate>
-      </div>
-    {{/if}}
-  </template>
-[[/inline]]
-
-[[#*inline "externalLinksTemplate"]]
-  <template id="external-links">
-    {{#if bindings}}
-      <div class="detail-panel-section detail-section--external">
-        <div class="detail-section-title">External links</div>
-        <rds-item-truncate class="detail-external-list" limit="8">
-          {{#each bindings}}<span class="detail-external-item"><a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a></span>{{/each}}
         </rds-item-truncate>
       </div>
     {{/if}}
