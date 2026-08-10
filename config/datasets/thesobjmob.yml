@@ -1,0 +1,30 @@
+datasets:
+  thesobjmob:
+    name: ThesObjMob
+    description:
+      brief: Thésaurus de la désignation des objets mobiliers
+      full: Le Thésaurus de la désignation des objets mobiliers a été mis en ligne au premier trimestre 2014. Il constitue la réédition, revue et complétée, de l'outil élaboré par l’Inventaire général des monuments et richesses artistiques de la France et édité en 2001 par les éditions du patrimoine, dans la collection Documents & méthodes. Treize ans plus tard, il a paru nécessaire de reprendre l'ouvrage pour, d'une part, introduire les concepts que les nouveaux domaines de recherche ont fait émerger, et d'autre part, en faire un véritable outil documentaire numérique.
+    publisher:
+      name: Ministère de la culture et de la communication
+      url: https://www.culture.gouv.fr/
+    source:
+      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T69?includeSchemes=true&format=TURTLE
+        type: http_file
+        file_format: ttl
+    file_format: ttl
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T69/
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      Concept:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?value .
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .

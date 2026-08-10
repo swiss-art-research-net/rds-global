@@ -1,0 +1,70 @@
+datasets:
+  wikidata:
+    name: Wikidata
+    description:
+      brief: Wikidata
+      full: Wikidata is a free and open knowledge base that can be read and edited by both humans and machines.
+    publisher:
+      name: Wikimedia Foundation
+      url: https://wikimediafoundation.org/
+    source:
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/artists.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/aatTerms.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/geonamesPlaces.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/gndTerms.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/lcnafPersons.ttl.gz
+        process:
+          - gunzip
+      - type: http_file
+        url: https://github.com/swiss-art-research-net/rds-wikidata-fetcher/releases/download/v0.2/ulanPersons.ttl.gz
+        process:
+          - gunzip
+    graph: http://www.wikidata.org/graph
+    namespace: http://www.wikidata.org/entity/
+    prefixes:
+      wd: http://www.wikidata.org/entity/
+      wdt: http://www.wikidata.org/prop/direct/
+      owl: http://www.w3.org/2002/07/owl#
+      rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      rds: http://schema.swissartresearch.net/ontology/rds#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      BibliographicItem:
+        - rds:BibliographicItem
+      Event:
+        - rds:Event
+      Group:
+        - rds:Group
+      Person:
+        - wd:Q5
+        - rds:Person
+      Place:
+        - rds:Place
+      Concept:
+        - rds:Concept
+    queries:
+      prefLabel: |
+        ?subject rdfs:label ?value .
+        FILTER(LANG(?value) = "en" )
+      labels: |
+        ?subject rdfs:label ?value .
+      description: |
+        ?subject schema:description ?value .
+        FILTER(LANG(?value) = "en")
+      matches: |
+        ?subject owl:sameAs ?value .

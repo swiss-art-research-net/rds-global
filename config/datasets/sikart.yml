@@ -1,0 +1,49 @@
+datasets:
+  sikart:
+    name: SIKART
+    description:
+      brief: SIKART
+      full: SIKART bietet Inhalte zu historischen und zeitgenössischen Künstlerinnen und Künstlern im Bereich Kunstwerke, Ausstellungen, Literatur und Auszeichnungen. Es umfasst über 17’000 Personeneinträge und rund 1900 ausführliche monografische Lexikonartikel.
+    publisher:
+      name: Schweizerisches Institut für Kunstwissenschaft SIK-ISEA
+      url: https://www.sik-isea.ch/
+    source:
+      - type: github_zip
+        repository: swiss-art-research-net/sikart-data
+        path: source/SIK_20210616_2300.ttl.zip
+        file_format: ttl
+        process:
+          - unzip
+    file_format: ttl
+    graph: http://recherche.sik-isea.ch/graph
+    namespace: https://recherche.sik-isea.ch/person-
+    prefixes:
+      crm: http://www.cidoc-crm.org/cidoc-crm/
+      crmdig: http://www.ics.forth.gr/isl/CRMdig/
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      sik: https://recherche.sik-isea.ch/
+    types:
+      Artwork:
+        - sik:SIK-WORK
+        - sik:SIK-WORK_GROUP
+        - sik:SIK-PARENT_WORK
+      Person:
+        - sik:SIK-ACTOR
+      Concept:
+        - sik:SIK-TYPE
+    queries:
+      description: |
+        ?subject crm:P67i_is_referred_to_by ?statement .
+        ?statement crm:P2_has_type ?type ;
+                  rdfs:label ?value .
+        VALUES ?type {
+          sik:type-BIOGRAPHICAL_DATA
+          sik:type-BRIEF_BIOGRAPHY
+        }
+      prefLabel: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      labels: |
+        ?subject crm:P1_is_identified_by/rdfs:label ?value .
+      matches:
+        ?subject crmdig:L54_same_as ?value .
+    wikidata_match_property: P781

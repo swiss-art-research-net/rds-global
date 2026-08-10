@@ -1,0 +1,36 @@
+datasets:  
+  lcnaf:
+    name: LCNAF
+    description:
+      brief: Library of Congress Name Authority File
+      full: Library of Congress Authorities provides around 500,000 authority records for subject headings and genre/form terms, as well as over 11 million name authority records for persons, organizations, places, and meetings/conferences. Also included are bibliographic headings pulled from the Library of Congress Catalog as additional references to support the work of catalogers. Library of Congress Authorities is a free service allowing users to browse, view and download authority headings in MARC format for use in a local library system.
+    publisher:
+      name: Library of Congress
+      url: https://www.loc.gov/
+    source:
+      - type: http_file
+        url: https://id.loc.gov/download/authorities/names.skosrdf.ttl.gz
+        file_format: ttl
+        process:
+          - gunzip
+    file_format: ttl
+    graph: http://id.loc.gov/authorities/names/graph
+    namespace: http://id.loc.gov/authorities/names/
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      Person:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:note ?value .
+        FILTER(isiri(?subject))
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+        FILTER(isiri(?subject))
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+        FILTER(isiri(?subject))
+      matches: |
+        ?subject skos:exactMatch ?value .
+    wikidata_match_property: P244
