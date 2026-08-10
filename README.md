@@ -89,6 +89,9 @@ task: Available tasks for this project:
 * fetch-all-sameas-statements:                             Fetch data reuired for SameAs statements
 * fetch-sameas-statements-for-dataset:                     Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
 * fetch-sameas-statements-for-dataset-from-wikidata:       Fetch SameAs statements from Wikidata for a specified dataset passed as DATASET variable or via CLI argument
+* generate-dataset-metadata:                               Generate dataset metadata RDF
+* generate-datasets-configuration:                         Generate the unified datasets configuration
+* generate-frontend-configuration:                         Generate configuration for the frontend
 * generate-labels:                                         Generate labels for URIs
 * generate-sameas-statements:                              Generates SameAs statements between entities
 * generate-type-mappings:                                  Generate type mappings for RDS entities
@@ -97,9 +100,13 @@ task: Available tasks for this project:
 * prepare-indexing:                                        Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
 * prepare-metadata-for-indexing:                           Prepare RDS metadata for indexing
 * process-sameas-statements:                               Process SameAs statements
+* remove-dataset-from-search-index:                        Remove a dataset from OpenSearch index. Dataset name should be passed via DATASET variable or as CLI argument
+* restart-qlever:                                          Request a restart of the QLever service
+* startup:                                                 Tasks that run on container startup
+* supplement-wikidata-type-mappings:                       Generate and index mappings for Wikidata entities that lack a RDS type based on entities linked via match statements
 * update-data:                                             Update RDF datasets
 * update-individual-dataset:                               Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
-* verify-data:                                             Verify the validity of the source data or any data in a specified directory passed as CLI argument
+* verify-data:                                             Verify the validity of the ingest data or any data in a specified directory passed as CLI argument
 ```
 
 
