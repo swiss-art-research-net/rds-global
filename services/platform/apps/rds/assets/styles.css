@@ -188,12 +188,12 @@
   column-gap: 2rem;
 }
 .detail-related-list > .rds-item-truncate-toggle {
-  grid-column: 1/-1;
+  grid-column: 1 / -1;
 }
 .detail-related-record {
   display: grid;
   grid-template-columns: subgrid;
-  grid-column: 1/-1;
+  grid-column: 1 / -1;
   align-items: start;
   column-gap: 2rem;
 }
@@ -431,7 +431,7 @@ html.rds-search-restoring .rds-intro {
 .rds-intro-datasets {
   margin-top: 56px;
 }
-rds-dataset-list {
+.rds-dataset-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 4rem;
@@ -442,7 +442,7 @@ rds-dataset-list {
   grid-template-columns: 120px minmax(0, 1fr);
   column-gap: 4rem;
   align-items: baseline;
-  padding: 10px 0 24px 0;
+  padding: 16px 0;
   border-bottom: 1px dotted #000000;
 }
 .rds-intro-dataset .rds-badge {
@@ -459,14 +459,19 @@ rds-dataset-list {
 .rds-intro-dataset-description {
   display: block;
 }
+.rds-intro-dataset-name a,
+.rds-intro-dataset-description a {
+  white-space: nowrap;
+  text-decoration: underline;
+}
 .rds-intro-dataset-name {
-  margin-bottom: 2px;
+  margin-bottom: 12px;
   font-size: 28px;
   font-weight: 400;
 }
 .rds-intro-dataset-description {
   font-size: 18px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
@@ -961,5 +966,25 @@ td[role="cell"]:empty {
 }
 .record-label {
   cursor: pointer;
+  text-decoration: underline;
+}
+.rds-text-truncate-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--rds-text-truncate-lines);
+}
+rds-text-truncate.is-expanded .rds-text-truncate-text {
+  display: block;
+  overflow: visible;
+}
+.rds-text-truncate-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #000000;
+  cursor: pointer;
+}
+.rds-text-truncate-toggle:hover {
   text-decoration: underline;
 }

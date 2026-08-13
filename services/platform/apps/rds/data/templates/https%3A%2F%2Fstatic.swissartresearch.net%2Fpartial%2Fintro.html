@@ -30,6 +30,58 @@
 
   <div class="rds-intro-datasets">
     <div class="eyebrow-label">Included datasets</div>
-    <rds-dataset-list></rds-dataset-list>
+    <semantic-query
+      query='SELECT ?name ?publisher ?title ?description WHERE {
+        GRAPH <http://rds.swissartresearch.net/graph/datasetMetadata> {
+          ?dataset
+            dct:title ?name ;
+            crm:P67i_is_referred_to_by ?titleNode .
+
+          OPTIONAL {
+            ?dataset dct:publisher/foaf:name ?publisher .
+          }
+
+          ?titleNode
+            crm:P2_has_type aat:300418049 ;
+            crm:P190_has_symbolic_content ?title .
+
+          OPTIONAL {
+            ?dataset crm:P67i_is_referred_to_by ?descrNode .
+            ?descrNode
+              crm:P2_has_type aat:300435416 ;
+              crm:P190_has_symbolic_content ?description .
+          }
+        }
+      }
+      ORDER BY ?publisher'
+      template="{{> dataset-list}}"
+      no-result-template=""
+    >
+      <template id="dataset-list">
+        <div class="rds-dataset-list">
+          {{#each bindings}}
+            <div class="rds-intro-dataset">
+              <span class="rds-badge">{{name.value}}</span>
+              <div class="rds-intro-dataset-content">
+                <div class="eyebrow-label">
+                  {{#if publisher.value}}{{publisher.value}}{{/if}}
+                </div>
+                <span class="rds-intro-dataset-name">
+                  {{title.value}}
+                </span>
+                {{#if description.value}}
+                  <rds-text-truncate
+                    class="rds-intro-dataset-description"
+                    lines="2"
+                    show-more-label="Show more"
+                    show-less-label="Show less"
+                  >{{description.value}}</rds-text-truncate>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </template>
+    </semantic-query>
   </div>
 </section>

@@ -595,3 +595,27 @@ td[role="cell"]:empty {
   cursor: pointer;
   text-decoration: underline;
 }
+
+.rds-text-truncate-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--rds-text-truncate-lines);
+}
+
+rds-text-truncate.is-expanded .rds-text-truncate-text {
+  display: block;
+  overflow: visible;
+}
+
+.rds-text-truncate-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: @col-black;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
