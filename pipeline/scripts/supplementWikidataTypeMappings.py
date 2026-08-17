@@ -29,7 +29,7 @@ BASE_QUERY_TEMPLATE = """
 }}
 """
 
-def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, match_graph, wikidata_graph, page_size=50000):
+def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, match_graph, wikidata_graph, page_size=100000):
     query = BASE_QUERY_TEMPLATE.format(
         RDS_ONTOLOGY_NAMESPACE=RDS_ONTOLOGY_NAMESPACE,
         wikidata_graph=wikidata_graph,
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     parser.add_argument("--types-graph", required=False, default="http://schema.swissartresearch.net/rds/graph/types", help="Graph URI for types")
     parser.add_argument("--match-graph", required=False, default="http://schema.swissartresearch.net/rds/exact-match-statements", help="Graph URI for matches")
     parser.add_argument("--wikidata-graph", required=False, default="http://wikidata.org/graph", help="Graph URI for Wikidata")
-    parser.add_argument("--page-size", type=int, default=5000, help="Number of results per page")
+    parser.add_argument("--page-size", type=int, default=100000, help="Number of results per page")
     args = parser.parse_args()
 
     endpoint = args.endpoint
