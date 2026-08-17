@@ -307,6 +307,7 @@ tasks:
       OUTPUT_DIRECTORY: /data/ingest/type-mappings-wikidata
     cmds:
       - mkdir -p "{{.OUTPUT_DIRECTORY}}"
+      - rm -f "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}_*.nq"
       - python /pipeline/scripts/supplementWikidataTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --types-graph "{{.TYPES_GRAPH}}" --match-graph "{{.MATCH_GRAPH}}" --wikidata-graph "{{.WIKIDATA_GRAPH}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
   update-individual-dataset:
