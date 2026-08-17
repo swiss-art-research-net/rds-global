@@ -35,7 +35,8 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         RDS_ONTOLOGY_NAMESPACE=RDS_ONTOLOGY_NAMESPACE,
         wikidata_graph=wikidata_graph,
         types_graph=types_graph,
-        match_graph=match_graph
+        match_graph=match_graph,
+        wikidata_graph=wikidata_graph
     )
     count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
     total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
@@ -52,7 +53,6 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         offset = str(counter)
         limit = str(page_size)
         paginated_query = query + f" ORDER BY ?wikidataEntity OFFSET {offset} LIMIT {limit}"
-        print(f"Fetching rows {counter} to {counter + page_size}...")
         sparql.setQuery(paginated_query)
         results = sparql.query().convert()
         pbar.update(len(results.strip().splitlines()) - 1)  # Subtract 1 for the header line
