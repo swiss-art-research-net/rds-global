@@ -1,6 +1,7 @@
 import argparse
 import re 
 from SPARQLWrapper import SPARQLWrapper, POST, CSV
+from tqdm import tqdm
 
 from lib.utils import RDS_ONTOLOGY_NAMESPACE
 from lib.sparql_data_download import fetch_total_count
@@ -39,6 +40,7 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
     count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
     total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
     print(f"Total rows to supplement: {total_count}")
+    pbar = tqdm(total=total_count, desc="Supplementing Wikidata type mappings", unit="entities")
 
     counter = 0
     hasResults = True
@@ -53,6 +55,7 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         print(f"Fetching rows {counter} to {counter + page_size}...")
         sparql.setQuery(paginated_query)
         results = sparql.query().convert()
+        pbar.update(len(results.strip().splitlines()) - 1)  # Subtract 1 for the header line
         if not results.strip():
             hasResults = False
             print("No more results.")
@@ -60,7 +63,6 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nt"
         with open(output_file, "w", encoding="utf-8") as f:
             triples = results.decode("utf-8")
-            # Add wikidata_graph to the end of each line before full stop to turn triples into quads
             quads = re.sub(r'\s*\.\s*$', f' <{wikidata_graph}> .', triples, flags=re.MULTILINE)
             f.write(quads)
         counter += page_size
