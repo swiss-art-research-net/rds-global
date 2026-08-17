@@ -35,9 +35,8 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         RDS_ONTOLOGY_NAMESPACE=RDS_ONTOLOGY_NAMESPACE,
         wikidata_graph=wikidata_graph,
         types_graph=types_graph,
-        match_graph=match_graph,
-        wikidata_graph=wikidata_graph
-    )
+        match_graph=match_graph
+    )   
     count_query = re.sub(r'CONSTRUCT\s*\{[^}]*\}', 'SELECT (COUNT(*) as ?count)', query, flags=re.IGNORECASE | re.DOTALL)
     total_count = fetch_total_count(endpoint=endpoint, count_query=count_query)
     print(f"Total rows to supplement: {total_count}")
