@@ -300,7 +300,7 @@ tasks:
   supplement-wikidata-type-mappings:
     desc: Generate and index mappings for Wikidata entities that lack a RDS type based on entities linked via match statements
     vars:
-      FILE_BASENAME: wikidata-type-mappings 
+      FILE_BASENAME: wikidata_type_mappings_
       TYPES_GRAPH: http://schema.swissartresearch.net/rds/graph/types
       MATCH_GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
       WIKIDATA_GRAPH: http://www.wikidata.org/graph
