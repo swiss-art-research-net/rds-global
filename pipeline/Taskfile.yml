@@ -40,6 +40,8 @@ tasks:
       - task: index-data
       - task: restart-qlever
       - task: supplement-wikidata-type-mappings
+      - task: index-data
+      - task: restart-qlever
       - task: add-data-to-search-index
 
   add-data-to-search-index:
