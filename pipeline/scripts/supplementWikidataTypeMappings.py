@@ -1,6 +1,6 @@
 import argparse
 import re 
-from SPARQLWrapper import SPARQLWrapper, POST, JSON
+from SPARQLWrapper import SPARQLWrapper, POST, CSV
 
 from lib.utils import RDS_ONTOLOGY_NAMESPACE
 from lib.sparql_data_download import fetch_total_count
@@ -43,7 +43,7 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
     counter = 0
     hasResults = True
     sparql = SPARQLWrapper(endpoint)
-    sparql.setReturnFormat(JSON)
+    sparql.setReturnFormat(CSV)
     sparql.setMethod(POST)
 
     while hasResults:
@@ -53,17 +53,13 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         print(f"Fetching rows {counter} to {counter + page_size}...")
         sparql.setQuery(paginated_query)
         results = sparql.query().convert()
-        if not results["results"]["bindings"]:
+        if not results.strip():
             hasResults = False
             print("No more results.")
             break
         output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nt"
         with open(output_file, "w", encoding="utf-8") as f:
-            for result in results["results"]["bindings"]:
-                sub = result["s"]["value"]
-                pred = result["p"]["value"]
-                obj = result["o"]["value"]
-                f.write(f"<{sub}> <{pred}> <{obj}> .\n")
+            f.write(results.decode("utf-8"))
         counter += page_size
 
 
