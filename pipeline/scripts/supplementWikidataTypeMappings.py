@@ -29,7 +29,7 @@ BASE_QUERY_TEMPLATE = """
 }}
 """
 
-def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, match_graph, wikidata_graph, page_size=5000):
+def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, match_graph, wikidata_graph, page_size=50000):
     query = BASE_QUERY_TEMPLATE.format(
         RDS_ONTOLOGY_NAMESPACE=RDS_ONTOLOGY_NAMESPACE,
         wikidata_graph=wikidata_graph,
@@ -59,7 +59,10 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
             break
         output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nt"
         with open(output_file, "w", encoding="utf-8") as f:
-            f.write(results.decode("utf-8"))
+            triples = results.decode("utf-8")
+            # Add wikidata_graph to the end of each line before full stop to turn triples into quads
+            quads = re.sub(r'\s*\.\s*$', f' <{wikidata_graph}> .', triples, flags=re.MULTILINE)
+            f.write(quads)
         counter += page_size
 
 
