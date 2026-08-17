@@ -377,6 +377,9 @@ async def get_manifest(request: Request):
         "schemaSpace": "http://schema.swissartresearch.net/ontology/rds#",
 
         "defaultTypes": types,
+        "view": {
+            "url": "https://rds-cloud.swissartresearch.net/resource/?uri={{id}}"
+        },
         "preview": {
             "url": f"{base_url}/preview?id={{{{id}}}}",
             "width": 400,
@@ -500,8 +503,23 @@ async def _reconcile_single(q: Dict[str, Any]):
     limit = int(q.get("limit", 5))
 
     entity_type = q.get("type")
+    requested_typeclasses: List[str] = []
     if isinstance(entity_type, list):
-        entity_type = entity_type[0] if entity_type else None
+        for t in entity_type:
+            if isinstance(t, dict):
+                type_value = t.get("id") or t.get("name")
+            else:
+                type_value = t
+            parsed_types = split_comma_separated_values(str(type_value)) if type_value else None
+            if parsed_types:
+                for parsed_type in parsed_types:
+                    if parsed_type not in requested_typeclasses:
+                        requested_typeclasses.append(parsed_type)
+    elif entity_type:
+        parsed_types = split_comma_separated_values(str(entity_type)) or [str(entity_type)]
+        for parsed_type in parsed_types:
+            if parsed_type not in requested_typeclasses:
+                requested_typeclasses.append(parsed_type)
 
     properties = q.get("properties", [])
     datasets = None
@@ -512,6 +530,17 @@ async def _reconcile_single(q: Dict[str, Any]):
                 val = p.get("v")
                 if val:
                     datasets = [val]
+            elif p.get("pid") == "type":
+                val = p.get("v")
+                if isinstance(val, dict):
+                    type_value = val.get("id") or val.get("name")
+                else:
+                    type_value = val
+                parsed_types = split_comma_separated_values(str(type_value)) if type_value else None
+                if parsed_types:
+                    for parsed_type in parsed_types:
+                        if parsed_type not in requested_typeclasses:
+                            requested_typeclasses.append(parsed_type)
 
     if not query_string:
         return {"result": []}
@@ -521,7 +550,7 @@ async def _reconcile_single(q: Dict[str, Any]):
             query=query_string,
             datasets=datasets,
             limit=limit,
-            typeclass_filter=entity_type
+            typeclass_filters=requested_typeclasses or None,
         )
     except Exception as e:
         logger.exception("SEARCH ERROR for query=%s: %s", query_string, e)
@@ -791,6 +820,11 @@ async def suggest_property(prefix: str = Query("")): # no limit as only one, ret
             "id": "dataset",
             "name": "Dataset",
             "description": "Filter results by dataset/source"
+        },
+        {
+            "id": "type",
+            "name": "Type",
+            "description": "Filter results by type class"
         }
     ]
 
@@ -812,23 +846,19 @@ async def run_search(
     query: str,
     datasets: Optional[List[str]],
     limit: int,
-    typeclass_filter: Optional[str] = None
+    typeclass_filters: Optional[List[str]] = None
 ):
     endpoint = app.state.opensearch_url
     index = app.state.opensearch_index
 
     url = endpoint.rstrip("/") + "/_msearch"
 
-    # Normalize the single `typeclass_filter` string (if provided) into a
-    # list so callers can pass either a single type or let it be None.
-    requested_typeclasses = [typeclass_filter] if typeclass_filter else None
-
     payload = build_msearch_query(
         q=query,
         config=app.state.config,
         total_limit=limit,
         index=index,
-        typeclass_filters=requested_typeclasses,
+        typeclass_filters=typeclass_filters,
         requested_datasets=datasets
     )
 
