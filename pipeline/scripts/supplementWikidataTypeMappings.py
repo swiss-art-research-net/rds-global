@@ -61,7 +61,7 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         pbar.update(len(triples.splitlines()))
         output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nq"
         with open(output_file, "w", encoding="utf-8") as f:
-            quads = re.sub(r'\s*\.\s*$', f' <{wikidata_graph}> .', triples, flags=re.MULTILINE)
+            quads = re.sub(r'\s*\.\s*$', f' <{types_graph}> .', triples, flags=re.MULTILINE)
             f.write(quads)
         counter += page_size
 
