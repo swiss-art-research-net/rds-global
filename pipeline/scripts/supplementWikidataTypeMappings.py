@@ -51,7 +51,8 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
         limit = str(page_size)
         paginated_query = query + f" ORDER BY ?wikidataEntity OFFSET {offset} LIMIT {limit}"
         print(f"Fetching rows {counter} to {counter + page_size}...")
-        results = sparql.query(paginated_query).convert()
+        sparql.setQuery(paginated_query)
+        results = sparql.query().convert()
         if not results["results"]["bindings"]:
             hasResults = False
             print("No more results.")
