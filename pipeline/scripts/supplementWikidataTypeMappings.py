@@ -1,10 +1,9 @@
 import argparse
 import re 
-from SPARQLWrapper import SPARQLWrapper, POST, CSV
 from tqdm import tqdm
 
 from lib.utils import RDS_ONTOLOGY_NAMESPACE
-from lib.sparql_data_download import fetch_total_count
+from lib.sparql_data_download import fetch_total_count, run_sparql_get
 
 BASE_QUERY_TEMPLATE = """
     PREFIX rds: <{RDS_ONTOLOGY_NAMESPACE}>
@@ -44,24 +43,24 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
 
     counter = 0
     hasResults = True
-    sparql = SPARQLWrapper(endpoint)
-    sparql.setReturnFormat(CSV)
-    sparql.setMethod(POST)
 
     while hasResults:
         offset = str(counter)
         limit = str(page_size)
         paginated_query = query + f" ORDER BY ?wikidataEntity OFFSET {offset} LIMIT {limit}"
-        sparql.setQuery(paginated_query)
-        results = sparql.query().convert()
-        pbar.update(len(results.strip().splitlines()) - 1)  # Subtract 1 for the header line
-        if not results.strip():
+        response = run_sparql_get(
+            endpoint=endpoint,
+            query=paginated_query,
+            accept="application/n-triples",
+        )
+        triples = response.text.strip()
+        if not triples:
             hasResults = False
             print("No more results.")
             break
-        output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nt"
+        pbar.update(len(triples.splitlines()))
+        output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nq"
         with open(output_file, "w", encoding="utf-8") as f:
-            triples = results.decode("utf-8")
             quads = re.sub(r'\s*\.\s*$', f' <{wikidata_graph}> .', triples, flags=re.MULTILINE)
             f.write(quads)
         counter += page_size
