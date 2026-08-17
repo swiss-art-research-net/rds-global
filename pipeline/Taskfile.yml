@@ -302,49 +302,10 @@ tasks:
       TYPES_GRAPH: http://schema.swissartresearch.net/rds/graph/types
       MATCH_GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
       WIKIDATA_GRAPH: http://www.wikidata.org/graph
-      OUTPUT_DIRECTORY: /tmp
-      QUERY: |
-        PREFIX rds: <http://schema.swissartresearch.net/ontology/rds#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        CONSTRUCT {
-          ?wikidataEntity a ?otherRdsType .
-        }
-        WHERE {
-          GRAPH <{{.WIKIDATA_GRAPH}}> {
-            ?wikidataEntity a ?wdType .
-          }
-          FILTER NOT EXISTS {
-            GRAPH <{{.TYPES_GRAPH}}> {
-              ?wikidataEntity a ?rdsType .
-            }
-          }
-          GRAPH <{{.MATCH_GRAPH}}> {
-            ?otherEntity rds:related ?wikidataEntity .
-          }
-          GRAPH <{{.TYPES_GRAPH}}> {
-            ?otherEntity a ?otherRdsType .
-          }
-        }
+      OUTPUT_DIRECTORY: /data/ingest/type-mappings-wikidata
     cmds:
       - mkdir -p "{{.OUTPUT_DIRECTORY}}"
-      # Retrieve mappings based on query and save as .nt file
-      - |
-          curl -X POST "{{.QLEVER_ENDPOINT}}/sparql" \
-            -H "Accept: text/turtle" \
-            -H "Content-Type: application/sparql-query" \
-            --data "{{.QUERY}}" \
-            -o "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
-      # Generate UPDATE query from retrieved mappings
-      - |
-        {
-          printf 'INSERT DATA { GRAPH <{{.TYPES_GRAPH}}> {\n'
-          cat {{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt
-          printf '\n} }'
-        } > {{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql
-      # Update QLever data
-      - qlever update --update-file "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql" --sparql-endpoint "{{.QLEVER_ENDPOINT}}" --access-token "$QLEVER_ACCESS_TOKEN" --log-level DEBUG
-      - rm "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
-      - rm "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql"
+      - python /pipeline/scripts/supplementWikidataTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --types-graph "{{.TYPES_GRAPH}}" --match-graph "{{.MATCH_GRAPH}}" --wikidata-graph "{{.WIKIDATA_GRAPH}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
   update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
