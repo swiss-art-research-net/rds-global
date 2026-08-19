@@ -29,7 +29,7 @@ BASE_QUERY_TEMPLATE = """
 }}
 """
 
-def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, match_graph, wikidata_graph, page_size=100000):
+def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, match_graph, wikidata_graph, page_size=100000, file_basename="wikidata_type_mappings"):
     query = BASE_QUERY_TEMPLATE.format(
         RDS_ONTOLOGY_NAMESPACE=RDS_ONTOLOGY_NAMESPACE,
         wikidata_graph=wikidata_graph,
@@ -59,7 +59,7 @@ def supplementWikidataTypeMappings(*, endpoint, output_directory, types_graph, m
             print("No more results.")
             break
         pbar.update(len(triples.splitlines()))
-        output_file = f"{output_directory}/wikidata_type_mappings_{counter}_{counter + page_size}.nq"
+        output_file = f"{output_directory}/{file_basename}_{counter}_{counter + page_size}.nq"
         with open(output_file, "w", encoding="utf-8") as f:
             quads = re.sub(r'\s*\.\s*$', f' <{types_graph}> .', triples, flags=re.MULTILINE)
             f.write(quads)
@@ -74,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--match-graph", required=False, default="http://schema.swissartresearch.net/rds/exact-match-statements", help="Graph URI for matches")
     parser.add_argument("--wikidata-graph", required=False, default="http://wikidata.org/graph", help="Graph URI for Wikidata")
     parser.add_argument("--page-size", type=int, default=100000, help="Number of results per page")
+    parser.add_argument("--file-basename", required=False, default="wikidata_type_mappings", help="Base name for output files")
     args = parser.parse_args()
 
     endpoint = args.endpoint
@@ -82,6 +83,7 @@ if __name__ == "__main__":
     match_graph = args.match_graph
     wikidata_graph = args.wikidata_graph
     page_size = args.page_size
+    file_basename = args.file_basename
     if page_size <= 0:
         raise ValueError("Page size must be a positive integer")
 
@@ -91,5 +93,6 @@ if __name__ == "__main__":
         page_size=page_size,
         types_graph=types_graph,
         match_graph=match_graph,
-        wikidata_graph=wikidata_graph
+        wikidata_graph=wikidata_graph,
+        file_basename=file_basename
     )

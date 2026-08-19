@@ -300,7 +300,7 @@ tasks:
   supplement-wikidata-type-mappings:
     desc: Generate and index mappings for Wikidata entities that lack a RDS type based on entities linked via match statements
     vars:
-      FILE_BASENAME: wikidata-type-mappings 
+      FILE_BASENAME: wikidata_type_mappings
       TYPES_GRAPH: http://schema.swissartresearch.net/rds/graph/types
       MATCH_GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
       WIKIDATA_GRAPH: http://www.wikidata.org/graph
@@ -308,7 +308,7 @@ tasks:
     cmds:
       - mkdir -p "{{.OUTPUT_DIRECTORY}}"
       - rm -f "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}_*.nq"
-      - python /pipeline/scripts/supplementWikidataTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --types-graph "{{.TYPES_GRAPH}}" --match-graph "{{.MATCH_GRAPH}}" --wikidata-graph "{{.WIKIDATA_GRAPH}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+      - python /pipeline/scripts/supplementWikidataTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --types-graph "{{.TYPES_GRAPH}}" --match-graph "{{.MATCH_GRAPH}}" --wikidata-graph "{{.WIKIDATA_GRAPH}}" --output-directory "{{.OUTPUT_DIRECTORY}}" --file-basename "{{.FILE_BASENAME}}" {{.CLI_ARGS}}
 
   update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
