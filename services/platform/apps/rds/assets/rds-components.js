@@ -133,46 +133,6 @@ class RdsDatasetLabel extends HTMLElement {
 
 customElements.define('rds-dataset-label', RdsDatasetLabel);
 
-class RdsDatasetList extends HTMLElement {
-  async connectedCallback() {
-    if (this._rendered) return;
-    this._rendered = true;
-
-    const config = await RDS_CONFIG;
-    const datasets = Object.entries(config.datasets || {});
-
-    this.replaceChildren(
-      ...datasets.map(([key, dataset]) => this._createDataset(key, dataset))
-    );
-  }
-
-  _createDataset(key, dataset) {
-    const item = document.createElement('div');
-    item.className = 'rds-intro-dataset';
-
-    const badge = document.createElement('span');
-    badge.className = 'rds-badge';
-    badge.textContent = dataset.name || key;
-
-    const content = document.createElement('div');
-    content.className = 'rds-intro-dataset-content';
-
-    const name = document.createElement('span');
-    name.className = 'rds-intro-dataset-name';
-    name.textContent = dataset.description || dataset.name || key;
-
-    const description = document.createElement('span');
-    description.className = 'rds-intro-dataset-description';
-    description.textContent = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
-
-    content.append(name, description);
-    item.append(badge, content);
-    return item;
-  }
-}
-
-customElements.define('rds-dataset-list', RdsDatasetList);
-
 class RdsFilterSelection extends HTMLElement {
   async connectedCallback() {
     const params = new URLSearchParams(window.location.search);
@@ -341,6 +301,57 @@ class RdsItemTruncate extends HTMLElement {
 }
 
 customElements.define('rds-item-truncate', RdsItemTruncate);
+
+class RdsTextTruncate extends HTMLElement {
+  connectedCallback() {
+    if (this._initialized) return;
+    this._initialized = true;
+
+    const text = this.textContent.trim();
+    const lines = Number.parseInt(this.getAttribute('lines'), 10) || 3;
+    this._showMoreLabel = this.getAttribute('show-more-label') || 'Show more';
+    this._showLessLabel = this.getAttribute('show-less-label') || 'Show less';
+
+    this._text = document.createElement('div');
+    this._text.className = 'rds-text-truncate-text';
+    this._text.style.setProperty('--rds-text-truncate-lines', String(lines));
+    this._text.textContent = text;
+
+    this._toggleButton = document.createElement('button');
+    this._toggleButton.type = 'button';
+    this._toggleButton.className = 'rds-text-truncate-toggle';
+    this._toggleButton.textContent = this._showMoreLabel;
+    this._toggleButton.setAttribute('aria-expanded', 'false');
+    this._toggleButton.hidden = true;
+    this._toggleButton.addEventListener('click', this._handleToggle);
+
+    this.replaceChildren(this._text, this._toggleButton);
+
+    this._resizeObserver = new ResizeObserver(this._measure);
+    this._resizeObserver.observe(this._text);
+    requestAnimationFrame(this._measure);
+  }
+
+  disconnectedCallback() {
+    this._resizeObserver?.disconnect();
+    this._toggleButton?.removeEventListener('click', this._handleToggle);
+  }
+
+  _handleToggle = () => {
+    const expanded = !this.classList.contains('is-expanded');
+    this.classList.toggle('is-expanded', expanded);
+    this._toggleButton.textContent = expanded ? this._showLessLabel : this._showMoreLabel;
+    this._toggleButton.setAttribute('aria-expanded', String(expanded));
+  };
+
+  _measure = () => {
+    if (this.classList.contains('is-expanded')) return;
+
+    this._toggleButton.hidden = this._text.scrollHeight <= this._text.clientHeight + 1;
+  };
+}
+
+customElements.define('rds-text-truncate', RdsTextTruncate);
 
 async function writeToClipboard(value) {
   try {

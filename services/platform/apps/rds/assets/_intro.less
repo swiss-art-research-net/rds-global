@@ -99,7 +99,7 @@ html.rds-search-restoring .rds-intro {
   margin-top: 56px;
 }
 
-rds-dataset-list {
+.rds-dataset-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 4rem;
@@ -111,7 +111,7 @@ rds-dataset-list {
   grid-template-columns: 120px minmax(0, 1fr);
   column-gap: 4rem;
   align-items: baseline;
-  padding: 10px 0 24px 0;
+  padding: 16px 0;
   border-bottom: 1px dotted @col-black;
 
   .rds-badge {
@@ -131,15 +131,20 @@ rds-dataset-list {
 .rds-intro-dataset-name,
 .rds-intro-dataset-description {
   display: block;
+
+  a {
+    white-space: nowrap;
+    text-decoration: underline;
+  }
 }
 
 .rds-intro-dataset-name {
-  margin-bottom: 2px;
+  margin-bottom: 12px;
   font-size: @font-size-large;
   font-weight: 400;
 }
 
 .rds-intro-dataset-description {
   font-size: @font-size-body-large;
-  line-height: 1.5;
+  line-height: 1.4;
 }

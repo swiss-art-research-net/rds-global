@@ -1,10 +1,10 @@
 <semantic-data-table
   id='grid-result-table'
-  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types WHERE {
+  query='SELECT DISTINCT ?prefLabel ?subject ?recordId ?description ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?localMatches ?matches ?types WHERE {
     BIND(REPLACE(STR(?subject), "^.*[/#]", "") AS ?recordId)
     BIND(ROUND(?score * 10) / 10 AS ?scoreDisplay)
     BIND(IF(?subject = ?reference, 1, 0) AS ?isReference)
-  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?matches ?types
+  } GROUP BY ?subject ?recordId ?description ?prefLabel ?typeClass ?dataset ?reference ?score ?scoreDisplay ?isReference ?localMatches ?matches ?types
   ORDER BY DESC(?score) DESC(?isReference) ?reference'
   number-of-displayed-rows="4"
   options='{
@@ -107,6 +107,7 @@
                   "dataset": "{{dataset.value}}", 
                   "rdsType": "{{typeClass.value}}", 
                   "matches": [{{#each (arraySplit matches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}], 
+                  "localMatches": [{{#each (arraySplit localMatches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}],
                   "sourceTypes": [{{#each (arraySplit types.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select
@@ -143,47 +144,53 @@
               <div>{{description.value}}</div>
             </div>
             <div class="single-row-related">
-              <semantic-query
-                query='SELECT DISTINCT ?related ?dataset ?datasetLabel ?label WHERE {
-                  VALUES (?related) {
-                    {{#each (arraySplit matches.value)}}
-                      (<{{this}}>)
-                    {{/each}}
-                  }
-
-                  ?related a ?type .
-
-                  [[> partial:valuesDatasetLabels]]
-
-                  FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-                  OPTIONAL { ?related rds:label ?label }
-                }
-                LIMIT 12'
-                template="{{> relatedRecordsTemplate}}"
-              >
-                <template id="relatedRecordsTemplate">
-                  {{#if bindings}}
-                    <div class="related-records">
-                      <div class="single-row-heading">Related records</div>
-                      <rds-item-truncate class="related-records-list" limit="3">
-                        {{#each bindings}}
-                          <div class="related-record">
-                            <rds-copy-popover uri="{{related.value}}">
-                              <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                              </button>
-                            </rds-copy-popover>
-                            <span class="related-record-label">{{label.value}}</span>
-                            <rds-copy-value class="related-record-uri" value="{{related.value}}">
-                              {{related.value}}
-                            </rds-copy-value>
-                          </div>
+              {{#ifCond localMatches.value "!==" "[]"}}
+                <semantic-query
+                    query='SELECT ?related ?dataset ?datasetLabel ?sourceDataset
+                    (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR=" | ") AS ?labels)
+                    WHERE {
+                      VALUES (?related) {
+                        {{#each (arraySplit localMatches.value)}}
+                          (<{{this}}>)
                         {{/each}}
-                      </rds-item-truncate>
-                    </div>
-                  {{/if}}
-                </template>
-              </semantic-query>
+                      }
+                      ?related a ?type .
+                      BIND("{{dataset.value}}" AS ?sourceDataset)
+                      [[> partial:valuesDatasetLabels]]
+                      FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                      OPTIONAL { ?related rds:label ?label }
+                    }
+                    GROUP BY ?related ?dataset ?datasetLabel ?sourceDataset'
+                    template="{{> relatedRecordsTemplate}}"
+                  >
+                    <template id="relatedRecordsTemplate">
+                      {{#if bindings}}
+                        <div class="related-records">
+                          <div class="single-row-heading single-row-related-heading">
+                            Links from source record in RDS
+                          </div>
+                          <rds-item-truncate class="related-records-list" limit="3">
+                            {{#each bindings}}
+                              <div class="related-record">
+                                <rds-copy-popover uri="{{related.value}}">
+                                  <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                                    <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                                  </button>
+                                </rds-copy-popover>
+                                {{#if labels.value}}
+                                  <div class="related-record-label">{{labels.value}}</div>
+                                {{/if}}
+                                <rds-copy-value class="related-record-uri" value="{{related.value}}">
+                                  {{related.value}}
+                                </rds-copy-value>
+                              </div>
+                            {{/each}}
+                          </rds-item-truncate>
+                        </div>
+                      {{/if}}
+                    </template>
+                </semantic-query>
+              {{/ifCond}}
             </div>
           </div>
         {{/each}}
