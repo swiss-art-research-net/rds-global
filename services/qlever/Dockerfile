@@ -1,5 +1,5 @@
 FROM adfreiburg/qlever:0.6.0
-#commit-84156ed
+
 USER root
 
 RUN mkdir /index
