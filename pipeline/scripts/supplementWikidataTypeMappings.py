@@ -84,6 +84,8 @@ if __name__ == "__main__":
     wikidata_graph = args.wikidata_graph
     page_size = args.page_size
     file_basename = args.file_basename
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", file_basename or ""):
+        raise ValueError("File basename must match pattern [A-Za-z0-9._-]+")
     if page_size <= 0:
         raise ValueError("Page size must be a positive integer")
 
