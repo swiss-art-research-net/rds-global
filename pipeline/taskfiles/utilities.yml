@@ -54,7 +54,7 @@ tasks:
             --index-basename {{.NAME}} \
             --vocabulary-type on-disk-compressed \
             -m 12G \
-            --parse-parallel true | tee {{.NAME}}.index-log.txt
+            --parallel-parsing true | tee {{.NAME}}.index-log.txt
 
   _fetch-sameas-statements-for-dataset:
     internal: True
