@@ -52,14 +52,21 @@
         <div>
           <div class="eyebrow-label">Datasets</div>
           <semantic-query
-            query='SELECT ?dataset ?selectedDataset ?datasetLabel WHERE {
+            query='SELECT ?dataset ?selectedDataset ?datasetLabel ?datasetFullName WHERE {
               BIND("[[urlParam "dataset"]]" AS ?selectedDataset)
               {
                 BIND("" AS ?dataset)
                 BIND("All" AS ?datasetLabel)
+                BIND("All datasets" AS ?datasetFullName)
               }
               UNION {
-                [[> partial:valuesDatasetLabels]]
+                GRAPH <http://rds.swissartresearch.net/graph/datasetMetadata> {
+                  ?datasetResource
+                    a rds:Dataset ;
+                    dct:identifier ?dataset ;
+                    dct:title ?datasetLabel ;
+                    dct:description ?datasetFullName .
+                }
               }
               BIND(IF(?dataset = "", 0, 1) AS ?sort)
             }
@@ -74,9 +81,19 @@
                     toggle-param="dataset"
                     toggle-value="{{dataset.value}}"
                   >
-                    <button class="filter-button">
+                    <button
+                      class="filter-button"
+                      aria-describedby="dataset-filter-tooltip-{{dataset.value}}"
+                    >
                       {{datasetLabel.value}}
                     </button>
+                    <span
+                      class="filter-tooltip"
+                      id="dataset-filter-tooltip-{{dataset.value}}"
+                      role="tooltip"
+                    >
+                      {{datasetFullName.value}}
+                    </span>
                   </rds-nav-link>
                 {{/each}}
               </div>

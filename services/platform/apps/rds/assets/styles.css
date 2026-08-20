@@ -581,6 +581,10 @@ ol.page-breadcrumb {
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+.filter-button-group rds-nav-link {
+  position: relative;
+  display: inline-flex;
+}
 .filter-button {
   padding: 2px 6px;
   font-size: 18px;
@@ -589,6 +593,31 @@ ol.page-breadcrumb {
 }
 .active-filter {
   background: #ECF0F3;
+}
+.filter-tooltip {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  width: max-content;
+  max-width: 280px;
+  padding: 4px 8px;
+  transform: translateX(-50%);
+  background: #000000;
+  color: #F9FAFB;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.3;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.filter-button-group rds-nav-link:hover .filter-tooltip,
+.filter-button-group rds-nav-link:focus-within .filter-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 /* search meta bar */
 .search-meta {
