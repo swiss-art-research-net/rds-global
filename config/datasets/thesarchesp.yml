@@ -1,0 +1,30 @@
+datasets:
+  thesarchesp:
+    name: ThesArchEsp
+    description:
+      brief: Thésaurus de la désignation des œuvres architecturales et des espaces aménagés
+      full: Le Thésaurus de la désignation des œuvres architecturales et des espaces aménagés élaboré en 2011 est une refonte du Thésaurus de l'architecture édité en 2000 aux Editions du patrimoine. Onze ans plus tard, il nous a paru nécessaire de reprendre cet ouvrage pour d'une part, présenter les concepts que les nouveaux terrains d'inventaire ou les nouveaux domaines de recherche ont fait émerger, ce qui a conduit à en reprendre l'organisation ; d'autre part, à en faire un véritable outil documentaire numérique.
+    publisher:
+      name: Ministère de la culture et de la communication
+      url: https://www.culture.gouv.fr/
+    source:
+      - url: http://data.culture.fr/thesaurus/data/ark:/67717/T96?includeSchemes=true&format=TURTLE
+        type: http_file
+        file_format: ttl
+    file_format: ttl
+    graph: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph
+    namespace: http://data.culture.fr/thesaurus/resource/ark:/67717/T96/
+    prefixes:
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      Concept:
+        - skos:Concept
+    queries:
+      description: |
+        ?subject skos:definition ?value .
+      prefLabel: |
+        ?subject skos:prefLabel ?value .
+      labels: |
+        ?subject (skos:prefLabel | skos:altLabel) ?value .
+      matches: |
+        ?subject skos:exactMatch ?value .

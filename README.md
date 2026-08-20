@@ -28,14 +28,14 @@ For acccess to the SIKART data it is necessary to provide a GitHub Username and 
 
 Important environment variables:
 
-- `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets.yml`.
+- `DATASETS`: comma-separated list of datasets to fetch and index. Available dataset keys are defined in `config/datasets/*.yml`, and the active subset is assembled into `config/datasets.yml` on startup.
 - `QLEVER_ACCESS_TOKEN`: access token used by the QLever API for authenticated update operations.
 - `COMPOSE_FILE`: selects which compose file assembly to use for the stack.
 - `PLATFORM_HOST_NAME`: public hostname for the ResearchSpace / RDS platform.
 - `RECONCILE_HOST_NAME`: public hostname for the OpenSearch reconciliation connector.
 - `PROXY_NETWORK_NAME`: name of the external reverse-proxy network used by the production overlay.
 
-The pipeline downloads source data from external services and repositories listed in `config/datasets.yml`, and the SameAs generation queries Wikidata. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
+The pipeline downloads source data from external services and repositories as configured in the datasets configuration, and queries Wikidata for SameAs generation. A first run therefore requires outbound network access and can take a while depending on the selected datasets.
 
 ### Running the service
 
@@ -89,6 +89,9 @@ task: Available tasks for this project:
 * fetch-all-sameas-statements:                             Fetch data reuired for SameAs statements
 * fetch-sameas-statements-for-dataset:                     Fetch SameAs statements for a specified dataset passed as DATASET variable or via CLI argument
 * fetch-sameas-statements-for-dataset-from-wikidata:       Fetch SameAs statements from Wikidata for a specified dataset passed as DATASET variable or via CLI argument
+* generate-dataset-metadata:                               Generate dataset metadata RDF
+* generate-datasets-configuration:                         Generate the unified datasets configuration
+* generate-frontend-configuration:                         Generate configuration for the frontend
 * generate-labels:                                         Generate labels for URIs
 * generate-sameas-statements:                              Generates SameAs statements between entities
 * generate-type-mappings:                                  Generate type mappings for RDS entities
@@ -97,9 +100,13 @@ task: Available tasks for this project:
 * prepare-indexing:                                        Load values from the config yml and pass on to _prepareForIndexing. Dataset name should be passed via DATASET variable or as CLI argument
 * prepare-metadata-for-indexing:                           Prepare RDS metadata for indexing
 * process-sameas-statements:                               Process SameAs statements
+* remove-dataset-from-search-index:                        Remove a dataset from OpenSearch index. Dataset name should be passed via DATASET variable or as CLI argument
+* restart-qlever:                                          Request a restart of the QLever service
+* startup:                                                 Tasks that run on container startup
+* supplement-wikidata-type-mappings:                       Generate and index mappings for Wikidata entities that lack a RDS type based on entities linked via match statements
 * update-data:                                             Update RDF datasets
 * update-individual-dataset:                               Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument
-* verify-data:                                             Verify the validity of the source data or any data in a specified directory passed as CLI argument
+* verify-data:                                             Verify the validity of the ingest data or any data in a specified directory passed as CLI argument
 ```
 
 

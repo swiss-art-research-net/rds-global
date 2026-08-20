@@ -1,0 +1,15 @@
+types:
+  Artwork:
+    name: Artwork
+  BibliographicItem:
+    name: Bibliographic Item
+  Event:
+    name: Event
+  Group:
+    name: Group
+  Person:
+    name: Person
+  Place:
+    name: Place
+  Concept:
+    name: Concept

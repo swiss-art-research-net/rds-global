@@ -1,0 +1,33 @@
+datasets:
+  ulan:
+    name: ULAN
+    description:
+      brief: Union List of Artist Names® (ULAN)
+      full: The Union List of Artist Names® (ULAN) is a structured vocabulary of artist names and biographical information.
+    publisher:
+      name: The Getty Research Institute
+      url: https://www.getty.edu
+    source:
+      - url: http://ulandownloads.getty.edu/VocabData/full.zip
+        process:
+          - unzip
+    graph: http://vocab.getty.edu/ulan/graph
+    namespace: http://vocab.getty.edu/ulan/
+    prefixes:
+      gvp: http://vocab.getty.edu/ontology#
+      skos: http://www.w3.org/2004/02/skos/core#
+      xl: http://www.w3.org/2008/05/skos-xl#
+    types:
+      Person:
+        - gvp:PersonConcept
+        - gvp:UnknownPersonConcept
+    queries:
+      description: |
+        ?subject gvp:parentStringAbbrev ?value .
+      prefLabel: |
+        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
+      labels: |
+        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+      matches: |
+        ?subject (skos:exactMatch | skos:closeMatch) ?value .
+    wikidata_match_property: P245

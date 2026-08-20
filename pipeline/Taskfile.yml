@@ -22,6 +22,7 @@ tasks:
   startup:
     desc: Tasks that run on container startup
     cmds:
+      - task: generate-datasets-configuration
       - task: generate-frontend-configuration
 
   default:
@@ -39,6 +40,8 @@ tasks:
       - task: index-data
       - task: restart-qlever
       - task: supplement-wikidata-type-mappings
+      - task: index-data
+      - task: restart-qlever
       - task: add-data-to-search-index
 
   add-data-to-search-index:
@@ -109,6 +112,21 @@ tasks:
       - mkdir -p "{{.DIRECTORY_WIKIDATA_ENTITIES}}"
       - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
+  generate-datasets-configuration:
+    desc: Generate the unified datasets configuration
+    vars:
+      DATASETS_DIRECTORY: /config/datasets
+      TYPES_CONFIG_YML: /config/types/types.yml
+    cmds:
+      - python /pipeline/scripts/generateDatasetsConfiguration.py --datasets-directory "{{.DATASETS_DIRECTORY}}" --types-config "{{.TYPES_CONFIG_YML}}" --output-file "{{.DATASETS_CONFIG_YML}}" --datasets "$DATASETS"
+  
+  generate-frontend-configuration:
+    desc: Generate configuration for the frontend
+    vars:
+      OUTPUT_DIRECTORY: /apps/rds-config/
+    cmds:
+      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets "$DATASETS" --output-app "{{.OUTPUT_DIRECTORY}}"
+
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
     vars:
@@ -124,13 +142,6 @@ tasks:
           DIRECTORY: "{{.DATA_DIRECTORY}}"
           FILE_FORMAT: "{{.FILE_FORMAT}}"
           GRAPH: "{{.GRAPH}}"
-  
-  generate-frontend-configuration:
-    desc: Generate configuration for the frontend
-    vars:
-      OUTPUT_DIRECTORY: /apps/rds-config/
-    cmds:
-      - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets $DATASETS --output-app "{{.OUTPUT_DIRECTORY}}"
 
   generate-type-mappings:
     desc: Generate type mappings for RDS entities
@@ -289,53 +300,15 @@ tasks:
   supplement-wikidata-type-mappings:
     desc: Generate and index mappings for Wikidata entities that lack a RDS type based on entities linked via match statements
     vars:
-      FILE_BASENAME: wikidata-type-mappings 
+      FILE_BASENAME: wikidata_type_mappings_
       TYPES_GRAPH: http://schema.swissartresearch.net/rds/graph/types
       MATCH_GRAPH: http://schema.swissartresearch.net/rds/exact-match-statements
       WIKIDATA_GRAPH: http://www.wikidata.org/graph
-      OUTPUT_DIRECTORY: /tmp
-      QUERY: |
-        PREFIX rds: <http://schema.swissartresearch.net/ontology/rds#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        CONSTRUCT {
-          ?wikidataEntity a ?otherRdsType .
-        }
-        WHERE {
-          GRAPH <{{.WIKIDATA_GRAPH}}> {
-            ?wikidataEntity a ?wdType .
-          }
-          FILTER NOT EXISTS {
-            GRAPH <{{.TYPES_GRAPH}}> {
-              ?wikidataEntity a ?rdsType .
-            }
-          }
-          GRAPH <{{.MATCH_GRAPH}}> {
-            ?otherEntity rds:related ?wikidataEntity .
-          }
-          GRAPH <{{.TYPES_GRAPH}}> {
-            ?otherEntity a ?otherRdsType .
-          }
-        }
+      OUTPUT_DIRECTORY: /data/ingest/type-mappings-wikidata
     cmds:
       - mkdir -p "{{.OUTPUT_DIRECTORY}}"
-      # Retrieve mappings based on query and save as .nt file
-      - |
-          curl -X POST "{{.QLEVER_ENDPOINT}}/sparql" \
-            -H "Accept: text/turtle" \
-            -H "Content-Type: application/sparql-query" \
-            --data "{{.QUERY}}" \
-            -o "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
-      # Generate UPDATE query from retrieved mappings
-      - |
-        {
-          printf 'INSERT DATA { GRAPH <{{.TYPES_GRAPH}}> {\n'
-          cat {{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt
-          printf '\n} }'
-        } > {{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql
-      # Update QLever data
-      - qlever update --update-file "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql" --sparql-endpoint "{{.QLEVER_ENDPOINT}}" --access-token "$QLEVER_ACCESS_TOKEN" --log-level DEBUG
-      - rm "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.nt"
-      - rm "{{.OUTPUT_DIRECTORY}}/{{.FILE_BASENAME}}.sparql"
+      - find "{{.OUTPUT_DIRECTORY}}" -maxdepth 1 -type f -name "{{.FILE_BASENAME}}*.nq" -delete
+      - python /pipeline/scripts/supplementWikidataTypeMappings.py --endpoint "{{.QLEVER_ENDPOINT}}" --types-graph "{{.TYPES_GRAPH}}" --match-graph "{{.MATCH_GRAPH}}" --wikidata-graph "{{.WIKIDATA_GRAPH}}" --output-directory "{{.OUTPUT_DIRECTORY}}" --file-basename "{{.FILE_BASENAME}}" {{.CLI_ARGS}}
 
   update-individual-dataset:
     desc: Update individual dataset. Dataset name should be passed via DATASET variable or as CLI argument

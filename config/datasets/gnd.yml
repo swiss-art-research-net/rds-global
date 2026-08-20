@@ -1,0 +1,76 @@
+datasets:  
+  gnd:
+    name: GND
+    description:
+      brief: Integrated Authority File (GND)
+      full: The Integrated Authority File (GND) is a service facilitating the collaborative use and administration of authority data. These authority data represent and describe entities, i.e. persons, corporate bodies, conferences and events, geographic entities, topics and works relating to cultural and academic collections. Libraries in particular use the GND to catalogue publications. However, archives, museums, cultural and academic institutions, and researchers involved in research projects are also increasingly working with the GND. Authority data make cataloguing easier, offer definitive search entries and forge links between different information resources.
+    publisher:
+      name: Deutsche Nationalbibliothek
+      url: https://www.dnb.de/
+    source:
+      - type: http_file
+        url: https://data.dnb.de/opendata/authorities-gnd_lds.nt.gz
+        process:
+          - gunzip   
+      - type: http_file
+        url: https://raw.githubusercontent.com/deutsche-nationalbibliothek/gnd-ontology/refs/heads/main/source/gnd.ttl
+        file_format: ttl
+    graph: https://d-nb.info/gnd/authorities/graph
+    namespace: https://d-nb.info/gnd/
+    prefixes:
+      gnd: https://d-nb.info/standards/elementset/gnd#
+      rdfs: http://www.w3.org/2000/01/rdf-schema#
+      schema: http://schema.org/
+      skos: http://www.w3.org/2004/02/skos/core#
+    types:
+      BibliographicItem:
+        - gnd:Work
+      Event:
+        - gnd:ConferenceOrEvent
+      Group:
+        - gnd:CorporateBody
+      Person:
+        - gnd:Person
+      Place:
+        - gnd:PlaceOrGeographicName
+      Concept:
+        - gnd:SubjectHeading
+    queries:
+      description: |
+            OPTIONAL {
+              ?subject gnd:definition|gnd:note|gnd:biographicalOrHistoricalInformation ?bio .
+            }
+            OPTIONAL { ?subject gnd:professionOrOccupationAsLiteral ?profession }
+            
+            OPTIONAL { ?subject gnd:dateOfBirth ?bDate }
+            OPTIONAL { ?subject gnd:placeOfBirth ?pb . ?pb gnd:preferredNameForThePlaceOrGeographicName ?bPlace }
+            OPTIONAL { ?subject gnd:dateOfDeath ?dDate }
+            OPTIONAL { ?subject gnd:placeOfDeath ?pd . ?pd gnd:preferredNameForThePlaceOrGeographicName ?dPlace }
+
+            BIND(CONCAT(
+              COALESCE(?bio, ""),
+              IF(BOUND(?profession), CONCAT(" ", ?profession), ""),
+              IF(BOUND(?bDate) || BOUND(?bPlace) || BOUND(?dDate) || BOUND(?dPlace),
+                CONCAT(" (", 
+                        COALESCE(STR(?bDate), ""), IF(BOUND(?bPlace), CONCAT(", ", ?bPlace), ""),
+                        " – ", 
+                        COALESCE(STR(?dDate), ""), IF(BOUND(?dPlace), CONCAT(", ", ?dPlace), ""),
+                        ")"),
+                "")
+            ) AS ?value)
+      prefLabel: |
+        ?subject ?predicatePrefLabel ?value .
+        ?predicatePrefLabel rdfs:subPropertyOf gnd:preferredName .
+      labels: |
+        ?subject ?predicatePrefLabel ?value .
+        ?predicatePrefLabel rdfs:subPropertyOf gnd:variantName .
+      types: |
+        { ?subject a ?value } UNION { ?subject a/rdfs:subClassOf ?value } .
+      matches: |
+        ?subject ?predicate ?value .
+        VALUES (?predicate) {
+          (schema:sameAs)
+          (rdfs:seeAlso)
+          (skos:exactMatch)
+        }
+    wikidata_match_property: P227
