@@ -31,14 +31,15 @@
   <div class="rds-intro-datasets">
     <div class="eyebrow-label">Included datasets</div>
     <semantic-query
-      query='SELECT ?name ?publisher ?title ?description WHERE {
+      query='SELECT ?name ?publisher ?publisherUrl ?title ?description WHERE {
         GRAPH <http://rds.swissartresearch.net/graph/datasetMetadata> {
           ?dataset
             dct:title ?name ;
             crm:P67i_is_referred_to_by ?titleNode .
 
           OPTIONAL {
-            ?dataset dct:publisher/foaf:name ?publisher .
+            ?dataset dct:publisher ?publisherUrl .
+            ?publisherUrl foaf:name ?publisher .
           }
 
           ?titleNode
@@ -64,7 +65,18 @@
               <span class="rds-badge">{{name.value}}</span>
               <div class="rds-intro-dataset-content">
                 <div class="eyebrow-label">
-                  {{#if publisher.value}}{{publisher.value}}{{/if}}
+                  {{#if publisher.value}}
+                    <a
+                      class="rds-intro-dataset-publisher"
+                      href="{{publisherUrl.value}}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="{{publisher.value}}"
+                    >
+                      <span>{{publisher.value}}</span>
+                      <span class="rds-intro-dataset-publisher-arrow" aria-hidden="true"></span>
+                    </a>
+                  {{/if}}
                 </div>
                 <span class="rds-intro-dataset-name">
                   {{title.value}}
