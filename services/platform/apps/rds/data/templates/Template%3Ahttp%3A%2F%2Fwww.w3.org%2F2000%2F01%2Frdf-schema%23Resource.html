@@ -121,6 +121,37 @@
 [[/inline]]
 
 [[#*inline "tab-overview"]]
+  <div class="detail-panel-section">
+    <div class="detail-row">
+      <span class="detail-property">URI</span>
+      <span class="detail-value">
+        <rds-copy-value value="[[this]]">[[this]]</rds-copy-value>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-property">Label</span>
+      <span class="detail-value"><mp-label iri="[[this]]"></mp-label></span>
+    </div>
+    <semantic-query
+      query='SELECT DISTINCT ?type WHERE {
+        ?? a ?type .
+      }
+      ORDER BY ?type'
+      template="{{> resource-types}}"
+      no-result-template=""
+    >
+      <template id="resource-types">
+        <div class="detail-row">
+          <span class="detail-property">Types</span>
+          <span class="detail-value">
+            {{#each bindings}}
+              <span><mp-label iri="{{type.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
+            {{/each}}
+          </span>
+        </div>
+      </template>
+    </semantic-query>
+  </div>
   <semantic-query
     query='[[> partial:queryGnd subject=this]]'
     template="{{> overview-fields}}"
