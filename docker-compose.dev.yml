@@ -1,4 +1,8 @@
 services:
+  opensearch-connector:
+    ports:
+      - 127.0.0.1:${PORT_OPENSEARCH_CONNECTOR:-8000}:8000
+
   opensearch-dashboard:
     ports:
       - 127.0.0.1:${PORT_OPENSEARCH_DASHBOARD:-5601}:5601
@@ -12,4 +16,4 @@ services:
       - ${PORT_RDS:-8080}:8080
   qlever:
     ports:
-      - ${PORT_QLEVER_RDS:-7001}:7001
+      - ${PORT_QLEVER_RDS:-7001}:7001for now,

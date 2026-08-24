@@ -500,7 +500,25 @@ async def root(request: Request):
 async def _reconcile_single(q: Dict[str, Any]):
 
     query_string = (q.get("query") or "").strip()
-    limit = int(q.get("limit", 5))
+    try:
+        requested_limit = int(q.get("limit", 10))
+    except (TypeError, ValueError):
+        requested_limit = 10
+    requested_limit = max(1, requested_limit)
+
+    max_limit = getattr(app.state, "max_limit", DEFAULT_MAX_LIMIT)
+    effective_limit = min(requested_limit, max_limit)
+    if requested_limit > max_limit:
+        logger.warning(
+            "Reconciliation requested limit %s exceeds configured maximum %s; clamping request.",
+            requested_limit,
+            max_limit,
+        )
+
+    try:
+        clean_query = query_string.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        clean_query = query_string
 
     entity_type = q.get("type")
     requested_typeclasses: List[str] = []
@@ -545,11 +563,17 @@ async def _reconcile_single(q: Dict[str, Any]):
     if not query_string:
         return {"result": []}
 
+    # using max limit to ensure we have enough hits to normalize and filter
+    search_limit = min(
+        max_limit,
+        max(effective_limit, DEFAULT_TOTAL_LIMIT, effective_limit * 20),
+    )
+
     try:
         hits = await run_search(
-            query=query_string,
+            query=clean_query,
             datasets=datasets,
-            limit=limit,
+            limit=search_limit,
             typeclass_filters=requested_typeclasses or None,
         )
     except Exception as e:
@@ -559,19 +583,29 @@ async def _reconcile_single(q: Dict[str, Any]):
     if not hits:
         return {"result": []}
 
+    # Apply the same hit normalization used by /search
+    normalized_response = normalize_entity_hits(
+        {
+            "hits": {
+                "total": {"value": len(hits), "relation": "eq"},
+                "hits": hits,
+            }
+        },
+        min_shared_matches=getattr(app.state, "min_shared_matches", 1),
+    )
+    hits = normalized_response.get("hits", {}).get("hits", [])
+
     # only consider matches with score >= 90% of the top hit's score.
     # For very small absolute scores avoid treating them as matches.
-    top_score = float(hits[0]["_score"])
-
-    threshold = max(
-        top_score * 0.9,
-        10.0
-    )
+    top_score = max(float(h.get("_score", 0.0) or 0.0) for h in hits)
+    threshold = max(top_score * 0.9, 10.0)
 
     results = []
 
     for h in hits:
         source = h["_source"]
+        subject = h.get("_id")
+        reference = h.get("_reference") or subject
 
         label = (
             (source.get("prefLabels") or [None])[0]
@@ -585,22 +619,34 @@ async def _reconcile_single(q: Dict[str, Any]):
 
         type_classes = source.get("typeClasses") or []
         types = []
+        normalized_type_classes: List[str] = []
 
         for t in type_classes:
             if isinstance(t, dict):
+                type_id = t.get("id") or t.get("name")
+                type_name = t.get("name") or t.get("id")
+                if type_id:
+                    normalized_type_classes.append(str(type_id))
                 types.append({
-                    "id": t.get("id") or t.get("name"),
-                    "name": t.get("name") or t.get("id")
+                    "id": type_id,
+                    "name": type_name
                 })
             else:
+                normalized_type_classes.append(str(t))
                 types.append({
                     "id": t,
                     "name": t
                 })
+
+        dataset = source.get("dataset")
+        has_matches = "matches" in source
+        has_types = "types" in source
+        matches = source.get("matches") if has_matches else None
+        source_types = source.get("types") if has_types else None
         
         description = source.get("description")
 
-        if not description:
+        if description is None:
             descs = source.get("descriptions")
             if isinstance(descs, list) and descs:
                 description = descs[0]
@@ -608,25 +654,60 @@ async def _reconcile_single(q: Dict[str, Any]):
                 description = descs
 
 
+        # Following SPARQL behavior
+        if not (
+            subject
+            and label
+            and dataset is not None
+            and normalized_type_classes
+            and has_matches
+            and has_types
+            and reference
+        ):
+            continue
+
+        if not isinstance(matches, list):
+            matches = []
+        if not isinstance(source_types, list):
+            source_types = []
+
+        record_id = str(subject).rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+        is_reference = 1 if subject == reference else 0
+        score_display = round(score * 10) / 10
+
         result = {
-            "id": h["_id"],
+            "id": subject,
             "name": label,
             "type": types,
             "score": score,
+            "scoreDisplay": score_display,
             "match": (
                 score >= threshold
                 and score > 0
-            )
+            ),
+            "description": description,
+            "dataset": dataset,
+            "typeClass": normalized_type_classes[0],
+            "reference": reference,
+            "recordId": record_id,
+            "isReference": is_reference,
+            "matches": matches,
+            "types": source_types,
         }
-
-        if description:
-            result["description"] = description
 
         results.append(result)
 
-    results.sort(key=lambda x: x["score"], reverse=True)
+    # ordering like SPARQL: score DESC, isReference DESC, reference ASC.
+    def sort_key(item: Dict[str, Any]):
+        return (
+            -float(item.get("score", 0.0)),
+            -int(item.get("isReference", 0)),
+            str(item.get("reference") or ""),
+        )
 
-    return {"result": results[:limit]}
+    results.sort(key=sort_key)
+
+    return {"result": results[:effective_limit]}
 
 
 @app.get("/preview")
