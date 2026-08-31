@@ -458,7 +458,7 @@ rds-copy-value {
   align-items: center;
   gap: 0.5rem;
   padding: 0;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   border: 0;
   background: none;
   color: @col-black;
@@ -594,4 +594,28 @@ td[role="cell"]:empty {
 .record-label {
   cursor: pointer;
   text-decoration: underline;
+}
+
+.rds-text-truncate-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--rds-text-truncate-lines);
+}
+
+rds-text-truncate.is-expanded .rds-text-truncate-text {
+  display: block;
+  overflow: visible;
+}
+
+.rds-text-truncate-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: @col-black;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
