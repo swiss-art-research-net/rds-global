@@ -89,6 +89,15 @@ class SearchRequest(BaseModel):
     limit: int = Field(default=DEFAULT_TOTAL_LIMIT, ge=1)
 
 
+EXTEND_PROPERTIES = {
+    "matches": "Matches",
+    "dataset": "Dataset",
+    "description": "Description",
+    "type": "Type",
+    "sourceType": "Source Type",
+}
+
+
 def sanitize_text(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
@@ -118,6 +127,88 @@ def sanitize_query(value: str) -> str:
             detail="Query must not be blank.",
         )
     return sanitized
+
+
+def _to_extend_values(property_id: str, source: Dict[str, Any]) -> List[Any]:
+    """Map one extend property to normalized response values from a source document."""
+    values: List[Any] = []
+
+    if property_id == "matches":
+        values = source.get("matches") if isinstance(source.get("matches"), list) else []
+    elif property_id == "dataset":
+        value = source.get("dataset")
+        values = [value] if value else []
+    elif property_id == "description":
+        description = source.get("description")
+        if not description:
+            descriptions = source.get("descriptions")
+            if isinstance(descriptions, list) and descriptions:
+                description = descriptions[0]
+            elif isinstance(descriptions, str):
+                description = descriptions
+        values = [description] if description else []
+    elif property_id == "type":
+        type_classes = source.get("typeClasses") if isinstance(source.get("typeClasses"), list) else []
+        values = [
+            value.get("id") or value.get("name") if isinstance(value, dict) else value
+            for value in type_classes
+        ]
+    elif property_id == "sourceType":
+        values = source.get("types") if isinstance(source.get("types"), list) else []
+
+    out: List[Dict[str, str]] = []
+    for value in values:
+        if value is None:
+            continue
+        normalized = str(value).strip()
+        if normalized:
+            out.append({"str": normalized})
+    return out # e.g.
+
+
+async def _fetch_sources_by_ids(ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    """Fetch source documents by entity ids via OpenSearch _mget using configured auth settings."""
+    endpoint = getattr(app.state, "opensearch_url", None)
+    index = getattr(app.state, "opensearch_index", None)
+    if not endpoint or not index:
+        raise HTTPException(status_code=500, detail="OpenSearch not configured")
+
+    # Use OpenSearch _mget to retrieve many ids in a single round-trip.
+    url = endpoint.rstrip("/") + f"/{index}/_mget"
+
+    auth = None
+    user = getattr(app.state, "opensearch_user", None)
+    password = getattr(app.state, "opensearch_password", None)
+    if user is not None and password is not None:
+        auth = (user, password)
+
+    headers = {"Content-Type": "application/json"}
+    api_key = getattr(app.state, "opensearch_api_key", None)
+    if api_key:
+        headers["Authorization"] = f"ApiKey {api_key}"
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # OpenSearch _mget payload {"ids": ["..."]}
+            r = await client.post(url, json={"ids": ids}, headers=headers, auth=auth)
+            r.raise_for_status()
+            payload = r.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"OpenSearch request failed: {e}")
+
+    # Normalize OpenSearch docs array into id -> _source mapping.
+    sources: Dict[str, Dict[str, Any]] = {}
+    for doc in payload.get("docs", []):
+        if not doc.get("found"):
+            continue
+        doc_id = doc.get("_id")
+        source = doc.get("_source") or {}
+        if doc_id and isinstance(source, dict):
+            sources[str(doc_id)] = source
+
+    return sources # example: {"id1": {"field": "value"}, "id2": {"field": "value"}}
 
 
 def resolve_dataset_names(
@@ -400,22 +491,37 @@ async def get_manifest(request: Request):
                 "service_path": "/suggest/property"
             }
         },
+        "extend": {
+            "property_settings": [
+                {
+                    "name": "limit",
+                    "label": "Limit",
+                    "type": "number",
+                    "default": 0,
+                    "help_text": "Maximum number of values returned per property (0 for no limit)"
+                },
+                {
+                    "name": "content",
+                    "label": "Content",
+                    "type": "select",
+                    "default": "literal",
+                    "help_text": "Return values as literal strings or as id objects",
+                    "choices": [
+                        {
+                            "value": "literal",
+                            "name": "Literal"
+                        },
+                        {
+                            "value": "id",
+                            "name": "ID"
+                        }
+                    ]
+                }
+            ]
+        },
 
     }
 
-
-def get_dataset_properties():
-    
-    datasets = getattr(app.state, "datasets", [])
-
-    return {
-        "id": "dataset",
-        "name": "Dataset",
-        "type": "string",
-        "constraints": {
-            "enum": datasets
-        }
-    }
 
 async def get_type_classes():
     return getattr(app.state, "type_classes", [])
@@ -462,20 +568,30 @@ async def load_type_classes():
 async def root(request: Request):
 
     # GET without queries: MANIFEST
-    if request.method == "GET" and "queries" not in request.query_params:
+    if (
+        request.method == "GET"
+        and "queries" not in request.query_params
+        and "extend" not in request.query_params
+    ):
         return JSONResponse(content=await get_manifest(request))
 
     # GET with queries: RECONCILIATION
     if request.method == "GET":
         queries_raw = request.query_params.get("queries")
+        extend_raw = request.query_params.get("extend")
 
     # POST: RECONCILIATION (x-www-form-urlencoded)
     elif request.method == "POST":
         form = await request.form()
         queries_raw = form.get("queries")
+        extend_raw = form.get("extend")
 
     else:
         return {}
+
+    # 0.2 data extension requests are sent as ?extend={...} on the root endpoint
+    if extend_raw:
+        return await _handle_extend_query(extend_raw)
 
     if not queries_raw:
         return {}
@@ -495,6 +611,115 @@ async def root(request: Request):
         results[qid] = await _reconcile_single(q)
 
     return results
+
+
+async def _handle_extend_query(extend_raw: str):
+    # Reconciliation API 0.2 uses root-level `extend` requests
+    extend_payload: Dict[str, Any] = {}
+    try:
+        parsed = json.loads(extend_raw)
+        if isinstance(parsed, dict):
+            extend_payload = parsed
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid extend payload JSON: {e.msg}")
+
+    if not extend_payload:
+        raise HTTPException(status_code=400, detail="Extend payload must be a JSON object")
+
+    payload_ids = extend_payload.get("ids")
+    payload_properties = extend_payload.get("properties")
+
+    if not isinstance(payload_ids, list):
+        raise HTTPException(status_code=400, detail="Extend payload must include 'ids' as an array")
+    if not isinstance(payload_properties, list):
+        raise HTTPException(status_code=400, detail="Extend payload must include 'properties' as an array")
+
+    ids: List[str] = []
+    for raw_id in payload_ids:
+        normalized_id = str(raw_id).strip() if raw_id is not None else ""
+        if not normalized_id:
+            continue
+        if normalized_id not in ids:
+            ids.append(normalized_id)
+
+    # Preserve property order while filtering and validating against supported property ids
+    property_ids: List[str] = []
+    property_settings_by_id: Dict[str, Dict[str, Any]] = {}
+    unknown_property_ids: List[str] = []
+    for item in payload_properties:
+        if not isinstance(item, dict):
+            raise HTTPException(status_code=400, detail="Each property must be an object with an 'id' field")
+
+        raw_prop_id = item.get("id")
+        settings = item.get("settings")
+
+        if raw_prop_id is None:
+            raise HTTPException(status_code=400, detail="Each property object must include an 'id' field")
+
+        prop_id = str(raw_prop_id).strip()
+        if not prop_id:
+            raise HTTPException(status_code=400, detail="Property id must be a non-empty string")
+
+        if prop_id not in EXTEND_PROPERTIES:
+            if prop_id not in unknown_property_ids:
+                unknown_property_ids.append(prop_id)
+            continue
+
+        if prop_id not in property_ids:
+            property_ids.append(prop_id)
+
+        if settings is not None and not isinstance(settings, dict):
+            raise HTTPException(status_code=400, detail=f"Settings for property '{prop_id}' must be an object")
+        if isinstance(settings, dict):
+            property_settings_by_id[prop_id] = settings
+
+    if unknown_property_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported extend property id(s): {', '.join(unknown_property_ids)}",
+        )
+
+    if not ids:
+        return {
+            "meta": [{"id": p, "name": EXTEND_PROPERTIES.get(p, p)} for p in property_ids],
+            "rows": {},
+        }
+
+    sources = await _fetch_sources_by_ids(ids)
+
+    rows: Dict[str, Dict[str, List[Any]]] = {}
+    for entity_id in ids:
+        source = sources.get(entity_id, {})
+        row: Dict[str, List[Any]] = {}
+        for prop in property_ids:
+            values = _to_extend_values(prop, source)
+            settings = property_settings_by_id.get(prop) or {}
+
+            limit_raw = settings.get("limit")
+            try:
+                limit = int(limit_raw) if limit_raw is not None else 0
+            except (TypeError, ValueError):
+                limit = 0
+            if limit > 0:
+                values = values[:limit]
+
+            content = str(settings.get("content", "literal")).strip().lower()
+            if content == "id":
+                id_values: List[Dict[str, str]] = []
+                for value in values:
+                    raw = value.get("str") if isinstance(value, dict) else None
+                    if raw:
+                        id_values.append({"id": raw, "name": raw})
+                values = id_values
+
+            row[prop] = values
+
+        rows[entity_id] = row
+
+    return {
+        "meta": [{"id": p, "name": EXTEND_PROPERTIES.get(p, p)} for p in property_ids],
+        "rows": rows,
+    }
 
 
 async def _reconcile_single(q: Dict[str, Any]):
@@ -625,24 +850,30 @@ async def _reconcile_single(q: Dict[str, Any]):
             if isinstance(t, dict):
                 type_id = t.get("id") or t.get("name")
                 type_name = t.get("name") or t.get("id")
-                if type_id:
-                    normalized_type_classes.append(str(type_id))
+                type_id_text = str(type_id).strip() if type_id is not None else ""
+                type_name_text = str(type_name).strip() if type_name is not None else ""
+                if not type_id_text:
+                    continue
+                if not type_name_text:
+                    type_name_text = type_id_text
+                normalized_type_classes.append(type_id_text)
                 types.append({
-                    "id": type_id,
-                    "name": type_name
+                    "id": type_id_text,
+                    "name": type_name_text
                 })
             else:
-                normalized_type_classes.append(str(t))
+                type_text = str(t).strip() if t is not None else ""
+                if not type_text:
+                    continue
+                normalized_type_classes.append(type_text)
                 types.append({
-                    "id": t,
-                    "name": t
+                    "id": type_text,
+                    "name": type_text
                 })
 
         dataset = source.get("dataset")
         has_matches = "matches" in source
         has_types = "types" in source
-        matches = source.get("matches") if has_matches else None
-        source_types = source.get("types") if has_types else None
         
         description = source.get("description")
 
@@ -666,11 +897,6 @@ async def _reconcile_single(q: Dict[str, Any]):
         ):
             continue
 
-        if not isinstance(matches, list):
-            matches = []
-        if not isinstance(source_types, list):
-            source_types = []
-
         record_id = str(subject).rsplit("/", 1)[-1].rsplit("#", 1)[-1]
         is_reference = 1 if subject == reference else 0
         score_display = round(score * 10) / 10
@@ -685,15 +911,15 @@ async def _reconcile_single(q: Dict[str, Any]):
                 score >= threshold
                 and score > 0
             ),
-            "description": description,
             "dataset": dataset,
-            "typeClass": normalized_type_classes[0],
             "reference": reference,
             "recordId": record_id,
             "isReference": is_reference,
-            "matches": matches,
-            "types": source_types,
         }
+
+        # Description is optional in 0.2; include only when it is a string
+        if isinstance(description, str):
+            result["description"] = description
 
         results.append(result)
 
@@ -894,18 +1120,33 @@ async def suggest_type(prefix: str = Query("")): # no limit as they are a few, r
 
 
 @app.get("/suggest/property")
-async def suggest_property(prefix: str = Query("")): # no limit as only one, return all matching properties
+async def suggest_property(prefix: str = Query("")):
 
     properties = [
         {
+            "id": "matches",
+            "name": "Matches",
+            "description": "External identifiers for enrichment"
+        },
+        {
             "id": "dataset",
             "name": "Dataset",
-            "description": "Filter results by dataset/source"
+            "description": "Dataset/source"
+        },
+        {
+            "id": "description",
+            "name": "Description",
+            "description": "Textual description"
         },
         {
             "id": "type",
             "name": "Type",
-            "description": "Filter results by type class"
+            "description": "Normalized type"
+        },
+        {
+            "id": "sourceType",
+            "name": "Source Type",
+            "description": "Source-specific RDF types"
         }
     ]
 
