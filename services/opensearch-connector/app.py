@@ -460,6 +460,11 @@ async def get_manifest(request: Request):
 
     configured_base_url = getattr(app.state, "reconciliation_base_url", None)
     base_url = configured_base_url.strip().rstrip("/") if configured_base_url else str(request.base_url).rstrip("/")
+    platform_host_name = getattr(app.state, "platform_host_name", None)
+    if platform_host_name:
+        view_url = f"{platform_host_name.strip().rstrip('/')}/resource/?uri={{{{id}}}}"
+    else:
+        view_url = "https://rds-cloud.swissartresearch.net/resource/?uri={{id}}"
     
     return {
         "versions": ["0.2"],
@@ -469,7 +474,7 @@ async def get_manifest(request: Request):
 
         "defaultTypes": types,
         "view": {
-            "url": "https://rds-cloud.swissartresearch.net/resource/?uri={{id}}"
+            "url": view_url
         },
         "preview": {
             "url": f"{base_url}/preview?id={{{{id}}}}",
@@ -1334,6 +1339,7 @@ def main() -> None:
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--reconciliation-base-url", default=None, help="Base URL for reconciliation service. If not provided, it will be inferred from the request.")
+    parser.add_argument("--platform-host-name", default=os.getenv("PLATFORM_HOST_NAME"), help="Host name for platform links used in reconciliation manifest view URL")
     args = parser.parse_args()
 
     if args.max_limit < 1:
@@ -1351,6 +1357,7 @@ def main() -> None:
     app.state.min_shared_matches = args.min_shared_matches
     app.state.type_classes = asyncio.run(load_type_classes())  # Load type classes at startup
     app.state.reconciliation_base_url = args.reconciliation_base_url
+    app.state.platform_host_name = args.platform_host_name
 
     # Load additional configuration from YAML file
     with open(args.config, "r") as f:
