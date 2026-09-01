@@ -301,6 +301,31 @@ def build_msearch_query(
         
     return msearch_payload
 
+
+def is_uri_query(query: str) -> bool:
+    """Return whether a search term should be resolved as an entity URI."""
+    return query.startswith(("http://", "https://"))
+
+
+def build_uri_lookup_query(
+    uri: str,
+    limit: int,
+    index: str,
+    typeclass_filters: Optional[List[str]] = None,
+    requested_datasets: Optional[List[str]] = None,
+) -> str:
+    filters: List[Dict[str, Any]] = []
+    if requested_datasets:
+        filters.append({"terms": {"dataset": requested_datasets}})
+    if typeclass_filters:
+        filters.append({"terms": {"typeClasses": typeclass_filters}})
+
+    query: Dict[str, Any] = {"ids": {"values": [uri]}}
+    if filters:
+        query = {"bool": {"must": [query], "filter": filters}}
+
+    return json.dumps({"index": index}) + "\n" + json.dumps({"size": limit, "query": query}) + "\n"
+
 def normalize_entity_hits(
     response: Dict[str, Any],
     min_shared_matches: int = 1,
@@ -1223,7 +1248,7 @@ async def search(body: SearchRequest) -> Any:
 
     # Point to the global _msearch endpoint
     url = endpoint.rstrip("/") + "/_msearch"
-    
+
     query = sanitize_query(body.query)
     dataset = sanitize_text(body.dataset)
     requested_datasets = split_comma_separated_values(dataset)
@@ -1254,16 +1279,25 @@ async def search(body: SearchRequest) -> Any:
         }
         logger.debug("Received search request: %s", json.dumps(log_body))
     
-    # Pass config as the second argument
-    payload = build_msearch_query(
-        q=clean_query,
-        config=app.state.config,
-        total_limit=effective_limit,
-        index=index,
-        typeclass_filters=requested_typeclasses,
-        requested_datasets=requested_datasets
-    )
-    
+    uri_lookup = is_uri_query(clean_query)
+    if uri_lookup:
+        payload = build_uri_lookup_query(
+            uri=clean_query,
+            limit=effective_limit,
+            index=index,
+            typeclass_filters=requested_typeclasses,
+            requested_datasets=requested_datasets,
+        )
+    else:
+        payload = build_msearch_query(
+            q=clean_query,
+            config=app.state.config,
+            total_limit=effective_limit,
+            index=index,
+            typeclass_filters=requested_typeclasses,
+            requested_datasets=requested_datasets,
+        )
+
     #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
     auth = None
