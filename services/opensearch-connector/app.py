@@ -464,7 +464,7 @@ async def get_manifest(request: Request):
     if platform_host_name:
         view_url = f"{platform_host_name.strip().rstrip('/')}/resource/?uri={{{{id}}}}"
     else:
-        view_url = "https://rds-cloud.swissartresearch.net/resource/?uri={{id}}"
+        view_url = "https://rds.swissartresearch.net/resource/?uri={{id}}"
     
     return {
         "versions": ["0.2"],
