@@ -142,7 +142,7 @@
     >
       <template id="resource-types">
         <div class="detail-row">
-          <span class="detail-property">Types</span>
+          <span class="detail-property">Type</span>
           <span class="detail-value">
             {{#each bindings}}
               <span><mp-label iri="{{type.value}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
@@ -157,26 +157,37 @@
     template="{{> overview-fields}}"
     no-result-template=""
   >
-    <template id="overview-fields">
-      {{#if bindings}}
-        <div class="detail-panel-section">
-          {{#each bindings}}
-            <div class="detail-row">
-              <span class="detail-property">{{field.value}}</span>
-              <mp-text-truncate
-                class="detail-value"
-                lines=3
-                expand='<div class="detail-value-expand"> ...<a>show more</a></div>'
-                collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
-              >
-                {{value.value}}
-              </mp-text-truncate>
-            </div>
-          {{/each}}
-        </div>
-      {{/if}}
-    </template>
+    [[> overviewFieldsTemplate]]
   </semantic-query>
+  <semantic-query
+    query='[[> partial:queryGeoNames subject=this]]'
+    template="{{> overview-fields}}"
+    no-result-template=""
+  >
+    [[> overviewFieldsTemplate]]
+  </semantic-query>
+[[/inline]]
+
+[[#*inline "overviewFieldsTemplate"]]
+  <template id="overview-fields">
+    {{#if bindings}}
+      <div class="detail-panel-section">
+        {{#each bindings}}
+          <div class="detail-row">
+            <span class="detail-property">{{field.value}}</span>
+            <mp-text-truncate
+              class="detail-value"
+              lines=3
+              expand='<div class="detail-value-expand"> ...<a>show more</a></div>'
+              collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
+            >
+              {{value.value}}
+            </mp-text-truncate>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}}
+  </template>
 [[/inline]]
 
 [[#*inline "tab-knowledge-graph"]]
@@ -222,7 +233,7 @@
   >
     <template id="related-records">
       {{#if bindings}}
-        <div class="detail-panel-section detail-section--related">
+        <div class="detail-panel-section resource-panel-section detail-section--related">
           <div class="detail-section-title">Related records</div>
           <rds-item-truncate class="detail-related-list" limit="3">
             {{#each bindings}}
@@ -272,7 +283,7 @@
   >
     <template id="external-links">
       {{#if bindings}}
-        <div class="detail-panel-section detail-section--external">
+        <div class="detail-panel-section resource-panel-section detail-section--external">
           <div class="detail-section-title">External links</div>
           <rds-item-truncate class="detail-external-list" limit="8">
             {{#each bindings}}<span class="detail-external-item"><a class="detail-external-name" href="{{related.value}}" target="_blank">{{external.value}}</a></span>{{/each}}
