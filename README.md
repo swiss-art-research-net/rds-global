@@ -185,6 +185,26 @@ ORDER BY DESC(?score) (?reference)
 LIMIT 100
 ```
 
+To retrieve an indexed entity by URI, use the URI as `os:searchTerm`. URI-valued
+search terms are matched exactly against the indexed entity `_id`:
+
+```sparql
+PREFIX os: <http://www.researchspace.com/resource/assets/Ontologies/opensearch#>
+
+SELECT * WHERE {
+  SERVICE <http://platform:8080/sparql?repository=opensearch> {
+    ?query os:searchTerm <https://d-nb.info/gnd/118587544> ;
+      os:hasPrefLabel ?prefLabel ;
+      os:hasSubject ?subject ;
+      os:hasDescription ?description ;
+      os:hasTypeClass ?typeClass ;
+      os:hasDataset ?dataset ;
+      os:hasLocalMatches ?localMatches ;
+      os:hasMatches ?matches .
+  }
+}
+```
+
 ## Search Evaluation
 
 The repository includes a small search evaluation runner that executes a CSV query set against the `opensearch-connector` API and writes both a CSV result file and an HTML inspection report.
