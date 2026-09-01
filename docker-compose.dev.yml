@@ -1,4 +1,8 @@
 services:
+  opensearch-connector:
+    ports:
+      - 127.0.0.1:${PORT_OPENSEARCH_CONNECTOR:-8000}:8000
+
   opensearch-dashboard:
     ports:
       - 127.0.0.1:${PORT_OPENSEARCH_DASHBOARD:-5601}:5601
