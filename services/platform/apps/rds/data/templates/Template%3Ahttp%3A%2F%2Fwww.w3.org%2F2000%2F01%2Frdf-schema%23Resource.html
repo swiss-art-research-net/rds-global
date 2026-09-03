@@ -62,9 +62,11 @@
         >
           <template id="dataset-badge">
             {{#each bindings}}
-              <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-              </button>
+              <rds-copy-popover uri="[[this]]" placement="left">
+                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                </button>
+              </rds-copy-popover>
             {{/each}}
           </template>
         </semantic-query>
