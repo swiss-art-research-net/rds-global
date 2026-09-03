@@ -165,6 +165,13 @@
   >
     [[> overviewFieldsTemplate]]
   </semantic-query>
+  <semantic-query
+    query='[[> partial:queryAat subject=this]]'
+    template="{{> overview-fields}}"
+    no-result-template=""
+  >
+    [[> overviewFieldsTemplate]]
+  </semantic-query>
 [[/inline]]
 
 [[#*inline "overviewFieldsTemplate"]]
@@ -175,14 +182,14 @@
         {{#each bindings}}
           <div class="detail-row">
             <span class="detail-property">{{field.value}}</span>
-            <mp-text-truncate
+            <rds-text-truncate
               class="detail-value"
-              lines=3
-              expand='<div class="detail-value-expand"> ...<a>show more</a></div>'
-              collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
+              lines="3"
+              show-more-label="Show more"
+              show-less-label="Show less"
             >
               {{value.value}}
-            </mp-text-truncate>
+            </rds-text-truncate>
           </div>
         {{/each}}
       </div>
