@@ -16,15 +16,38 @@
     </div>
     <bs-tabs id="tabs" unmount-on-exit=true>
       <bs-tab event-key="0" title="Overview">
-        <div class="resource-layout">
-          <main class="resource-main">
-            [[> tab-overview]]
-          </main>
-
-          <aside class="resource-panel">
-            [[> query-related-records]]
-          </aside>
-        </div>
+        <semantic-query
+          query='SELECT ?dataset ?localMatches ?matches WHERE {
+            SERVICE <http://platform:8080/sparql?repository=opensearch> {
+              ?query os:searchTerm ?? ;
+                os:hasDataset ?dataset ;
+                os:hasLocalMatches ?localMatches ;
+                os:hasMatches ?matches .
+            }
+          }'
+          template="{{> resource-overview}}"
+          no-result-template="{{> resource-overview-unindexed}}"
+        >
+          <template id="resource-overview">
+            {{#each bindings}}
+              <div class="resource-layout">
+                <main class="resource-main">
+                  [[> tab-overview]]
+                </main>
+                <aside class="resource-panel">
+                  [[> related-records]]
+                </aside>
+              </div>
+            {{/each}}
+          </template>
+          <template id="resource-overview-unindexed">
+            <div class="resource-layout">
+              <main class="resource-main">
+                [[> resource-general]]
+              </main>
+            </div>
+          </template>
+        </semantic-query>
       </bs-tab>
       <bs-tab event-key="1" class="tab-ontodia" title="Knowledge Graph">
         [[> tab-knowledge-graph]]
@@ -121,7 +144,7 @@
   </div>
 [[/inline]]
 
-[[#*inline "tab-overview"]]
+[[#*inline "resource-general"]]
   <div class="detail-panel-section resource-general-section">
     <div class="detail-row">
       <span class="detail-property">URI</span>
@@ -153,41 +176,57 @@
       </template>
     </semantic-query>
   </div>
-  <semantic-query
-    query='[[> partial:queryGnd subject=this]]'
-    template="{{> overview-fields}}"
-    no-result-template=""
-  >
-    [[> overviewFieldsTemplate]]
-  </semantic-query>
-  <semantic-query
-    query='[[> partial:queryGeoNames subject=this]]'
-    template="{{> overview-fields}}"
-    no-result-template=""
-  >
-    [[> overviewFieldsTemplate]]
-  </semantic-query>
-  <semantic-query
-    query='[[> partial:queryAat subject=this]]'
-    template="{{> overview-fields}}"
-    no-result-template=""
-  >
-    [[> overviewFieldsTemplate]]
-  </semantic-query>
-  <semantic-query
-    query='[[> partial:queryUlan subject=this]]'
-    template="{{> overview-fields}}"
-    no-result-template=""
-  >
-    [[> overviewFieldsTemplate]]
-  </semantic-query>
-  <semantic-query
-    query='[[> partial:querySikart subject=this]]'
-    template="{{> overview-fields}}"
-    no-result-template=""
-  >
-    [[> overviewFieldsTemplate]]
-  </semantic-query>
+[[/inline]]
+
+[[#*inline "tab-overview"]]
+  [[> resource-general]]
+  {{#switch dataset.value}}
+    {{#case "gnd" break=true}}
+      <semantic-query
+        query='[[> partial:queryGnd subject=this]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
+    {{#case "geonames" break=true}}
+      <semantic-query
+        query='[[> partial:queryGeoNames subject=this]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
+    {{#case "aat" break=true}}
+      <semantic-query
+        query='[[> partial:queryAat subject=this]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
+    {{#case "ulan" break=true}}
+      <semantic-query
+        query='[[> partial:queryUlan subject=this]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
+    {{#case "sikart" break=true}}
+      <semantic-query
+        query='[[> partial:querySikart subject=this]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
+  {{/switch}}
 [[/inline]]
 
 [[#*inline "overviewFieldsTemplate"]]
@@ -228,146 +267,130 @@
 
 [[#*inline "tab-statements"]]
   <div class="statements">
-      [[> Platform:SourceStatements]]
+    [[> Platform:SourceStatements]]
   </div>
 [[/inline]]
 
-[[#*inline "query-related-records"]]
-  <semantic-query
-    query='SELECT ?localMatches ?matches WHERE {
-      SERVICE <http://platform:8080/sparql?repository=opensearch> {
-        ?query os:searchTerm ?? ;
-          os:hasLocalMatches ?localMatches ;
-          os:hasMatches ?matches .
+[[#*inline "related-records"]]
+  {{#ifCond localMatches.value "!==" "[]"}}
+    <semantic-query
+      query='SELECT ?related ?dataset ?external
+        (GROUP_CONCAT(DISTINCT STR(?relatedLabel); SEPARATOR=" | ") AS ?label)
+      WHERE {
+        VALUES ?related {
+          {{#each (arraySplit localMatches.value)}}
+            <{{this}}>
+          {{/each}}
+        }
+        OPTIONAL {
+          SELECT DISTINCT ?related ?dataset WHERE {
+            VALUES ?related {
+              {{#each (arraySplit localMatches.value)}}
+                <{{this}}>
+              {{/each}}
+            }
+            ?related a ?type .
+            [[> partial:valuesDatasetLabels]]
+            FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+          }
+        }
+        OPTIONAL {
+          GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
+            ?related rds:label ?relatedLabel .
+          }
+        }
+        BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
       }
-    }'
-    template="{{> related-records-lookup}}"
-    no-result-template=""
-  >
-    <template id="related-records-lookup">
-      {{#each bindings}}
-        {{#ifCond localMatches.value "!==" "[]"}}
-          <semantic-query
-            query='SELECT ?related ?dataset ?external
-              (GROUP_CONCAT(DISTINCT STR(?relatedLabel); SEPARATOR=" | ") AS ?label)
-            WHERE {
-              VALUES ?related {
-                {{#each (arraySplit localMatches.value)}}
-                  <{{this}}>
-                {{/each}}
-              }
-              OPTIONAL {
-                SELECT DISTINCT ?related ?dataset WHERE {
-                  VALUES ?related {
-                    {{#each (arraySplit localMatches.value)}}
-                      <{{this}}>
-                    {{/each}}
-                  }
-                  ?related a ?type .
-                  [[> partial:valuesDatasetLabels]]
-                  FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-                }
-              }
-              OPTIONAL {
-                GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
-                  ?related rds:label ?relatedLabel .
-                }
-              }
-              BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
-            }
-            GROUP BY ?related ?dataset ?external
-            ORDER BY ?dataset ?label
-            LIMIT 12'
-            template="{{> related-records}}"
-            no-result-template=""
-          >
-            <template id="related-records">
-              {{#if bindings}}
-                <div class="detail-panel-section resource-panel-section detail-section--related">
-                  <div class="detail-section-title">Links from source record</div>
-                  <rds-item-truncate class="detail-related-list" limit="3">
-                    {{#each bindings}}
-                      <div class="detail-row detail-related-record">
-                        {{#if dataset.value}}
-                          <rds-copy-popover uri="{{related.value}}">
-                            <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                              <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                            </button>
-                          </rds-copy-popover>
-                        {{else}}
-                          <span class="rds-badge">{{external.value}}</span>
-                        {{/if}}
-                        <div class="detail-related-content">
-                          {{#if label.value}}
-                            <div class="detail-related-label">{{label.value}}</div>
-                          {{/if}}
-                          <rds-copy-value class="detail-related-uri" value="{{related.value}}">
-                            {{related.value}}
-                          </rds-copy-value>
-                        </div>
-                      </div>
-                    {{/each}}
-                  </rds-item-truncate>
+      GROUP BY ?related ?dataset ?external
+      ORDER BY ?dataset ?label
+      LIMIT 12'
+      template="{{> related-records}}"
+      no-result-template=""
+    >
+      <template id="related-records">
+        {{#if bindings}}
+          <div class="detail-panel-section resource-panel-section detail-section--related">
+            <div class="detail-section-title">Links from source record</div>
+            <rds-item-truncate class="detail-related-list" limit="3">
+              {{#each bindings}}
+                <div class="detail-row detail-related-record">
+                  {{#if dataset.value}}
+                    <rds-copy-popover uri="{{related.value}}">
+                      <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                        <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                      </button>
+                    </rds-copy-popover>
+                  {{else}}
+                    <span class="rds-badge">{{external.value}}</span>
+                  {{/if}}
+                  <div class="detail-related-content">
+                    {{#if label.value}}
+                      <div class="detail-related-label">{{label.value}}</div>
+                    {{/if}}
+                    <rds-copy-value class="detail-related-uri" value="{{related.value}}">
+                      {{related.value}}
+                    </rds-copy-value>
+                  </div>
                 </div>
-              {{/if}}
-            </template>
-          </semantic-query>
-        {{/ifCond}}
-        {{#ifCond matches.value "!==" "[]"}}
-          <semantic-query
-            query='SELECT ?related ?dataset
-              (GROUP_CONCAT(DISTINCT STR(?relatedLabel); SEPARATOR=" | ") AS ?label)
-            WHERE {
-              VALUES ?related {
-                {{#each (arraySplit matches.value)}}
-                  <{{this}}>
-                {{/each}}
-              }
-              FILTER(?related != ??)
-              ?related a ?type .
-              [[> partial:valuesDatasetLabels]]
-              FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-              OPTIONAL {
-                GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
-                  ?related rds:label ?relatedLabel .
-                }
-              }
-            }
-            GROUP BY ?related ?dataset
-            ORDER BY ?dataset ?label
-            LIMIT 12'
-            template="{{> matched-records}}"
-            no-result-template=""
-          >
-            <template id="matched-records">
-              {{#if bindings}}
-                <div class="detail-panel-section resource-panel-section detail-section--related">
-                  <div class="detail-section-title">Matched records in RDS</div>
-                  <rds-item-truncate class="detail-related-list" limit="3">
-                    {{#each bindings}}
-                      <div class="detail-row detail-related-record">
-                        <rds-copy-popover uri="{{related.value}}">
-                          <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                            <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                          </button>
-                        </rds-copy-popover>
-                        <div class="detail-related-content">
-                          {{#if label.value}}
-                            <div class="detail-related-label">{{label.value}}</div>
-                          {{/if}}
-                          <rds-copy-value class="detail-related-uri" value="{{related.value}}">
-                            {{related.value}}
-                          </rds-copy-value>
-                        </div>
-                      </div>
-                    {{/each}}
-                  </rds-item-truncate>
+              {{/each}}
+            </rds-item-truncate>
+          </div>
+        {{/if}}
+      </template>
+    </semantic-query>
+  {{/ifCond}}
+  {{#ifCond matches.value "!==" "[]"}}
+    <semantic-query
+      query='SELECT ?related ?dataset
+        (GROUP_CONCAT(DISTINCT STR(?relatedLabel); SEPARATOR=" | ") AS ?label)
+      WHERE {
+        VALUES ?related {
+          {{#each (arraySplit matches.value)}}
+            <{{this}}>
+          {{/each}}
+        }
+        FILTER(?related != ??)
+        ?related a ?type .
+        [[> partial:valuesDatasetLabels]]
+        FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+        OPTIONAL {
+          GRAPH <http://schema.swissartresearch.net/rds/graph/labels> {
+            ?related rds:label ?relatedLabel .
+          }
+        }
+      }
+      GROUP BY ?related ?dataset
+      ORDER BY ?dataset ?label
+      LIMIT 12'
+      template="{{> matched-records}}"
+      no-result-template=""
+    >
+      <template id="matched-records">
+        {{#if bindings}}
+          <div class="detail-panel-section resource-panel-section detail-section--related">
+            <div class="detail-section-title">Matched records in RDS</div>
+            <rds-item-truncate class="detail-related-list" limit="3">
+              {{#each bindings}}
+                <div class="detail-row detail-related-record">
+                  <rds-copy-popover uri="{{related.value}}">
+                    <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                      <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                    </button>
+                  </rds-copy-popover>
+                  <div class="detail-related-content">
+                    {{#if label.value}}
+                      <div class="detail-related-label">{{label.value}}</div>
+                    {{/if}}
+                    <rds-copy-value class="detail-related-uri" value="{{related.value}}">
+                      {{related.value}}
+                    </rds-copy-value>
+                  </div>
                 </div>
-              {{/if}}
-            </template>
-          </semantic-query>
-        {{/ifCond}}
-      {{/each}}
-    </template>
-  </semantic-query>
+              {{/each}}
+            </rds-item-truncate>
+          </div>
+        {{/if}}
+      </template>
+    </semantic-query>
+  {{/ifCond}}
 [[/inline]]
