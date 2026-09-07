@@ -1,0 +1,90 @@
+PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+PREFIX sik: <https://recherche.sik-isea.ch/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" | ") AS ?value) ?order
+WHERE {
+  GRAPH <http://recherche.sik-isea.ch/graph> {
+    <[[subject]]> a ?sourceType .
+    VALUES ?sourceType {
+      sik:SIK-ACTOR sik:SIK-WORK sik:SIK-WORK_GROUP
+      sik:SIK-PARENT_WORK sik:SIK-TYPE
+    }
+    {
+      <[[subject]]> crm:P67i_is_referred_to_by ?note .
+      ?note crm:P2_has_type ?noteType ; rdfs:label ?rawValue .
+      VALUES (?noteType ?field ?order) {
+        (sik:type-BIOGRAPHICAL_DATA "Biographical details" 2)
+        (sik:type-BRIEF_BIOGRAPHY "Brief biography" 3)
+      }
+    }
+    UNION
+    {
+      <[[subject]]> crm:P01i_is_domain_of ?note .
+      ?note crm:P3.1_has_type ?noteType ; rdfs:label ?rawValue .
+      VALUES (?noteType ?field ?order) {
+        (sik:type-DATE_DISPLAY "Creation date" 4)
+        (sik:type-TECHNIQUE_DISPLAY "Technique" 5)
+        (sik:type-DIMENSION_DISPLAY "Dimensions" 6)
+      }
+    }
+    UNION
+    {
+      <[[subject]]> crm:P1_is_identified_by ?identifier .
+      ?identifier crm:P2_has_type sik:type-SIK-ISEA_INVENTORY_NUMBER ;
+                  rdfs:label ?rawValue .
+      BIND("SIK-ISEA inventory number" AS ?field)
+      BIND(1 AS ?order)
+    }
+    UNION
+    {
+      VALUES (?recordType ?field) {
+        (sik:SIK-ACTOR "Names")
+        (sik:SIK-WORK "Titles")
+        (sik:SIK-WORK_GROUP "Titles")
+        (sik:SIK-PARENT_WORK "Titles")
+        (sik:SIK-TYPE "Labels")
+      }
+      <[[subject]]> a ?recordType ; crm:P1_is_identified_by ?appellation .
+      ?appellation a crm:E41_Appellation ; rdfs:label ?rawValue .
+      BIND(7 AS ?order)
+    }
+    UNION
+    {
+      <[[subject]]> crm:P107_is_current_or_former_member_of ?membership .
+      ?membership crm:P2_has_type sik:type-NATIONALITY ;
+                  crm:P74_has_current_or_former_residence ?country .
+      ?country rdfs:label ?rawValue .
+      BIND("Nationality" AS ?field)
+      BIND(8 AS ?order)
+    }
+    UNION
+    {
+      <[[subject]]> crm:P108i_was_produced_by/crm:P01_is_domain_of ?relation .
+      ?relation crm:P14.1_in_the_role_of sik:type-CREATOR ;
+                crm:P02_has_range ?creator .
+      ?creator crm:P1_is_identified_by/rdfs:label ?rawValue .
+      BIND("Creator" AS ?field)
+      BIND(9 AS ?order)
+    }
+    UNION
+    {
+      VALUES (?predicate ?field ?order) {
+        (crm:P50_has_current_keeper "Current keeper" 10)
+        (crm:P74_has_current_or_former_residence "Location" 11)
+        (crm:P127_has_broader_term "Broader term" 12)
+      }
+      <[[subject]]> ?predicate ?linkedResource .
+      ?linkedResource crm:P1_is_identified_by/rdfs:label ?rawValue .
+    }
+  }
+  BIND(LANG(?rawValue) AS ?language)
+  BIND(
+    IF(STRLEN(?language) > 0,
+      CONCAT(STR(?rawValue), " [", ?language, "]"),
+      STR(?rawValue)
+    ) AS ?valueText
+  )
+}
+GROUP BY ?field ?order
+ORDER BY ?order
