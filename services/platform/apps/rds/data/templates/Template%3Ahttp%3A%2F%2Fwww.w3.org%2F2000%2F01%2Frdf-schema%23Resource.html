@@ -226,6 +226,24 @@
         [[> overviewFieldsTemplate]]
       </semantic-query>
     {{/case}}
+    {{#case "thesarchesp" break=true}}
+      <semantic-query
+        query='[[> partial:queryFrenchThesaurus subject=this graph="http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph"]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
+    {{#case "thesobjmob" break=true}}
+      <semantic-query
+        query='[[> partial:queryFrenchThesaurus subject=this graph="http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph"]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
   {{/switch}}
 [[/inline]]
 
