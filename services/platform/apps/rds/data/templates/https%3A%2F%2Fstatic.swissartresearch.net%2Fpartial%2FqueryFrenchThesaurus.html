@@ -1,0 +1,36 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" | ") AS ?value) ?order WHERE {
+  GRAPH <[[graph]]> {
+    <[[subject]]> a skos:Concept .
+
+    {
+      VALUES (?predicate ?field ?order) {
+        (skos:definition "Definition" 1)
+        (skos:altLabel "Alternate labels" 2)
+      }
+      <[[subject]]> ?predicate ?rawValue .
+    }
+    UNION
+    {
+      <[[subject]]> skos:broader ?broader .
+      ?broader skos:prefLabel ?rawValue .
+      BIND("Broader terms" AS ?field)
+      BIND(3 AS ?order)
+    }
+  }
+
+  FILTER(ISLITERAL(?rawValue))
+  FILTER(STRLEN(STR(?rawValue)) > 0)
+
+  BIND(LANG(?rawValue) AS ?language)
+  BIND(
+    IF(
+      STRLEN(?language) > 0,
+      CONCAT(STR(?rawValue), " [", ?language, "]"),
+      STR(?rawValue)
+    ) AS ?valueText
+  )
+}
+GROUP BY ?field ?order
+ORDER BY ?order

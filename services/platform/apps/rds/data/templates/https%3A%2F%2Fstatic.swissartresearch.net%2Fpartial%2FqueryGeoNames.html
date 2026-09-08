@@ -1,0 +1,46 @@
+SELECT ?field ?value ?order WHERE {
+  {
+    SELECT ?countryCode ?country ?region ?parentFeature ?coordinates ?population WHERE {
+      BIND(<[[subject]]> AS ?subject)
+      GRAPH <http://sws.geonames.org/graph> {
+        ?subject a gn:Feature .
+        OPTIONAL { ?subject gn:countryCode ?countryCode . }
+        OPTIONAL { ?subject gn:parentCountry ?countryLink . ?countryLink gn:name ?country . }
+        OPTIONAL { ?subject gn:parentADM1 ?regionLink . ?regionLink gn:name ?region . }
+        OPTIONAL { ?subject wgs:lat ?latitude . }
+        OPTIONAL { ?subject wgs:long ?longitude . }
+        OPTIONAL { ?subject gn:population ?population . }
+      }
+      OPTIONAL {
+        SELECT (GROUP_CONCAT(DISTINCT ?parentFeatureValue; separator=", ") AS ?parentFeature)
+        WHERE {
+          BIND(<[[subject]]> AS ?subject)
+          GRAPH <http://sws.geonames.org/graph> {
+            ?subject gn:parentFeature ?parentFeatureLink .
+            OPTIONAL { ?parentFeatureLink gn:name ?parentFeatureName . }
+            BIND(COALESCE(?parentFeatureName, REPLACE(STR(?parentFeatureLink), "/$", "")) AS ?parentFeatureValue)
+          }
+        }
+      }
+      BIND(IF(BOUND(?latitude) && BOUND(?longitude), CONCAT(STR(?latitude), ", ", STR(?longitude)), "") AS ?coordinates)
+    }
+  }
+  VALUES (?field ?order ?fieldKey) {
+    ("Country code" 1 "countryCode")
+    ("Country" 2 "country")
+    ("Region" 3 "region")
+    ("Parent feature" 4 "parentFeature")
+    ("Coordinates" 5 "coordinates")
+    ("Population" 6 "population")
+  }
+  BIND(
+    IF(?fieldKey = "countryCode", STR(?countryCode),
+    IF(?fieldKey = "country", STR(?country),
+    IF(?fieldKey = "region", STR(?region),
+    IF(?fieldKey = "parentFeature", STR(?parentFeature),
+    IF(?fieldKey = "coordinates", STR(?coordinates),
+    STR(?population)))))) AS ?value
+  )
+  FILTER(STRLEN(?value) > 0)
+}
+ORDER BY ?order
