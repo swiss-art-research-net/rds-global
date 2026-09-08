@@ -29,4 +29,6 @@ datasets:
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
       matches: |
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
-    wikidata_match_property: P1014
+    wikidata_matching:
+      - property: P1014
+        prefix: http://vocab.getty.edu/aat/
