@@ -250,14 +250,10 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
         typesQuery = datasetConfig.get("queries", {}).get("types", DEFAULT_TYPES_QUERY)
         # Load Configuration
         try:
-            wikidataProperty = datasetConfig["wikidata_match_property"]
+            wikidataMatchingConfig = datasetConfig["wikidata_matching"]
         except KeyError:
-            print(f"No Wikidata match property defined for dataset {datasetName} in config, skipping...")
+            print(f"No Wikidata match configuration defined for dataset {datasetName} in config, skipping...")
             continue
-        try:
-            namespace = datasetConfig["namespace"]
-        except KeyError:
-            raise KeyError(f"Namespace not defined for dataset {datasetName} in config")
         try:
             namedGraph = datasetConfig["graph"]
         except KeyError:
@@ -297,25 +293,33 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                 entities = [r["subject"]["value"] for r in bindings]
                 pbar.update(len(entities))
 
-                candidateIds = normalize_candidate_ids(entities, namespace)
-                if not candidateIds:
-                    pbar.set_postfix({"Links": wdEquivalentsFound})
-                    continue
-
-                # sameAs statements from wikidata based on configured external-id property
-                sameAsQuery = build_wd_sameas_query(prefixes, wikidataProperty, candidateIds)
-                sameAsResults = query_wikidata_with_retry(
-                    wikidata_endpoint, sameAsQuery, label=f"{datasetName}:wikidata sameAs"
-                )
-
                 newWdEntities = []
-                for r in sameAsResults["results"]["bindings"]:
-                    localUri = namespace + r["candidateId"]["value"]
-                    wdUri = r["wdEntity"]["value"]
-                    f.write(f"<{localUri}> {PREDICATE_SAMEAS} <{wdUri}> .\n")
-                    newWdEntities.append(wdUri)
+                for wdConfig in wikidataMatchingConfig:
+                    try:
+                        wikidataProperty = wdConfig["property"]
+                    except KeyError:
+                        raise KeyError(f"Wikidata property not defined in config for dataset {datasetName}")
+                    try:
+                        wikidataPrefix = wdConfig["prefix"]
+                    except KeyError:
+                        raise KeyError(f"Wikidata prefix not defined in config for dataset {datasetName}")
 
-                wdEquivalentsFound += len(sameAsResults["results"]["bindings"])
+                    candidateIds = normalize_candidate_ids(entities, wikidataPrefix)
+                    if not candidateIds:
+                        pbar.set_postfix({"Links": wdEquivalentsFound})
+                        continue
+                    sameAsQuery = build_wd_sameas_query(prefixes, wikidataProperty, candidateIds)
+                    sameAsResults = query_wikidata_with_retry(
+                        wikidata_endpoint, sameAsQuery, label=f"{datasetName}:wikidata sameAs"
+                    )
+
+                    for r in sameAsResults["results"]["bindings"]:
+                        localUri = wikidataPrefix + r["candidateId"]["value"]
+                        wdUri = r["wdEntity"]["value"]
+                        f.write(f"<{localUri}> {PREDICATE_SAMEAS} <{wdUri}> .\n")
+                        newWdEntities.append(wdUri)
+
+                    wdEquivalentsFound += len(sameAsResults["results"]["bindings"])
 
                 # retrieve formatter-url matches for the currently retrieved wikidata entities
                 uniqueWdEntities = set(newWdEntities)
