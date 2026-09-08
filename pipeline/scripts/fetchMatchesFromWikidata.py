@@ -304,7 +304,10 @@ def main(*, endpoint, wikidata_endpoint, wikidata_properties_csv, output_directo
                     except KeyError:
                         raise KeyError(f"Wikidata prefix not defined in config for dataset {datasetName}")
 
-                    candidateIds = normalize_candidate_ids(entities, wikidataPrefix)
+                    candidateIds = normalize_candidate_ids(
+                        [entity for entity in entities if entity.startswith(wikidataPrefix)],
+                        wikidataPrefix,
+                    )
                     if not candidateIds:
                         pbar.set_postfix({"Links": wdEquivalentsFound})
                         continue
