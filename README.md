@@ -209,6 +209,8 @@ SELECT * WHERE {
 
 The connector also exposes a Reconciliation API 0.2 service for finding and enriching entities in OpenRefine and similar tools. In development it is available at `http://localhost:8000`; in production it is published through `RECONCILE_HOST_NAME`.
 
+For the complete protocol reference, see the [Reconciliation API 0.2 specification](https://www.w3.org/community/reports/reconciliation/CG-FINAL-specs-0.2-20230410/).
+
   | Endpoint | Purpose | Example |
   | --- | --- | --- |
   | `GET /` | Shows the service description, including supported types and available actions (preview, suggest, extend). | `curl http://localhost:8000/` |
