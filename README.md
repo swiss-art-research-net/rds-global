@@ -205,6 +205,66 @@ SELECT * WHERE {
 }
 ```
 
+### Reconciliation API
+
+The connector also exposes a Reconciliation API 0.2 service for finding and enriching entities in OpenRefine and similar tools. In development it is available at `http://localhost:8000`; in production it is published through `RECONCILE_HOST_NAME`.
+
+  | Endpoint | Purpose | Example |
+  | --- | --- | --- |
+  | `GET /` | Shows the service description, including supported types and available actions (preview, suggest, extend). | `curl http://localhost:8000/` |
+  | `GET /?queries=...` | Looks up one or more names or identifiers. Each query may include `query`, `limit`, `type`, and `properties`. | `curl --get http://localhost:8000/ --data-urlencode 'queries={"q1":{"query":"London","limit":5}}'` |
+  | `POST /` | Sends the same lookup request as form data. | `curl -X POST http://localhost:8000/ --data-urlencode 'queries={"q1":{"query":"London"}}'` |
+  | `GET/POST /?extend=...` | Looks up extra information for entities, such as external matches, datasets, descriptions, or types. | `curl --get http://localhost:8000/ --data-urlencode 'extend={"ids":["http://www.wikidata.org/entity/Q84"],"properties":[{"id":"matches"}]}'` |
+  | `GET /preview?id=...` | Shows a small HTML preview for an entity. | `curl 'http://localhost:8000/preview?id=https%3A%2F%2Fwww.wikidata.org%2Fentity%2FQ84'` |
+  | `GET /suggest/entity?prefix=...` | Suggests matching entities. | `curl 'http://localhost:8000/suggest/entity?prefix=Lon'` |
+  | `GET /suggest/type?prefix=...` | Suggests configured type classes. | `curl 'http://localhost:8000/suggest/type?prefix=Per'` |
+  | `GET /suggest/property?prefix=...` | Suggests extend properties. | `curl 'http://localhost:8000/suggest/property?prefix=mat'` |
+
+The response uses the submitted query id to label each result:
+
+```json
+{
+  "q1": {
+    "result": [
+      {
+        "id": "http://www.wikidata.org/entity/Q84",
+        "name": "London",
+        "type": [{"id": "Place", "name": "Place"}],
+        "score": 42.5,
+        "scoreDisplay": 42.5,
+        "match": true,
+        "dataset": "example",
+        "reference": "http://www.wikidata.org/entity/Q84",
+        "recordId": "Q84",
+        "isReference": 1
+      }
+    ]
+  }
+}
+```
+
+Extend values are returned under `rows[entity_id][property_id]`. The available properties are `matches`, `dataset`, `description`, `type`, and `sourceType`. The optional `limit` setting limits how many values are returned. With `content: "id"`, values are returned as `{ "id": "...", "name": "..." }` objects instead of `{ "str": "..." }` text values.
+
+For example, an extend request for Wikidata entry for London can return:
+
+```json
+{
+  "meta": [
+    {"id": "matches", "name": "Matches"}
+  ],
+  "rows": {
+    "http://www.wikidata.org/entity/Q84": {
+      "matches": [
+        {"str": "https://d-nb.info/gnd/4074335-4"},
+        {"str": "https://sws.geonames.org/2643743/"}
+      ]
+    }
+  }
+}
+```
+
+
+
 ## Search Evaluation
 
 The repository includes a small search evaluation runner that executes a CSV query set against the `opensearch-connector` API and writes both a CSV result file and an HTML inspection report.
