@@ -799,10 +799,22 @@ async def _reconcile_single(q: Dict[str, Any]):
 
     if isinstance(properties, list):
         for p in properties:
+            if not isinstance(p, dict):
+                continue
+
             if p.get("pid") == "dataset":
                 val = p.get("v")
-                if val:
-                    datasets = [val]
+                values = val if isinstance(val, list) else [val]
+                requested_datasets: List[str] = []
+                for value in values:
+                    if isinstance(value, dict):
+                        value = value.get("id") or value.get("name")
+                    parsed_values = split_comma_separated_values(str(value)) if value else None
+                    if parsed_values:
+                        for dataset in parsed_values:
+                            if dataset not in requested_datasets:
+                                requested_datasets.append(dataset)
+                datasets = requested_datasets or None
             elif p.get("pid") == "type":
                 val = p.get("v")
                 if isinstance(val, dict):
