@@ -226,6 +226,15 @@
         [[> overviewFieldsTemplate]]
       </semantic-query>
     {{/case}}
+    {{#case "lcnaf" break=true}}
+      <semantic-query
+        query='[[> partial:queryLcnaf subject=this]]'
+        template="{{> overview-fields}}"
+        no-result-template=""
+      >
+        [[> overviewFieldsTemplate]]
+      </semantic-query>
+    {{/case}}
     {{#case "grp" break=true}}
       <semantic-query
         query='[[> partial:queryGrp subject=this]]'

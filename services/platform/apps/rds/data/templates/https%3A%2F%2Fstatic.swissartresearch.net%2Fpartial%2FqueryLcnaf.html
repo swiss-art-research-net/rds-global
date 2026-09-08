@@ -1,0 +1,28 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" | ") AS ?value) ?order WHERE {
+  GRAPH <http://id.loc.gov/authorities/names/graph> {
+    <[[subject]]> a skos:Concept .
+
+    VALUES (?predicate ?field ?order) {
+      (skos:altLabel "Alternate labels" 1)
+      (skos:note "Notes" 2)
+      (skos:editorialNote "Editorial notes" 3)
+    }
+    <[[subject]]> ?predicate ?rawValue .
+  }
+
+  FILTER(ISLITERAL(?rawValue))
+  FILTER(STRLEN(STR(?rawValue)) > 0)
+
+  BIND(LANG(?rawValue) AS ?language)
+  BIND(
+    IF(
+      STRLEN(?language) > 0,
+      CONCAT(STR(?rawValue), " [", ?language, "]"),
+      STR(?rawValue)
+    ) AS ?valueText
+  )
+}
+GROUP BY ?field ?order
+ORDER BY ?order
