@@ -159,7 +159,7 @@ class RdsFilterSelection extends HTMLElement {
     badge.appendChild(document.createTextNode(label));
 
     const remaining = values.filter(selectedValue => selectedValue !== value);
-    const url = new URL('/resource/page:StartDev', window.location.origin);
+    const url = new URL('/resource/page:Start', window.location.origin);
     const preserveParam = this.getAttribute('preserve-param');
     const preservedValue = preserveParam && params.get(preserveParam);
     if (preservedValue) url.searchParams.set(preserveParam, preservedValue);
