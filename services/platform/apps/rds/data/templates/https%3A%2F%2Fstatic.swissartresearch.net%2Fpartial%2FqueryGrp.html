@@ -1,0 +1,104 @@
+PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX grp: <https://ontology.gta.arch.ethz.ch/>
+PREFIX type: <https://data.gta.arch.ethz.ch/type/>
+PREFIX aaao: <https://ontology.swissartresearch.net/aaao/>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" | ") AS ?value) ?order WHERE {
+  GRAPH <https://data.gta.arch.ethz.ch/graph> {
+    VALUES ?entityType { grp:Person grp:Group }
+    <[[subject]]> a ?entityType .
+
+    {
+      <[[subject]]> crm:P1_is_identified_by ?identifier .
+      ?identifier crm:P2_has_type aat:300404012;
+        crm:P190_has_symbolic_content ?rawValue .
+      BIND("Source ID" AS ?field)
+      BIND(1 AS ?order)
+    }
+    UNION
+    {
+      <[[subject]]> crm:P1_is_identified_by ?name .
+      ?name a crm:E33_E41_Linguistic_Appellation;
+        crm:P190_has_symbolic_content ?rawValue .
+      FILTER NOT EXISTS {
+        ?name crm:P2_has_type aat:300404670
+      }
+      BIND("Alternate names" AS ?field)
+      BIND(2 AS ?order)
+    }
+    UNION
+    {
+      VALUES (?statementType ?field ?order) {
+        (type:4149527 "Description" 3)
+        (type:4149528 "Detailed description" 4)
+      }
+      <[[subject]]> crm:P67i_is_referred_to_by ?statement .
+      ?statement crm:P2_has_type ?statementType;
+        crm:P190_has_symbolic_content ?rawValue .
+    }
+    UNION
+    {
+      VALUES (?eventPredicate ?field ?order) {
+        (crm:P98i_was_born "Birth date" 5)
+        (crm:P100i_died_in "Death date" 6)
+      }
+      <[[subject]]> ?eventPredicate ?event .
+      ?event crm:P4_has_time-span ?timespan .
+      OPTIONAL {
+        ?timespan crm:P82a_begin_of_the_begin ?begin
+      }
+      OPTIONAL {
+        ?timespan crm:P82b_end_of_the_end ?end
+      }
+      FILTER(BOUND(?begin) || BOUND(?end))
+      BIND(
+        IF(
+          BOUND(?begin),
+          IF(
+            BOUND(?end),
+            IF(
+              STR(?begin) = STR(?end),
+              STR(?begin),
+              CONCAT(STR(?begin), " – ", STR(?end))
+            ),
+            CONCAT("From ", STR(?begin))
+          ),
+          CONCAT("Until ", STR(?end))
+        ) AS ?rawValue
+      )
+    }
+    UNION
+    {
+      <[[subject]]> aaao:ZP11i_is_classificatory_subject_of/aaao:ZP12_ascribes_classification ?nationality .
+      ?nationality crm:P2_has_type aat:300387171;
+        rdfs:label ?rawValue .
+      BIND("Nationality" AS ?field)
+      BIND(7 AS ?order)
+    }
+    UNION
+    {
+      <[[subject]]> aaao:ZP32i_is_membership_subject_of/aaao:ZP33_ascribes_group ?group .
+      ?group crm:P1_is_identified_by ?groupName .
+      ?groupName crm:P2_has_type aat:300404670;
+        crm:P190_has_symbolic_content ?rawValue .
+      BIND("Group memberships" AS ?field)
+      BIND(8 AS ?order)
+    }
+  }
+
+  FILTER(ISLITERAL(?rawValue))
+  FILTER(STRLEN(STR(?rawValue)) > 0)
+
+  BIND(LANG(?rawValue) AS ?language)
+  BIND(
+    IF(
+      ?order != 1 && STRLEN(?language) > 0,
+      CONCAT(STR(?rawValue), " [", ?language, "]"),
+      STR(?rawValue)
+    ) AS ?valueText
+  )
+}
+GROUP BY ?field ?order
+ORDER BY ?order

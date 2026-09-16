@@ -1,0 +1,43 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" | ") AS ?value) ?order WHERE {
+  GRAPH <http://vocab.getty.edu/aat/graph> {
+    <[[subject]]> a gvp:Concept .
+
+    {
+      VALUES (?predicate ?field ?order) {
+        (dc:identifier "Getty subject ID" 1)
+        (gvp:parentString "Hierarchy" 4)
+      }
+      <[[subject]]> ?predicate ?rawValue .
+    }
+    UNION
+    {
+      <[[subject]]> skos:scopeNote/rdf:value ?rawValue .
+      FILTER(LANGMATCHES(LANG(?rawValue), "en"))
+      BIND("Scope note" AS ?field)
+      BIND(2 AS ?order)
+    }
+    UNION
+    {
+      <[[subject]]> xl:altLabel/xl:literalForm ?rawValue .
+      BIND("Alternate labels" AS ?field)
+      BIND(3 AS ?order)
+    }
+  }
+
+  BIND(LANG(?rawValue) AS ?language)
+  BIND(
+    IF(
+      ?field = "Alternate labels" && STRLEN(?language) > 0,
+      CONCAT(STR(?rawValue), " [", ?language, "]"),
+      STR(?rawValue)
+    ) AS ?valueText
+  )
+}
+GROUP BY ?field ?order
+ORDER BY ?order

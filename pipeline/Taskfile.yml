@@ -110,7 +110,7 @@ tasks:
     cmds:
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
       - mkdir -p "{{.DIRECTORY_WIKIDATA_ENTITIES}}"
-      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "$WIKIDATA_ENDPOINT" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-datasets-configuration:
     desc: Generate the unified datasets configuration

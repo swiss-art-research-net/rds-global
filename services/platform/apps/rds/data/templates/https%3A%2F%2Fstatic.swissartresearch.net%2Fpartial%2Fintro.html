@@ -12,15 +12,15 @@
     <div>
       <div class="eyebrow-label">Try an example query</div>
       <div class="rds-intro-examples">
-        <a class="rds-intro-example" href="/resource/page:StartDev?type=Person&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipAFtcZABa0ANk0wBzcQgC6AX1IBXTLgCOy2gElekAAwLFpAGZU5pJLTDKx2Bkp5NsTMLWwRIlCyCZjcUpj8tDgMIAAqiAAizkwAdACyTAQARvSkAGoOCgpAA">
+        <a class="rds-intro-example" href="/resource/page:Start?type=Person&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipAFtcZABa0ANk0wBzcQgC6AX1IBXTLgCOy2gElekAAwLFpAGZU5pJLTDKx2Bkp5NsTMLWwRIlCyCZjcUpj8tDgMIAAqiAAizkwAdACyTAQARvSkAGoOCgpAA">
           <span class="rds-intro-example-type">Person</span>
           <span class="rds-intro-example-label">Michelangelo</span>
         </a>
-        <a class="rds-intro-example" href="/resource/page:StartDev?type=Place&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipAC8ArklxkAFiAC6AX1KDMuAI6DaASV6QADNJmkAZlUmkktMIIA22BrJ5NsTMLWwRIlIyCbncAc0wBbWhwGEAAVRAAROyYAOgBZJgIAI3pSADVraWkgA">
+        <a class="rds-intro-example" href="/resource/page:Start?type=Place&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipAC8ArklxkAFiAC6AX1KDMuAI6DaASV6QADNJmkAZlUmkktMIIA22BrJ5NsTMLWwRIlIyCbncAc0wBbWhwGEAAVRAAROyYAOgBZJgIAI3pSADVraWkgA">
           <span class="rds-intro-example-type">Place</span>
           <span class="rds-intro-example-label">Zurich</span>
         </a>
-        <a class="rds-intro-example" href="/resource/page:StartDev?type=Group&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipACMmAVwAWwiAF0AvqSGZcARyG0Akr0gAGKdNIAzKhNJJaYIQBtsDGTybYmYWtgiRKhkEzO4A5pgC2tHAYQABVEABFbJgA6AFkmAn56UgA1KykpIA">
+        <a class="rds-intro-example" href="/resource/page:Start?type=Group&semanticSearch-keyword-search=N4IgziBcoCYPZRAJxmSBRAdgFwJbYE8QAaEAYygG1RsBTKUJAQ0RTSz0JJBipACMmAVwAWwiAF0AvqSGZcARyG0Akr0gAGKdNIAzKhNJJaYIQBtsDGTybYmYWtgiRKhkEzO4A5pgC2tHAYQABVEABFbJgA6AFkmAn56UgA1KykpIA">
           <span class="rds-intro-example-type">Group</span>
           <span class="rds-intro-example-label">Bauhaus</span>
         </a>
@@ -31,14 +31,15 @@
   <div class="rds-intro-datasets">
     <div class="eyebrow-label">Included datasets</div>
     <semantic-query
-      query='SELECT ?name ?publisher ?title ?description WHERE {
+      query='SELECT ?name ?publisher ?publisherUrl ?title ?description WHERE {
         GRAPH <http://rds.swissartresearch.net/graph/datasetMetadata> {
           ?dataset
             dct:title ?name ;
             crm:P67i_is_referred_to_by ?titleNode .
 
           OPTIONAL {
-            ?dataset dct:publisher/foaf:name ?publisher .
+            ?dataset dct:publisher ?publisherUrl .
+            ?publisherUrl foaf:name ?publisher .
           }
 
           ?titleNode
@@ -64,7 +65,18 @@
               <span class="rds-badge">{{name.value}}</span>
               <div class="rds-intro-dataset-content">
                 <div class="eyebrow-label">
-                  {{#if publisher.value}}{{publisher.value}}{{/if}}
+                  {{#if publisher.value}}
+                    <a
+                      class="rds-intro-dataset-publisher"
+                      href="{{publisherUrl.value}}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="{{publisher.value}}"
+                    >
+                      <span>{{publisher.value}}</span>
+                      <span class="rds-intro-dataset-publisher-arrow" aria-hidden="true"></span>
+                    </a>
+                  {{/if}}
                 </div>
                 <span class="rds-intro-dataset-name">
                   {{title.value}}

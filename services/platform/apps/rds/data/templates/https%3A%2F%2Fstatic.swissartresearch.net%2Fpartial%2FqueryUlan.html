@@ -1,0 +1,76 @@
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX schema: <http://schema.org/>
+PREFIX xl: <http://www.w3.org/2008/05/skos-xl#>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" | ") AS ?value) ?order WHERE {
+  GRAPH <http://vocab.getty.edu/ulan/graph> {
+    <[[subject]]> a ?ulanType .
+    VALUES ?ulanType {
+      gvp:PersonConcept
+      gvp:UnknownPersonConcept
+    }
+  }
+
+  {
+    GRAPH <http://vocab.getty.edu/ulan/graph> {
+      VALUES (?predicate ?field ?order) {
+        (dc:identifier "Getty subject ID" 1)
+        (gvp:parentString "Hierarchy" 6)
+      }
+      <[[subject]]> ?predicate ?rawValue .
+    }
+  }
+  UNION
+  {
+    GRAPH <http://vocab.getty.edu/ulan/graph> {
+      <[[subject]]> foaf:focus/gvp:biographyPreferred/schema:description ?rawValue .
+    }
+    BIND("Description" AS ?field)
+    BIND(2 AS ?order)
+  }
+  UNION
+  {
+    GRAPH <http://vocab.getty.edu/ulan/graph> {
+      <[[subject]]> gvp:agentTypePreferred ?linkedValue .
+    }
+    GRAPH <http://vocab.getty.edu/aat/graph> {
+      ?linkedValue gvp:prefLabelGVP/xl:literalForm ?rawValue .
+      FILTER(LANGMATCHES(LANG(?rawValue), "en"))
+    }
+    BIND("Agent type" AS ?field)
+    BIND(3 AS ?order)
+  }
+  UNION
+  {
+    GRAPH <http://vocab.getty.edu/ulan/graph> {
+      <[[subject]]> foaf:focus/gvp:nationalityPreferred ?linkedValue .
+    }
+    GRAPH <http://vocab.getty.edu/aat/graph> {
+      ?linkedValue gvp:prefLabelGVP/xl:literalForm ?rawValue .
+      FILTER(LANGMATCHES(LANG(?rawValue), "en"))
+    }
+    BIND("Nationality / culture" AS ?field)
+    BIND(4 AS ?order)
+  }
+  UNION
+  {
+    GRAPH <http://vocab.getty.edu/ulan/graph> {
+      <[[subject]]> xl:altLabel/xl:literalForm ?rawValue .
+    }
+    BIND("Alternate names" AS ?field)
+    BIND(5 AS ?order)
+  }
+
+  BIND(LANG(?rawValue) AS ?language)
+  BIND(
+    IF(
+      ?field = "Alternate names" && STRLEN(?language) > 0,
+      CONCAT(STR(?rawValue), " [", ?language, "]"),
+      STR(?rawValue)
+    ) AS ?valueText
+  )
+}
+GROUP BY ?field ?order
+ORDER BY ?order
