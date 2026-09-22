@@ -43,6 +43,7 @@ SELECT DISTINCT
 WHERE {{
     GRAPH <{dataset_graph}> {{
         ?subject a ?type .
+        FILTER(STRSTARTS(STR(?subject), "{dataset_namespace}"))
     }}
     GRAPH <{types_graph}> {{
         {type_constraint_block}
@@ -108,6 +109,7 @@ SELECT (COUNT(DISTINCT ?subject) as ?total)
 WHERE {{
     GRAPH <{dataset_graph}> {{
         ?subject a ?type .
+        FILTER(STRSTARTS(STR(?subject), "{dataset_namespace}"))
     }}
 
     GRAPH <{types_graph}> {{
@@ -161,6 +163,7 @@ def _generate_prefixes(prefixes: Dict[str, str]) -> str:
 def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     prefixes = _generate_prefixes(dataset_config.get("prefixes", {}))
     dataset_graph = dataset_config["graph"]
+    namespace = dataset_config.get("namespace", "")
 
     type_constraint_block = _build_type_constraint_block(dataset_config.get("types", []))
 
@@ -179,6 +182,7 @@ def _prepare_query_parts(dataset_config: Dict[str, Any]) -> Dict[str, str]:
     return {
         "prefixes": prefixes,
         "dataset_graph": dataset_graph,
+        "dataset_namespace": namespace,
         "types_graph": types_graph,
         "labels_graph": labels_graph,
         "type_constraint_block": type_constraint_block,
