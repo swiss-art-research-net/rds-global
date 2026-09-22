@@ -677,7 +677,7 @@ def main() -> int:
     ap.add_argument("--endpoint", required=True, help="Common SPARQL endpoint URL")
     ap.add_argument("--dataset", required=True, help="Dataset key in YAML under datasets: (e.g. aat, gnd)")
 
-    ap.add_argument("--page-size", type=int, default=1000, help="SPARQL LIMIT per page")
+    ap.add_argument("--page-size", type=int, default=10000, help="SPARQL LIMIT per page")
     ap.add_argument("--max-pages", type=int, default=None, help="Stop after N pages (debug/testing)")
     ap.add_argument("--sleep", type=float, default=0.0, help="Sleep between pages (seconds)")
     ap.add_argument("--sparql-timeout", type=int, default=60, help="SPARQL HTTP timeout seconds")
