@@ -43,7 +43,7 @@ SELECT DISTINCT
 WHERE {{
     GRAPH <{dataset_graph}> {{
         ?subject a ?type .
-        FILTER(STRSTARTS(STR(?subject), "{dataset_namespace}"))
+        FILTER(?subject >= <{dataset_namespace}> && ?subject < <{dataset_namespace}\uFFFF>)
     }}
     GRAPH <{types_graph}> {{
         {type_constraint_block}
