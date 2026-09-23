@@ -15,6 +15,7 @@ START_ARGS="
   --access-token ${QLEVER_ACCESS_TOKEN}
   --memory-for-queries 10G
   --cache-max-size 6G
+  --timeout 2m
 "
 
 is_index_ready() {
