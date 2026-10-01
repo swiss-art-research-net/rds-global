@@ -112,3 +112,11 @@ WHERE {
 }
 SPARQL
 ```
+
+## Errors when processing sameas statements
+
+Wikidata SameAs statements can contain extra spaces within LOC URIs. To fix them:
+
+```bash
+sed -i -E ':a; s|(<http://id\.loc\.gov/authorities/[^>]*)\s+([^>]*>)|\1\2|; ta' data/sameAsStatements/sources/wikidataSameAs.ttl
+```
