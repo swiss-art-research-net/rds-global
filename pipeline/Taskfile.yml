@@ -136,6 +136,8 @@ tasks:
     cmds:
       - task: fetch-all-sameas-statements
       - mkdir -p {{.DATA_DIRECTORY}}
+      # Clean up extra spaces in LOC URIs within Wikidata SameAs statements
+      - sed -i -E ':a; s|(<http://id\.loc\.gov/authorities/[^>]*)\s+([^>]*>)|\1\2|; ta' /data/sameAsStatements/sources/wikidataSameAs.ttl
       - task: process-sameas-statements
       - task: _prepareForIndexing
         vars:
