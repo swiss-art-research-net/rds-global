@@ -67,7 +67,8 @@ curl -X POST 'http://127.0.0.1:9200/rds-entities/_update/http%3A%2F%2Fwww.wikida
   -d '{
     "doc": {
       "prefLabels": ["Bunk Johnson"],
-      "labels": ["Bunk Johnson"]
+      "labels": ["Bunk Johnson"],
+      "description": "American musician (1879-1949)"
     }
   }'
   ```
