@@ -876,6 +876,17 @@ rds-copy-value .rds-copy-value-text {
   white-space: normal;
   word-break: break-all;
 }
+rds-copy-value .rds-copy-value-tail {
+  display: inline-block;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+rds-copy-value .rds-copy-value-tail .rds-copy-value-text {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
 rds-copy-value .rds-copy-value-actions {
   position: relative;
   top: -1px;

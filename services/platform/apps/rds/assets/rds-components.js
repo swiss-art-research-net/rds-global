@@ -531,7 +531,15 @@ class RdsCopyValue extends HTMLElement {
 
     const valueText = document.createElement('span');
     valueText.className = 'rds-copy-value-text';
-    valueText.textContent = this.textContent.trim() || this._value;
+    const displayValue = Array.from(this.textContent.trim() || this._value);
+    valueText.textContent = displayValue.slice(0, -1).join('');
+
+    const valueEnding = document.createElement('span');
+    valueEnding.className = 'rds-copy-value-text';
+    valueEnding.textContent = displayValue.slice(-1).join('');
+
+    const valueTail = document.createElement('span');
+    valueTail.className = 'rds-copy-value-tail';
 
     const copyIcon = document.createElement('img');
     copyIcon.className = 'rds-copy-value-copy-icon';
@@ -566,7 +574,8 @@ class RdsCopyValue extends HTMLElement {
     }
     actions.appendChild(this._copyIconButton);
 
-    this.replaceChildren(valueText, actions);
+    valueTail.append(valueEnding, actions);
+    this.replaceChildren(valueText, valueTail);
 
     this._copyIconButton.addEventListener('click', event => {
       event.stopPropagation();
