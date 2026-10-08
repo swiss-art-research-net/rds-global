@@ -177,3 +177,18 @@ html.rds-search-restoring .rds-intro {
   font-size: @font-size-body-large;
   line-height: 1.4;
 }
+
+@media (max-width: 767px) {
+  .rds-intro-grid,
+  .rds-dataset-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rds-intro-examples {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
+  .rds-intro-dataset:nth-last-child(2):nth-child(odd) {
+    border-bottom: 1px dotted @col-black;
+  }
+}

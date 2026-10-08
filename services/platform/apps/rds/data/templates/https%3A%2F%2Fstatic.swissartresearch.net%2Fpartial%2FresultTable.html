@@ -70,8 +70,8 @@
           </rds-copy-popover>
         {{/each}}
       </div>
-      <div class="group-row-type">{{rows.0.typeClass.value}}</div>
-      <div class="group-row-description">{{rows.0.description.value}}</div>
+      <div class="group-row-type"><div class="group-row-field-heading">Type</div>{{rows.0.typeClass.value}}</div>
+      <div class="group-row-description"><div class="group-row-field-heading">Description</div>{{rows.0.description.value}}</div>
       <button type="button" class="rs-row-toggle group-row-toggle{{#if isExpanded}} is-expanded{{/if}}" aria-label="Toggle grouped records">
         <span class="group-row-toggle-count">{{memberCount}}</span>
         <img class="group-row-toggle-chevron" src="/assets/no-auth/chevron.svg" alt="" />

@@ -134,6 +134,9 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+.page-resulttable .group-row-field-heading {
+  display: none;
+}
 .page-resulttable .group-row-score {
   font-size: 28px;
   line-height: 1;
@@ -301,4 +304,69 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-height: 1.2;
+}
+@media (max-width: 767px) {
+  .page-resulttable .semantic-data-table thead {
+    display: none;
+  }
+  .page-resulttable .group-row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: 'label score' 'uri uri' 'datasets datasets' 'type type' 'description description' 'toggle toggle';
+    padding: var(--result-table-row-padding-y) 10px;
+    gap: 12px;
+    min-height: 0;
+  }
+  .page-resulttable .group-row > * {
+    padding: 0;
+    overflow-wrap: anywhere;
+  }
+  .page-resulttable .group-row-label {
+    display: contents;
+  }
+  .page-resulttable .group-row-label-text {
+    grid-area: label;
+  }
+  .page-resulttable .group-row-reference-uri {
+    grid-area: uri;
+  }
+  .page-resulttable .group-row-score {
+    grid-area: score;
+  }
+  .page-resulttable .group-row-datasets {
+    grid-area: datasets;
+  }
+  .page-resulttable .group-row-type {
+    grid-area: type;
+  }
+  .page-resulttable .group-row-description {
+    grid-area: description;
+  }
+  .page-resulttable .group-row-field-heading {
+    display: block;
+    margin: 0;
+    color: #5F5F5F;
+    font-family: 'Geist Mono', 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .page-resulttable .group-row-toggle {
+    grid-area: toggle;
+    align-self: end;
+  }
+  .page-resulttable .group-members,
+  .page-resulttable .group-members-list,
+  .page-resulttable .single-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .page-resulttable .single-row {
+    gap: 16px;
+    min-height: 0;
+  }
+  .page-resulttable .related-records-list {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+  .page-resulttable .related-record-uri {
+    grid-column: 2;
+  }
 }

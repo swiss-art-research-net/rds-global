@@ -58,6 +58,37 @@
   color: #000000;
   text-decoration: underline;
 }
+@media (max-width: 767px) {
+  .nav-bar .rs-header {
+    gap: 8px;
+  }
+  .nav-bar .navbar-header,
+  .nav-bar .navbar-collapse,
+  .nav-bar .rds-nav,
+  .nav-bar .rds-nav > li,
+  .nav-bar .rds-nav > li > a {
+    height: auto !important;
+  }
+  .nav-bar .rs-header-logo {
+    display: flex;
+  }
+  .nav-bar .collapse.navbar-collapse {
+    display: flex !important;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+  .nav-bar .rds-nav {
+    gap: 8px;
+  }
+  .nav-bar .rds-nav > li {
+    margin: 0;
+  }
+  .nav-bar .rds-nav > li > a {
+    padding: 0;
+    font-size: 16px;
+  }
+}
 .rds-footer {
   display: flex;
   align-items: center;
@@ -533,6 +564,18 @@ html.rds-search-restoring .rds-intro {
   font-size: 18px;
   line-height: 1.4;
 }
+@media (max-width: 767px) {
+  .rds-intro-grid,
+  .rds-dataset-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rds-intro-examples {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+  .rds-intro-dataset:nth-last-child(2):nth-child(odd) {
+    border-bottom: 1px dotted #000000;
+  }
+}
 body {
   font-family: 'Familjen Grotesk', Arial, sans-serif;
   font-size: 16px;
@@ -556,6 +599,11 @@ body strong {
 }
 .page-holder {
   min-height: 0;
+}
+.page-holder-container:has(.page-resulttable),
+.page-holder > div:has(.page-resulttable) {
+  min-width: 0;
+  width: 100%;
 }
 #template-content {
   height: auto;
@@ -591,10 +639,30 @@ ol.page-breadcrumb {
   gap: 4rem;
   margin-bottom: 2.5rem;
 }
+.filter-search-bar > .keyword-search,
+.filter-search-bar > .filter-container {
+  min-width: 0;
+}
 .filter-container {
   display: flex;
   gap: 2rem;
   flex: 1;
+}
+.filter-container > div {
+  min-width: 0;
+  flex: 1;
+}
+@media (max-width: 1199px) {
+  .filter-search-bar {
+    flex-direction: column;
+    gap: 2rem;
+  }
+}
+@media (max-width: 767px) {
+  .filter-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 }
 .keyword-search {
   flex: 1;
@@ -1087,4 +1155,58 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
 }
 .rds-text-truncate-toggle:hover {
   text-decoration: underline;
+}
+@media (max-width: 767px) {
+  .main-panel {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 20px;
+    gap: 20px;
+  }
+  .facets-col {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .results-col {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .facets-col .semantic-facet-holder {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .facets-col .facet {
+    border-right: 0;
+    padding-right: 0;
+  }
+  .facets-col .facet-relations {
+    width: 100%;
+  }
+  .facets-col .show-facet-button {
+    order: -1;
+    align-self: flex-start;
+    flex-direction: row;
+    width: auto;
+    height: auto;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 14px;
+    left: 0;
+    gap: 12px;
+  }
+  .facets-col .show-facet-button::before {
+    margin: 0;
+    transform: rotate(45deg);
+  }
+  .facets-col .show-facet-button::after {
+    writing-mode: horizontal-tb;
+    transform: none;
+    padding: 0;
+  }
+  .facets-col .show-facet-button.show-facet-button__hide::before {
+    transform: rotate(225deg);
+    margin: 0;
+  }
 }
