@@ -390,6 +390,18 @@
 
 @media (max-width: 767px) {
   .page-resulttable {
+    .semantic-data-table-widget-holder .pagination {
+      > li:not(:first-child):not(:last-child):not(.active) {
+        display: none;
+      }
+
+      > li > a {
+        min-width: 44px;
+        height: 44px;
+        padding: 0 10px;
+      }
+    }
+
     .semantic-data-table thead {
       display: none;
     }
