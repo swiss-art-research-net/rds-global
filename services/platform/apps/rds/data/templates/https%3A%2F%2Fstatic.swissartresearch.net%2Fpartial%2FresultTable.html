@@ -88,6 +88,7 @@
       <div class="group-members-list">
         {{#each rows}}
           <div class="single-row">
+            <div class="single-row-record-heading">
             <div class="single-row-dataset">
               <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
                 <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
@@ -95,7 +96,7 @@
                 </button>
               </rds-copy-popover>
             </div>
-            <div class="single-row-field">
+            <div class="single-row-field single-row-label">
               <div class="single-row-heading">Label</div>
               <mp-event-trigger
                 type="Component.TemplateUpdate"
@@ -117,7 +118,8 @@
                 </rds-record-select>
               </mp-event-trigger>
             </div>
-            <div class="single-row-field">
+            </div>
+            <div class="single-row-field single-row-uri">
               <div class="single-row-heading">URI</div>
               <div>
                 <rds-copy-value value="{{subject.value}}">
@@ -125,7 +127,7 @@
                 </rds-copy-value>
               </div>
             </div>
-            <div class="single-row-field">
+            <div class="single-row-field single-row-id">
               <div class="single-row-heading">ID</div>
               <div>
                 <rds-copy-value value="{{recordId.value}}" copy-only copy-label="ID">
@@ -133,7 +135,7 @@
                 </rds-copy-value>
               </div>
             </div>
-            <div class="single-row-field">
+            <div class="single-row-field single-row-types">
               <div class="single-row-heading">Source Type(s)</div>
                 {{#each (arraySplit types.value)}}
                   <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>

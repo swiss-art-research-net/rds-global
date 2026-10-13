@@ -85,7 +85,7 @@
 }
 .page-resulttable .group-row > * {
   min-width: 0;
-  padding: var(--result-table-row-padding-y) 10px;
+  padding: var(--result-table-row-padding-y) 14px;
   box-sizing: border-box;
 }
 .page-resulttable .semantic-data-table__group-row-template-cell--clickable {
@@ -183,6 +183,9 @@
   min-height: 12rem;
   cursor: pointer;
   transition: transform 160ms ease-out, background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+.page-resulttable .single-row-record-heading {
+  display: contents;
 }
 .page-resulttable .single-row + .single-row {
   border-top: 1px solid #000000;
@@ -312,7 +315,7 @@
   .page-resulttable .group-row {
     grid-template-columns: minmax(0, 1fr) max-content;
     grid-template-areas: 'label score' 'uri uri' 'datasets datasets' 'type type' 'description description' 'toggle toggle';
-    padding: var(--result-table-row-padding-y) 10px;
+    padding: var(--result-table-row-padding-y) 14px;
     gap: 12px;
     min-height: 0;
   }
@@ -360,11 +363,63 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .page-resulttable .single-row {
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'heading heading' 'uri uri' 'id types' 'description description' 'related related';
+    gap: 12px;
+    padding: var(--result-table-row-padding-y) 14px;
     min-height: 0;
+  }
+  .page-resulttable .single-row-heading {
+    margin: 0;
+  }
+  .page-resulttable .single-row-dataset {
+    grid-area: auto;
+    min-width: 0;
+  }
+  .page-resulttable .single-row-record-heading {
+    grid-area: heading;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+  }
+  .page-resulttable .single-row-label {
+    grid-area: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .page-resulttable .single-row-label > .single-row-heading,
+  .page-resulttable .group-members-summary {
+    display: none;
+  }
+  .page-resulttable .single-row-uri {
+    grid-area: uri;
+  }
+  .page-resulttable .single-row-id {
+    grid-area: id;
+  }
+  .page-resulttable .single-row-types {
+    grid-area: types;
+  }
+  .page-resulttable .single-row-description {
+    grid-area: description;
+  }
+  .page-resulttable .single-row-related {
+    grid-area: related;
+  }
+  .page-resulttable .single-row-related-heading {
+    margin-bottom: 8px;
   }
   .page-resulttable .related-records-list {
     grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 0px;
+    align-items: center;
+  }
+  .page-resulttable .related-record + .related-record > rds-copy-popover,
+  .page-resulttable .related-record + .related-record > .related-record-label {
+    margin-top: 10px;
   }
   .page-resulttable .related-record-uri {
     grid-column: 2;

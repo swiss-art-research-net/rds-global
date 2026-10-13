@@ -114,7 +114,7 @@
 
   .group-row > * {
     min-width: 0;
-    padding: var(--result-table-row-padding-y) 10px;
+    padding: var(--result-table-row-padding-y) 14px;
     box-sizing: border-box;
   }
 
@@ -237,6 +237,10 @@
       transform 160ms ease-out,
       background-color 160ms ease-out,
       box-shadow 160ms ease-out;
+  }
+
+  .single-row-record-heading {
+    display: contents;
   }
 
   .single-row + .single-row {
@@ -399,7 +403,7 @@
         'type type'
         'description description'
         'toggle toggle';
-      padding: var(--result-table-row-padding-y) 10px;
+      padding: var(--result-table-row-padding-y) 14px;
       gap: 12px;
       min-height: 0;
     }
@@ -439,12 +443,66 @@
     }
 
     .single-row {
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        'heading heading'
+        'uri uri'
+        'id types'
+        'description description'
+        'related related';
+      gap: 12px;
+      padding: var(--result-table-row-padding-y) 14px;
       min-height: 0;
+    }
+
+    .single-row-heading {
+      margin: 0;
+    }
+
+    .single-row-dataset {
+      grid-area: auto;
+      min-width: 0;
+    }
+
+    .single-row-record-heading {
+      grid-area: heading;
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .single-row-label {
+      grid-area: auto;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .single-row-label > .single-row-heading,
+    .group-members-summary {
+      display: none;
+    }
+    .single-row-uri { grid-area: uri; }
+    .single-row-id { grid-area: id; }
+    .single-row-types { grid-area: types; }
+    .single-row-description { grid-area: description; }
+    .single-row-related { grid-area: related; }
+
+    .single-row-related-heading {
+      margin-bottom: 8px;
     }
 
     .related-records-list {
       grid-template-columns: max-content minmax(0, 1fr);
+      column-gap: 12px;
+      row-gap: 0px;
+      align-items: center;
+    }
+
+    .related-record + .related-record > rds-copy-popover,
+    .related-record + .related-record > .related-record-label {
+      margin-top: 10px;
     }
 
     .related-record-uri {
