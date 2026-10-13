@@ -1,0 +1,28 @@
+@prefix sp: <http://spinrdf.org/sp#> .
+@prefix spin: <http://spinrdf.org/spin#> .
+@prefix spl: <http://spinrdf.org/spl#> .
+@prefix ephedra: <http://www.researchspace.org/resource/system/ephedra#> .
+@prefix sail: <http://www.openrdf.org/config/sail#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix wd: <http://www.researchspace.org/resource/system/service/wikidata#> .
+
+wd:QueryService a ephedra:Service ;
+  sail:sailType "researchspace:RESTSail" ;
+  rdfs:label "Live Wikidata SPARQL fields" ;
+  ephedra:hasSPARQLPattern (
+    [ sp:subject wd:_rows ; sp:predicate wd:query ; sp:object wd:_query ]
+    [ sp:subject wd:_rows ; sp:predicate wd:field ; sp:object wd:_field ]
+    [ sp:subject wd:_rows ; sp:predicate wd:value ; sp:object wd:_value ]
+    [ sp:subject wd:_rows ; sp:predicate wd:image ; sp:object wd:_image ]
+    [ sp:subject wd:_rows ; sp:predicate wd:commonsPage ; sp:object wd:_commonsPage ]
+    [ sp:subject wd:_rows ; sp:predicate wd:order ; sp:object wd:_order ]
+
+  ) ;
+  spin:constraint [ a spl:Argument ; spl:predicate wd:_query ; spl:valueType xsd:string ] ;
+  spin:column [ a spin:Column ; spl:predicate wd:_rows ; spl:valueType rdfs:Resource ; ephedra:jsonPath "$.results.bindings[*]" ] ;
+  spin:column [ a spin:Column ; spl:predicate wd:_field ; spl:valueType xsd:string ; ephedra:jsonPath "$.field.value" ] ;
+  spin:column [ a spin:Column ; spl:predicate wd:_value ; spl:valueType xsd:string ; ephedra:jsonPath "$.value.value" ] ;
+  spin:column [ a spin:Column ; spl:predicate wd:_image ; spl:valueType xsd:string ; ephedra:jsonPath "$.image.value" ] ;
+  spin:column [ a spin:Column ; spl:predicate wd:_commonsPage ; spl:valueType xsd:string ; ephedra:jsonPath "$.commonsPage.value" ] ;
+  spin:column [ a spin:Column ; spl:predicate wd:_order ; spl:valueType xsd:integer ; ephedra:jsonPath "$.order.value" ] .

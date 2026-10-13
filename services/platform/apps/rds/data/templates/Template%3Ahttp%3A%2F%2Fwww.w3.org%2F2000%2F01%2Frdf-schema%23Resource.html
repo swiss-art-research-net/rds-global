@@ -181,6 +181,40 @@
 [[#*inline "tab-overview"]]
   [[> resource-general]]
   {{#switch dataset.value}}
+    {{#case "wikidata" break=true}}
+      <div class="detail-panel-section resource-wikidata-live">
+        <div class="detail-section-title">Source data · Live Wikidata</div>
+        <semantic-context repository="wikidata">
+          <semantic-query
+            query='[[> partial:queryWikidata subject=this]]'
+            template="{{> wikidata-fields}}"
+            no-result-template="<p>No additional Wikidata fields available.</p>"
+          >
+            <template id="wikidata-fields">
+              {{#each bindings}}
+                <div class="detail-row">
+                  <span class="detail-property">{{field.value}}</span>
+                  {{#if image}}
+                    <figure class="detail-value resource-wikidata-image">
+                      <a href="{{commonsPage.value}}" target="_blank" rel="noopener noreferrer">
+                        <img src="{{image.value}}?width=400" alt="Image from Wikidata" loading="lazy">
+                      </a>
+                      <figcaption>
+                        <a href="{{commonsPage.value}}" target="_blank" rel="noopener noreferrer">View on Wikimedia Commons</a>
+                      </figcaption>
+                    </figure>
+                  {{else}}
+                    <rds-text-truncate class="detail-value" lines="3" show-more-label="Show more" show-less-label="Show less">
+                      {{value.value}}
+                    </rds-text-truncate>
+                  {{/if}}
+                </div>
+              {{/each}}
+            </template>
+          </semantic-query>
+        </semantic-context>
+      </div>
+    {{/case}}
     {{#case "gnd" break=true}}
       <semantic-query
         query='[[> partial:queryGnd subject=this]]'

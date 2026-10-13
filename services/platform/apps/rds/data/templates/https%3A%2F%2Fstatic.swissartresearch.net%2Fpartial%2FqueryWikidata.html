@@ -1,0 +1,52 @@
+PREFIX live: <http://www.researchspace.org/resource/system/service/wikidata#>
+SELECT ?field ?value ?image ?commonsPage ?order WHERE {
+  ?row live:query """PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?field (GROUP_CONCAT(DISTINCT ?valueText; separator=" · ") AS ?value) ?image ?commonsPage ?order WHERE {
+  {
+    VALUES (?predicate ?field ?order) {
+      (wdt:P569 "Birth date" 1)
+      (wdt:P570 "Death date" 2)
+      (wdt:P19 "Birth place" 3)
+      (wdt:P20 "Death place" 4)
+      (wdt:P106 "Occupation" 5)
+      (wdt:P27 "Citizenship" 6)
+    }
+    <[[subject]]> ?predicate ?rawValue .
+    OPTIONAL {
+      ?rawValue rdfs:label ?linkedLabel .
+      FILTER(LANG(?linkedLabel) = "en")
+    }
+    BIND(STR(COALESCE(?linkedLabel, ?rawValue)) AS ?valueText)
+  }
+  UNION
+  {
+    <[[subject]]> skos:altLabel ?alias .
+    BIND(CONCAT(STR(?alias), " [", LANG(?alias), "]") AS ?valueText)
+    BIND("Alternate names" AS ?field)
+    BIND(7 AS ?order)
+  }
+  UNION
+  {
+    <[[subject]]> p:P18/ps:P18 ?image .
+    BIND(IRI(CONCAT("https://commons.wikimedia.org/wiki/File:", STRAFTER(STR(?image), "Special:FilePath/"))) AS ?commonsPage)
+    BIND("Image" AS ?field)
+    BIND("" AS ?valueText)
+    BIND(8 AS ?order)
+  }
+}
+GROUP BY ?field ?image ?commonsPage ?order
+ORDER BY ?order ?image
+""" ;
+    live:field ?field ;
+    live:value ?value ;
+    live:image ?image ;
+    live:commonsPage ?commonsPage ;
+    live:order ?order .
+}
+ORDER BY ?order ?image

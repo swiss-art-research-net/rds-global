@@ -1,0 +1,22 @@
+@prefix rep: <http://www.openrdf.org/config/repository#> .
+@prefix sr: <http://www.openrdf.org/config/repository/sail#> .
+@prefix sail: <http://www.openrdf.org/config/sail#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ephedra: <http://www.researchspace.org/resource/system/ephedra#> .
+@prefix wd: <http://www.researchspace.org/resource/system/service/wikidata#> .
+
+[] a rep:Repository ;
+  rep:repositoryID "wikidata" ;
+  rdfs:label "Live Wikidata REST wrapper" ;
+  rep:repositoryImpl [
+    rep:repositoryType "openrdf:SailRepository" ;
+    sr:sailImpl [
+      sail:sailType "researchspace:RESTSail" ;
+      ephedra:serviceURL "https://query.wikidata.org/sparql" ;
+      ephedra:httpMethod "POST" ;
+      ephedra:mediaType "application/x-www-form-urlencoded" ;
+      ephedra:userAgent "RDSGlobal/0.1 (https://github.com/swiss-art-research-net/rds-global)" ;
+      ephedra:httpHeader [ ephedra:name "Accept" ; ephedra:value "application/sparql-results+json" ] ;
+      ephedra:implementsService wd:QueryService
+    ]
+  ] .

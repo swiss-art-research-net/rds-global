@@ -347,6 +347,21 @@
   min-width: 0;
   border-right: 1px solid #000000;
 }
+.resource-wikidata-live .system-spinner {
+  height: 48px;
+}
+.resource-wikidata-image {
+  margin: 0;
+}
+.resource-wikidata-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+.resource-wikidata-image figcaption {
+  margin-top: 8px;
+}
 .resource-general-section .detail-row:first-child {
   padding-top: 0;
 }
