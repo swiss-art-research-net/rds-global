@@ -264,12 +264,12 @@
     }
   }
 
-  .page-resulttable .detail-related-list,
-  .page-resulttable .detail-related-record {
+  :is(.page-resulttable, .rds-resource-page) .detail-related-list,
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .page-resulttable .detail-related-record {
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record {
     row-gap: 8px;
 
     > .rds-badge,

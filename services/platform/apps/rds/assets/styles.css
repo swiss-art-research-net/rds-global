@@ -326,19 +326,19 @@
   .page-resulttable .detail-panel-header > :last-child {
     flex-shrink: 0;
   }
-  .page-resulttable .detail-related-list,
-  .page-resulttable .detail-related-record {
+  :is(.page-resulttable, .rds-resource-page) .detail-related-list,
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record {
     grid-template-columns: minmax(0, 1fr);
   }
-  .page-resulttable .detail-related-record {
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record {
     row-gap: 8px;
   }
-  .page-resulttable .detail-related-record > .rds-badge,
-  .page-resulttable .detail-related-record > rds-copy-popover {
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record > .rds-badge,
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record > rds-copy-popover {
     max-width: 100%;
     min-width: 0;
   }
-  .page-resulttable .detail-related-record .rds-badge {
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record .rds-badge {
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;
@@ -478,6 +478,251 @@
 }
 .rds-resource-page .statements .filter-container {
   gap: 0;
+}
+@media (max-width: 767px) {
+  .rds-resource-header {
+    padding-bottom: 24px;
+  }
+  .rds-resource-title-row {
+    margin-bottom: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .rds-resource-title-row h1 {
+    order: 1;
+    width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .rds-resource-title-row h1 span {
+    margin-top: 0;
+  }
+  .rds-resource-meta {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .rds-resource-meta:last-child {
+    margin-bottom: 0;
+  }
+  .rds-resource-page {
+    min-width: 0;
+    padding-top: 24px;
+  }
+  .rds-resource-page .resource-layout,
+  .rds-resource-page .resource-layout:has(> .resource-panel .resource-panel-section) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rds-resource-page .resource-main {
+    border-right: 0;
+  }
+  .rds-resource-page .detail-panel-section {
+    padding: 20px 0;
+  }
+  .rds-resource-page .resource-panel {
+    border-top: 1px solid #000000;
+  }
+  .rds-resource-page .detail-row,
+  .rds-resource-page .detail-property,
+  .rds-resource-page .detail-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .rds-resource-page .detail-property,
+  .rds-resource-page .detail-value {
+    word-break: normal;
+  }
+  .rds-resource-page .detail-property {
+    flex-basis: 33.333333%;
+  }
+  .rds-resource-page #tabs > .nav-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    gap: 0 20px;
+    padding-bottom: 4px;
+  }
+  .rds-resource-page #tabs > .nav-tabs::before,
+  .rds-resource-page #tabs > .nav-tabs::after {
+    display: none;
+  }
+  .rds-resource-page #tabs > .nav-tabs > li {
+    flex: 0 0 auto;
+    float: none;
+    margin: 0;
+    padding: 0;
+  }
+  .rds-resource-page #tabs > .nav-tabs > li > a {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    margin: 0;
+    padding: 4px 0;
+    font-size: 16px;
+    white-space: nowrap;
+  }
+  .rds-resource-page .ontodia-dialog {
+    position: fixed;
+    top: calc(var(--nav-height, 63px) + 60px) !important;
+    left: 20px !important;
+    width: calc(100vw - 40px) !important;
+    height: min(50vh, 400px) !important;
+    height: min(50dvh, 400px) !important;
+    z-index: 20;
+  }
+  .rds-resource-page .ontodia-dialog__close-button {
+    top: -44px;
+    right: 0;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+  }
+  .rds-resource-page .ontodia-dialog input {
+    font-size: 16px;
+  }
+  .rds-resource-page .ontodia-navigator {
+    max-width: calc(100vw - 80px);
+  }
+  .rds-resource-page #tabs .tab-ontodia {
+    height: 70vh;
+    height: 70dvh;
+    min-height: 400px;
+  }
+  .rds-resource-page .statements {
+    min-width: 0;
+    padding: 20px 0;
+  }
+  .rds-resource-page .page__body {
+    padding: 20px 0;
+    overflow-wrap: anywhere;
+  }
+  .rds-resource-page .page__body code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .page-holder-container:has(.rds-resource-page),
+  .page-holder > div:has(.rds-resource-page) {
+    min-width: 0;
+    width: 100%;
+  }
+  .rds-resource-page #tabs,
+  .rds-resource-page #tabs > .tab-content,
+  .rds-resource-page #tabs > .tab-content > .tab-pane {
+    min-width: 0;
+    width: 100%;
+  }
+  .rds-resource-page .statements table,
+  .rds-resource-page .statements tbody,
+  .rds-resource-page .statements tfoot {
+    display: block;
+    width: 100%;
+  }
+  .rds-resource-page .statements thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .rds-resource-page .statements .standard-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border-bottom: 1px dotted #000000;
+  }
+  .rds-resource-page .statements .standard-row > td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .rds-resource-page .statements .standard-row > td::before {
+    display: block;
+    color: #5F5F5F;
+    font-family: 'Geist Mono', 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .rds-resource-page .statements .standard-row > td:nth-child(1)::before {
+    content: 'Property';
+  }
+  .rds-resource-page .statements .standard-row > td:nth-child(2)::before {
+    content: 'Object';
+  }
+  .rds-resource-page .statements .standard-row > td:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+  .rds-resource-page .statements .standard-row > td:nth-child(3)::before {
+    content: 'Named graph';
+  }
+  .rds-resource-page .statements .standard-row:hover {
+    background: transparent;
+  }
+  .rds-resource-page .statements > .semantic-table-holder:nth-of-type(2) td:nth-child(2)::before {
+    content: 'Subject';
+  }
+  .rds-resource-page .statements .griddle-filter,
+  .rds-resource-page .statements .filter-container,
+  .rds-resource-page .statements .filter-container input {
+    width: 100%;
+    min-width: 0;
+  }
+  html:has(.rds-resource-page) .rds-copy-popover {
+    min-width: 0;
+    max-width: calc(100vw - 40px);
+  }
+  .rds-resource-page .statements {
+    margin: 0;
+    font-size: 16px;
+    cursor: auto;
+  }
+  .rds-resource-page .statements .filter-container {
+    flex-direction: row;
+    gap: 0;
+  }
+  .rds-resource-page .statements .filter-container input {
+    height: 44px;
+    font-size: 16px;
+  }
+  .rds-resource-page .statements .filter-container::before {
+    height: 44px;
+  }
+  .rds-resource-page .statements .pagination {
+    display: flex;
+    margin: 12px 0;
+  }
+  .rds-resource-page .statements .pagination > li:not(:first-child):not(:last-child):not(.active) {
+    display: none;
+  }
+  .rds-resource-page .statements .pagination > li > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    border: 1px solid #000000;
+    border-radius: 0;
+    background: transparent;
+    color: #000000;
+  }
+  .rds-resource-page .statements .pagination > .active > a {
+    background: #000000;
+    color: #F9FAFB;
+  }
+  .rds-resource-page .statements .btn-action {
+    white-space: normal;
+    border: 1px solid #000000;
+    border-radius: 0;
+    background: #ECF0F3;
+    color: #000000;
+    min-height: 44px;
+    padding: 10px 12px;
+  }
 }
 .page.page-resulttable {
   padding-top: 0;
@@ -664,6 +909,11 @@ body strong {
 #application {
   height: 100vh;
   overflow-y: auto;
+}
+@media (max-width: 767px) {
+  #application {
+    height: 100dvh;
+  }
 }
 .page-container {
   height: auto;
