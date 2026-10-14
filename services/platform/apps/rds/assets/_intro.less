@@ -188,6 +188,17 @@ html.rds-search-restoring .rds-intro {
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   }
 
+  .rds-intro-dataset {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .rds-intro-dataset-name,
+  .rds-intro-dataset-description,
+  .rds-intro-dataset-publisher {
+    overflow-wrap: anywhere;
+  }
+
   .rds-intro-dataset:nth-last-child(2):nth-child(odd) {
     border-bottom: 1px dotted @col-black;
   }

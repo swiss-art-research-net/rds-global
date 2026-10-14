@@ -12,7 +12,6 @@ body {
   font-family: @font-body;
   font-size: @font-size-body;
   background: @col-bg;
-  overscroll-behavior: none;
 
   strong {
     font-weight: 500;
@@ -22,7 +21,6 @@ body {
 .rs-application {
   max-width: 100vw;
   overflow-x: hidden;
-  overscroll-behavior: none;
 }
 
 #application {
@@ -696,6 +694,10 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
 }
 
 @media (max-width: 767px) {
+  .rds-text-truncate-toggle {
+    text-decoration: underline;
+  }
+
   .main-panel {
     grid-template-columns: minmax(0, 1fr);
     margin-top: 20px;
@@ -756,5 +758,13 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
       transform: rotate(225deg);
       margin: 0;
     }
+  }
+}
+
+@media (min-width: 768px) {
+  body,
+  .rs-application,
+  .detail-panel-content {
+    overscroll-behavior: none;
   }
 }
