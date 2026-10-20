@@ -18,6 +18,7 @@ datasets:
     namespace: http://id.loc.gov/authorities/names/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
+      xsd: http://www.w3.org/2001/XMLSchema#
     types:
       Concept:
         - skos:Concept
