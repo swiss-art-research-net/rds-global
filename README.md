@@ -94,6 +94,7 @@ task: Available tasks for this project:
 * generate-frontend-configuration:                         Generate configuration for the frontend
 * generate-labels:                                         Generate labels for URIs
 * generate-sameas-statements:                              Generates SameAs statements between entities
+* generate-type-mapping-ontology:                          Generate RDF subclass mappings from the datasets configuration
 * generate-type-mappings:                                  Generate type mappings for RDS entities
 * index-data:                                              Index all data in QLever
 * ingest-data-from-folder:                                 Ingest data to QLever from a specified folder. The folder should be passed via CLI argument

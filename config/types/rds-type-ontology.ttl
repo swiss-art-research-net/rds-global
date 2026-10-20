@@ -1,0 +1,66 @@
+@prefix aat: <http://vocab.getty.edu/aat/> .
+@prefix crm: <http://www.cidoc-crm.org/cidoc-crm/> .
+@prefix frbroo: <http://iflastandards.info/ns/fr/frbr/frbroo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rds: <http://schema.swissartresearch.net/ontology/rds#> .
+
+# The stable RDS type ontology. Dataset-specific subclasses are generated in
+# type-mapping.ttl from config/datasets.yml.
+
+rds:Entity a rdfs:Class ;
+    rdfs:label "Entity"@en ;
+    rdfs:comment "The common superclass for entity types expressed in RDS."@en .
+
+rds:Person a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Person"@en .
+
+rds:Group a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Group"@en .
+
+rds:Artwork a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Artwork"@en .
+
+rds:BibliographicItem a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Bibliographic Item"@en .
+
+rds:Event a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Event"@en .
+
+rds:Place a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Place"@en .
+
+rds:Concept a rdfs:Class ;
+    rdfs:subClassOf rds:Entity ;
+    rdfs:label "Concept"@en .
+
+# Legacy name retained for existing consumers of the former type mapping.
+rds:Type a rdfs:Class ;
+    rdfs:subClassOf rds:Concept ;
+    rdfs:label "Type"@en .
+
+# CIDOC CRM and FRBRoo foundations of the RDS ontology.
+crm:E21_Person rdfs:subClassOf rds:Person .
+crm:E74_Group rdfs:subClassOf rds:Group .
+crm:E5_Event rdfs:subClassOf rds:Event .
+crm:E53_Place rdfs:subClassOf rds:Place .
+crm:E55_Type rdfs:subClassOf rds:Concept .
+frbroo:F24_Publication_Expression rdfs:subClassOf rds:BibliographicItem .
+
+rds:crmArtwork a owl:Class ;
+    rdfs:subClassOf rds:Artwork ;
+    owl:equivalentClass [
+        a owl:Class ;
+        owl:intersectionOf (
+            crm:E22_Man-Made_Object
+            [ a owl:Restriction ;
+              owl:onProperty crm:P2_has_type ;
+              owl:hasValue aat:300133025 ]
+        )
+    ] .
