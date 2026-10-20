@@ -27,7 +27,7 @@ datasets:
         FILTER(isiri(?subject))
       prefLabel: |
         ?subject skos:prefLabel ?value .
-        FILTER(isIRI(?subject) && LANG(?value) = "en")
+        FILTER(isIRI(?subject) && DATATYPE(?value) = xsd:string)
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
         FILTER(isiri(?subject))
