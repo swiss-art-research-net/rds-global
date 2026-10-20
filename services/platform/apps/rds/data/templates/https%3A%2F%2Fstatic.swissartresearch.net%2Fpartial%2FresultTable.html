@@ -102,14 +102,14 @@
                 type="Component.TemplateUpdate"
                 targets='["detail-panel"]'
                 data='{
-                  "subjectUri": "{{subject.value}}", 
-                  "recordId": "{{recordId.value}}",
-                  "prefLabel": "{{prefLabel.value}}", 
-                  "dataset": "{{dataset.value}}", 
-                  "rdsType": "{{typeClass.value}}", 
-                  "matches": [{{#each (arraySplit matches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}], 
-                  "localMatches": [{{#each (arraySplit localMatches.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}],
-                  "sourceTypes": [{{#each (arraySplit types.value)}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]}'
+                  "subjectUri": {{stringify subject.value}},
+                  "recordId": {{stringify recordId.value}},
+                  "prefLabel": {{stringify prefLabel.value}},
+                  "dataset": {{stringify dataset.value}},
+                  "rdsType": {{stringify typeClass.value}},
+                  "matches": [{{#each (arraySplit matches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
+                  "localMatches": [{{#each (arraySplit localMatches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
+                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select
                   class="single-row-link"
