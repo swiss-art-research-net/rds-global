@@ -147,14 +147,18 @@
             </mp-sparql-result-counts>
           </semantic-search-result>
           [[#if (urlParam "dataset")]]
+          <div class="search-meta-group">
             <span class="search-meta-sep">|</span>
             <span class="search-meta-label">Datasets:</span>
-            <rds-filter-selection param="dataset" preserve-param="type"></rds-filter-selection>
+            <rds-filter-selection param="dataset" preserve-param="type" mobile-limit="1"></rds-filter-selection>
+          </div>
           [[/if]]
           [[#if (urlParam "type")]]
+          <div class="search-meta-group">
             <span class="search-meta-sep">|</span>
             <span class="search-meta-label">Types:</span>
-            <rds-filter-selection param="type" preserve-param="dataset"></rds-filter-selection>
+            <rds-filter-selection param="type" preserve-param="dataset" mobile-limit="1"></rds-filter-selection>
+          </div>
           [[/if]]
         </div>
       </div>

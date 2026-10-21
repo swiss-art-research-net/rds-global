@@ -145,9 +145,15 @@ class RdsFilterSelection extends HTMLElement {
       .map(value => value.trim())
       .filter(Boolean);
 
-    this.replaceChildren(
+    const items = document.createElement('rds-item-truncate');
+    items.setAttribute('limit', '3');
+    if (this.hasAttribute('mobile-limit')) {
+      items.setAttribute('mobile-limit', this.getAttribute('mobile-limit'));
+    }
+    items.append(
       ...values.map(value => this._createBadge(value, values, params, paramName, config))
     );
+    this.replaceChildren(items);
   }
 
   _createBadge(value, values, params, paramName, config) {
@@ -246,6 +252,8 @@ class RdsItemTruncate extends HTMLElement {
     if (this._toggleButton) return;
 
     this._limit = Number.parseInt(this.getAttribute('limit'), 10) || 3;
+    this._mobileLimit = Number.parseInt(this.getAttribute('mobile-limit'), 10) || this._limit;
+    this._mobileQuery = window.matchMedia('(max-width: 767px)');
     this._items = Array.from(this.children);
     this._originalDisplay = new Map(
       this._items.map(item => [
@@ -257,7 +265,7 @@ class RdsItemTruncate extends HTMLElement {
       ])
     );
 
-    if (this._items.length <= this._limit) return;
+    if (this._items.length <= Math.min(this._limit, this._mobileLimit)) return;
 
     this._expanded = false;
     this._toggleButton = document.createElement('button');
@@ -273,12 +281,15 @@ class RdsItemTruncate extends HTMLElement {
     });
 
     this.appendChild(this._toggleButton);
+    this._mobileQuery.addEventListener('change', () => this._render());
     this._render();
   }
 
   _render() {
+    const limit = this._mobileQuery.matches ? this._mobileLimit : this._limit;
+    this._toggleButton.hidden = this._items.length <= limit;
     this._items.forEach((item, index) => {
-      const isHidden = !this._expanded && index >= this._limit;
+      const isHidden = !this._expanded && index >= limit;
       item.hidden = isHidden;
       if (isHidden) {
         item.style.display = 'none';
