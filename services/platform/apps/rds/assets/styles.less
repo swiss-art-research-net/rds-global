@@ -251,6 +251,37 @@ rds-filter-selection {
   gap: 6px;
 }
 
+@media (max-width: 767px) {
+  .search-meta {
+    height: auto;
+    padding: 12px 0;
+  }
+
+  .search-meta-left {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: start;
+    gap: 10px 8px;
+    width: 100%;
+
+    > span:first-child {
+      grid-column: 1 / -1;
+      white-space: nowrap;
+    }
+
+    .search-meta-sep {
+      display: none;
+    }
+
+    rds-filter-selection {
+      display: flex;
+      flex-wrap: wrap;
+      min-width: 0;
+      gap: 8px 6px;
+    }
+  }
+}
+
 .rds-badge {
   display: inline-flex;
   align-items: center;
