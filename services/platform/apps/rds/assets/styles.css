@@ -109,6 +109,8 @@
 @media (max-width: 767px) {
   .rds-footer {
     margin-top: 24px;
+    padding: 16px 0;
+    box-sizing: border-box;
   }
 }
 .detail-col {
@@ -939,6 +941,12 @@ body strong {
 #template-content {
   height: auto;
   min-height: calc(100vh - var(--nav-height, 63px) - var(--nav-height, 63px));
+}
+@media (max-width: 767px) {
+  #template-content,
+  .rds-resource-page {
+    min-height: calc(100dvh - var(--nav-height, 63px) - var(--nav-height, 63px) - 24px);
+  }
 }
 .page {
   padding: 20px;
