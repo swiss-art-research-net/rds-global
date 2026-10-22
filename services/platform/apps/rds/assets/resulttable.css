@@ -172,6 +172,22 @@
   column-gap: var(--result-table-column-gap);
   min-width: 0;
 }
+.page-resulttable .group-link-map {
+  margin-top: 16px;
+}
+.page-resulttable .group-link-map > summary {
+  width: max-content;
+  margin: 0 0 12px;
+  font-family: 'Familjen Grotesk', Arial, sans-serif;
+  font-size: 16px;
+  list-style: none;
+}
+.page-resulttable .group-link-map > summary::-webkit-details-marker {
+  display: none;
+}
+.page-resulttable .group-link-map[open] > summary::before {
+  transform: rotate(180deg);
+}
 .page-resulttable .single-row {
   display: grid;
   grid-template-columns: subgrid;

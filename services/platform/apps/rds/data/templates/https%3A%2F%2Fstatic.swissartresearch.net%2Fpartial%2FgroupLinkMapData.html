@@ -1,0 +1,60 @@
+{
+          VALUES (?node ?index ?nodeDataset) {
+            {{#each mapRecords}}{{#if displayIndex}} (<{{subject.value}}> {{displayIndex.value}} "{{nodeDataset.value}}") {{/if}}{{/each}}
+          }
+          [[> partial:valuesDatasetLabels]]
+          FILTER(?dataset = ?nodeDataset)
+          BIND(?datasetLabel AS ?nodeLabel)
+          BIND("member" AS ?scope)
+          BIND(IF({{mapRecords.0.memberCount.value}} > 8, {{mapRecords.0.memberCount.value}} * 14, 120) AS ?radius)
+          BIND(6.283185307179586 * ?index / {{mapRecords.0.memberCount.value}} - 1.570796326794897 AS ?angle)
+          BIND(IF({{mapRecords.0.memberCount.value}} = 2, 110 * ?index - 55, 60 * math:cos(?angle)) AS ?x)
+          BIND(IF({{mapRecords.0.memberCount.value}} = 2, 0, ?radius * math:sin(?angle)) AS ?y)
+        }
+        UNION
+        {
+          {
+            SELECT ?node ((COUNT(DISTINCT ?earlier) - 1) AS ?position)
+            WHERE {
+              VALUES ?node { {{#each mapRecords}} <{{subject.value}}> {{#each (arraySplit localMatches.value)}} <{{this}}> {{/each}}{{/each}} }
+              FILTER(?node NOT IN ({{#each mapRecords}}{{#if displayIndex}} <{{subject.value}}>, {{/if}}{{/each}} <urn:rds:link-map:no-record>))
+              VALUES ?earlier { {{#each mapRecords}} <{{subject.value}}> {{#each (arraySplit localMatches.value)}} <{{this}}> {{/each}}{{/each}} }
+              FILTER(STR(?earlier) <= STR(?node))
+              FILTER(?earlier NOT IN ({{#each mapRecords}}{{#if displayIndex}} <{{subject.value}}>, {{/if}}{{/each}} <urn:rds:link-map:no-record>))
+            }
+            GROUP BY ?node
+          }
+          OPTIONAL {
+            VALUES (?node ?nodeDataset) {
+              {{#each mapRecords}} (<{{subject.value}}> "{{nodeDataset.value}}") {{/each}}
+            }
+            [[> partial:valuesDatasetLabels]]
+            FILTER(?dataset = ?nodeDataset)
+          }
+          OPTIONAL {
+            SELECT ?node (?datasetLabel AS ?prefixLabel) WHERE {
+              VALUES ?node { {{#each mapRecords}} <{{subject.value}}> {{#each (arraySplit localMatches.value)}} <{{this}}> {{/each}}{{/each}} }
+              [[> partial:valuesDatasetLabels]]
+              FILTER(STRSTARTS(STR(?node), ?datasetPrefix))
+            }
+          }
+          BIND(COALESCE(?datasetLabel, ?prefixLabel, REPLACE(STR(?node), "^[a-zA-Z][a-zA-Z0-9+.-]*://([^/]+).*$", "$1")) AS ?nodeLabel)
+          BIND("outside" AS ?scope)
+          BIND(IF({{mapRecords.0.memberCount.value}} > 8, {{mapRecords.0.memberCount.value}} * 14, 120) AS ?radius)
+          BIND(IF(STRLEN(?nodeLabel) > 8, 0, -50 + 100 * (?position - 2 * FLOOR(?position / 2))) AS ?x)
+          BIND(?radius + 105 + 65 * ?position AS ?y)
+        }
+        UNION
+        {
+          VALUES (?source ?target) { {{#each mapRecords}}{{#each (arraySplit localMatches.value)}} (<{{../subject.value}}> <{{this}}>) {{/each}}{{/each}} }
+          FILTER(?source != ?target)
+          BIND(?source IN ({{#each mapRecords}}{{#if displayIndex}} <{{subject.value}}>, {{/if}}{{/each}} <urn:rds:link-map:no-record>) && ?target IN ({{#each mapRecords}}{{#if displayIndex}} <{{subject.value}}>, {{/if}}{{/each}} <urn:rds:link-map:no-record>) AS ?inside)
+          OPTIONAL {
+            VALUES (?source ?target) {
+              {{#each mapRecords}}{{#each (arraySplit localMatches.value)}} (<{{this}}> <{{../subject.value}}>) {{/each}}{{/each}}
+            }
+            BIND(true AS ?mutual)
+          }
+          FILTER(!BOUND(?mutual) || STR(?source) < STR(?target))
+          BIND(IF(COALESCE(?mutual, false), IF(?inside, map:mutualLink, map:externalMutualLink), IF(?inside, map:internalLink, map:externalLink)) AS ?linkPredicate)
+        }

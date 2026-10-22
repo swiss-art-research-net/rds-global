@@ -1,0 +1,51 @@
+{{#ifCond memberCount ">" 1}}
+<details class="group-link-map" open>
+  <summary class="rds-item-truncate-toggle">Link map</summary>
+  <semantic-query
+    query='SELECT ?candidate ?displayRows ?memberCount WHERE {
+      BIND({{stringify (stringify rows)}} AS ?displayRows)
+      BIND({{memberCount}} AS ?memberCount)
+      OPTIONAL {
+        SELECT DISTINCT ?candidate WHERE {
+          VALUES ?candidate { {{#each rows}}{{#each (arraySplit matches.value)}} <{{this}}> {{/each}}{{/each}} }
+          ?candidate a ?candidateType .
+          FILTER(?candidate NOT IN ({{#each rows}} <{{subject.value}}>{{#unless @last}},{{/unless}} {{/each}}))
+        }
+      }
+    }'
+    template="{{> groupLinkMapCandidates}}"
+  >
+    <template id="groupLinkMapCandidates">
+      <semantic-query
+        query='PREFIX os: <http://www.researchspace.com/resource/assets/Ontologies/opensearch#>
+        SELECT DISTINCT ?subject ?nodeDataset ?localMatches ?displayIndex ?memberCount WHERE {
+          {
+            VALUES (?subject ?nodeDataset ?localMatches ?displayIndex) {
+              {{#each (arraySplit bindings.0.displayRows.value)}}
+                (<{{subject.value}}> "{{dataset.value}}" {{stringify localMatches.value}} {{@index}})
+              {{/each}}
+            }
+          }
+          {{#each bindings}}{{#if candidate}}
+          UNION {
+            SERVICE <http://platform:8080/sparql?repository=opensearch> {
+              ?lookup os:searchTerm <{{candidate.value}}> ;
+                os:hasSubject ?subject ;
+                os:hasDataset ?nodeDataset ;
+                os:hasLocalMatches ?localMatches .
+            }
+            FILTER(?subject = <{{candidate.value}}>)
+          }
+          {{/if}}{{/each}}
+          BIND({{bindings.0.memberCount.value}} AS ?memberCount)
+        }'
+        template="{{> groupLinkMapEnriched}}"
+      >
+        <template id="groupLinkMapEnriched">
+          [[> partial:groupLinkMapGraph]]
+        </template>
+      </semantic-query>
+    </template>
+  </semantic-query>
+</details>
+{{/ifCond}}

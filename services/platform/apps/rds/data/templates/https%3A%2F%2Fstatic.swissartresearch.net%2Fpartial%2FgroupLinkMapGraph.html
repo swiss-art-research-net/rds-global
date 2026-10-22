@@ -1,0 +1,105 @@
+{{#bind mapRecords=bindings}}
+<semantic-query
+  query='PREFIX map: <urn:rds:link-map:>
+  PREFIX math: <http://www.w3.org/2005/xpath-functions/math#>
+  SELECT ?records ?zoom ?panX ?panY ?height WHERE {
+    {
+      SELECT
+        (MIN(?x - (STRLEN(?nodeLabel) * 4.8 + 9)) AS ?left)
+        (MAX(?x + (STRLEN(?nodeLabel) * 4.8 + 9)) AS ?right)
+        (MIN(?y - 13) AS ?top)
+        (MAX(?y + 13) AS ?bottom)
+      WHERE {
+        { [[> partial:groupLinkMapData]] }
+        FILTER(BOUND(?x) && BOUND(?y) && BOUND(?nodeLabel))
+      }
+    }
+    BIND({{stringify (stringify mapRecords)}} AS ?records)
+    BIND(1 AS ?zoom)
+    BIND(4 - ?left * ?zoom AS ?panX)
+    BIND(10 - ?top * ?zoom AS ?panY)
+    BIND(CEIL((?bottom - ?top) * ?zoom + 20) AS ?height)
+  }'
+  template="{{> groupLinkMapPositioned}}"
+>
+  <template id="groupLinkMapPositioned">
+    {{#bind mapRecords=(arraySplit bindings.0.records.value)}}
+  <semantic-graph
+    height="{{bindings.0.height.value}}"
+    user-zooming-enabled=false
+    query='
+      PREFIX map: <urn:rds:link-map:>
+      PREFIX math: <http://www.w3.org/2005/xpath-functions/math#>
+      CONSTRUCT {
+        ?node map:node ?node ; map:label ?nodeLabel ; map:x ?x ; map:y ?y ; map:scope ?scope .
+        ?source ?linkPredicate ?target .
+      }
+      WHERE {
+        [[> partial:groupLinkMapData]]
+      }
+    '
+    hide-predicates='["<urn:rds:link-map:label>", "<urn:rds:link-map:x>", "<urn:rds:link-map:y>", "<urn:rds:link-map:scope>"]'
+    graph-style='[
+      {
+        "selector": "node",
+        "style": {
+          "content": "{{{{raw}}}}{{[<urn:rds:link-map:label>].[0].value}}{{{{/raw}}}}",
+          "shape": "roundrectangle",
+          "width": "label",
+          "height": 16,
+          "padding-top": 3.6,
+          "padding-bottom": 3.6,
+          "padding-left": 8,
+          "padding-right": 8,
+          "background-color": "#ECF0F3",
+          "background-image": "none",
+          "border-color": "#000000",
+          "border-width": 1,
+          "font-family": "Geist Mono, Courier New, monospace",
+          "font-size": 16,
+          "color": "#000000",
+          "text-valign": "center",
+          "text-halign": "center",
+          "text-outline-width": 0
+        }
+      },
+      {
+        "selector": "node[property(<urn:rds:link-map:scope>) *= literal(outside)]",
+        "style": { "border-style": "dashed" }
+      },
+      {
+        "selector": "edge",
+        "style": {
+          "content": "",
+          "width": 1.25,
+          "line-color": "#000000",
+          "target-arrow-shape": "triangle",
+          "target-arrow-color": "#000000",
+          "target-arrow-fill": "filled",
+          "curve-style": "bezier"
+        }
+      },
+      {
+        "selector": "edge[resource = iri(<urn:rds:link-map:node>)]",
+        "style": { "display": "none" }
+      },
+      {
+        "selector": "edge[resource = iri(<urn:rds:link-map:mutualLink>)], edge[resource = iri(<urn:rds:link-map:externalMutualLink>)]",
+        "style": { "source-arrow-shape": "triangle", "source-arrow-color": "#000000" }
+      }
+    ]'
+  >
+    <semantic-graph-layout-preset
+      position-x="<urn:rds:link-map:x>"
+      position-y="<urn:rds:link-map:y>"
+      fit=false
+      zoom="{{bindings.0.zoom.value}}"
+      pan='{"x": {{bindings.0.panX.value}}, "y": {{bindings.0.panY.value}} }'
+      animate=false
+    ></semantic-graph-layout-preset>
+  </semantic-graph>
+
+    {{/bind}}
+  </template>
+</semantic-query>
+{{/bind}}
