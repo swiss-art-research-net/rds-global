@@ -6,7 +6,7 @@
           FILTER(?dataset = ?nodeDataset)
           BIND(?datasetLabel AS ?nodeLabel)
           BIND("member" AS ?scope)
-          BIND(IF({{mapRecords.0.memberCount.value}} > 8, {{mapRecords.0.memberCount.value}} * 14, 120) AS ?radius)
+          BIND(IF({{mapRecords.0.memberCount.value}} > 8, {{mapRecords.0.memberCount.value}} * 11, 90) AS ?radius)
           BIND(6.283185307179586 * ?index / {{mapRecords.0.memberCount.value}} - 1.570796326794897 AS ?angle)
           BIND(IF({{mapRecords.0.memberCount.value}} = 2, 110 * ?index - 55, 60 * math:cos(?angle)) AS ?x)
           BIND(IF({{mapRecords.0.memberCount.value}} = 2, 0, ?radius * math:sin(?angle)) AS ?y)
@@ -40,9 +40,9 @@
           }
           BIND(COALESCE(?datasetLabel, ?prefixLabel, REPLACE(STR(?node), "^[a-zA-Z][a-zA-Z0-9+.-]*://([^/]+).*$", "$1")) AS ?nodeLabel)
           BIND("outside" AS ?scope)
-          BIND(IF({{mapRecords.0.memberCount.value}} > 8, {{mapRecords.0.memberCount.value}} * 14, 120) AS ?radius)
+          BIND(IF({{mapRecords.0.memberCount.value}} > 8, {{mapRecords.0.memberCount.value}} * 11, 90) AS ?radius)
           BIND(IF(STRLEN(?nodeLabel) > 8, 0, -50 + 100 * (?position - 2 * FLOOR(?position / 2))) AS ?x)
-          BIND(?radius + 105 + 65 * ?position AS ?y)
+          BIND(?radius + 65 + 48 * ?position AS ?y)
         }
         UNION
         {

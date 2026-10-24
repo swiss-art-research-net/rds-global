@@ -168,6 +168,8 @@
 }
 .page-resulttable .group-members-list {
   display: grid;
+  align-self: start;
+  align-content: start;
   grid-template-columns: var(--result-table-member-columns);
   column-gap: var(--result-table-column-gap);
   min-width: 0;
