@@ -270,12 +270,14 @@
     border-top: 1px solid @col-black;
   }
 
+  .single-row + .single-row.is-graph-highlighted:not(.is-selected),
   .single-row + .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
   .single-row + .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed),
   .single-row + .single-row.is-selected {
     border-top-color: transparent;
   }
 
+  .single-row.is-graph-highlighted:not(.is-selected),
   .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
   .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed),
   .single-row.is-selected {
@@ -283,6 +285,7 @@
     box-shadow: 4px 4px 0px 0px #00000012;
   }
 
+  .single-row.is-graph-highlighted:not(.is-selected),
   .single-row:hover:not(.is-selected):not(.is-hover-suppressed),
   .single-row:has(.single-row-link:focus):not(.is-selected):not(.is-hover-suppressed) {
     background: @col-highlight;
@@ -347,6 +350,7 @@
     }
   }
 
+  .single-row.is-graph-highlighted:not(.is-selected) .single-row-link,
   .single-row:hover:not(.is-selected):not(.is-hover-suppressed) .single-row-link,
   .single-row:not(.is-selected):not(.is-hover-suppressed) .single-row-link:focus,
   .single-row.is-selected .single-row-link {

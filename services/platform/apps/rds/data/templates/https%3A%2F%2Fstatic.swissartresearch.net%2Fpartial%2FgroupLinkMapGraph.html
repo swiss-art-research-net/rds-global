@@ -31,20 +31,23 @@
       PREFIX map: <urn:rds:link-map:>
       PREFIX math: <http://www.w3.org/2005/xpath-functions/math#>
       CONSTRUCT {
-        ?node map:node ?node ; map:label ?nodeLabel ; map:x ?x ; map:y ?y ; map:scope ?scope .
+        ?node map:node ?node ; map:label ?nodeLabel ; map:x ?x ; map:y ?y ; map:scope ?scope ; map:pillPoints ?pillPoints .
         ?source ?linkPredicate ?target .
       }
       WHERE {
-        [[> partial:groupLinkMapData]]
+        { [[> partial:groupLinkMapData]] }
+        BIND(23.2 / (STRLEN(?nodeLabel) * 9.6 + 16) AS ?pillRadius)
+        BIND(CONCAT(STR(1 + ?pillRadius * (-1.00000000)), " -1.00000000 ", STR(1 + ?pillRadius * (-0.80490968)), " -0.98078528 ", STR(1 + ?pillRadius * (-0.61731657)), " -0.92387953 ", STR(1 + ?pillRadius * (-0.44442977)), " -0.83146961 ", STR(1 + ?pillRadius * (-0.29289322)), " -0.70710678 ", STR(1 + ?pillRadius * (-0.16853039)), " -0.55557023 ", STR(1 + ?pillRadius * (-0.07612047)), " -0.38268343 ", STR(1 + ?pillRadius * (-0.01921472)), " -0.19509032 ", STR(1 + ?pillRadius * (0.00000000)), " 0.00000000 ", STR(1 + ?pillRadius * (-0.01921472)), " 0.19509032 ", STR(1 + ?pillRadius * (-0.07612047)), " 0.38268343 ", STR(1 + ?pillRadius * (-0.16853039)), " 0.55557023 ", STR(1 + ?pillRadius * (-0.29289322)), " 0.70710678 ", STR(1 + ?pillRadius * (-0.44442977)), " 0.83146961 ", STR(1 + ?pillRadius * (-0.61731657)), " 0.92387953 ", STR(1 + ?pillRadius * (-0.80490968)), " 0.98078528 ", STR(1 + ?pillRadius * (-1.00000000)), " 1.00000000 ", STR(-1 + ?pillRadius * (1.00000000)), " 1.00000000 ", STR(-1 + ?pillRadius * (0.80490968)), " 0.98078528 ", STR(-1 + ?pillRadius * (0.61731657)), " 0.92387953 ", STR(-1 + ?pillRadius * (0.44442977)), " 0.83146961 ", STR(-1 + ?pillRadius * (0.29289322)), " 0.70710678 ", STR(-1 + ?pillRadius * (0.16853039)), " 0.55557023 ", STR(-1 + ?pillRadius * (0.07612047)), " 0.38268343 ", STR(-1 + ?pillRadius * (0.01921472)), " 0.19509032 ", STR(-1 + ?pillRadius * (0.00000000)), " 0.00000000 ", STR(-1 + ?pillRadius * (0.01921472)), " -0.19509032 ", STR(-1 + ?pillRadius * (0.07612047)), " -0.38268343 ", STR(-1 + ?pillRadius * (0.16853039)), " -0.55557023 ", STR(-1 + ?pillRadius * (0.29289322)), " -0.70710678 ", STR(-1 + ?pillRadius * (0.44442977)), " -0.83146961 ", STR(-1 + ?pillRadius * (0.61731657)), " -0.92387953 ", STR(-1 + ?pillRadius * (0.80490968)), " -0.98078528 ", STR(-1 + ?pillRadius * (1.00000000)), " -1.00000000 ") AS ?pillPoints)
       }
     '
-    hide-predicates='["<urn:rds:link-map:label>", "<urn:rds:link-map:x>", "<urn:rds:link-map:y>", "<urn:rds:link-map:scope>"]'
+    hide-predicates='["<urn:rds:link-map:label>", "<urn:rds:link-map:x>", "<urn:rds:link-map:y>", "<urn:rds:link-map:scope>", "<urn:rds:link-map:pillPoints>"]'
     graph-style='[
       {
         "selector": "node",
         "style": {
           "content": "{{{{raw}}}}{{[<urn:rds:link-map:label>].[0].value}}{{{{/raw}}}}",
-          "shape": "roundrectangle",
+          "shape": "polygon",
+          "shape-polygon-points": "{{{{raw}}}}{{[<urn:rds:link-map:pillPoints>].[0].value}}{{{{/raw}}}}",
           "width": "label",
           "height": 16,
           "padding-top": 3.6,
@@ -57,8 +60,10 @@
           "border-width": 1,
           "font-family": "Geist Mono, Courier New, monospace",
           "font-size": 16,
+          "font-weight": 300,
           "color": "#000000",
           "text-valign": "center",
+          "text-margin-y": 1,
           "text-halign": "center",
           "text-outline-width": 0
         }
@@ -71,7 +76,7 @@
         "selector": "edge",
         "style": {
           "content": "",
-          "width": 1.25,
+          "width": 1,
           "line-color": "#000000",
           "target-arrow-shape": "triangle",
           "target-arrow-color": "#000000",
@@ -86,6 +91,10 @@
       {
         "selector": "edge[resource = iri(<urn:rds:link-map:mutualLink>)], edge[resource = iri(<urn:rds:link-map:externalMutualLink>)]",
         "style": { "source-arrow-shape": "triangle", "source-arrow-color": "#000000" }
+      }
+      ,{
+        "selector": ".rds-map-muted",
+        "style": { "opacity": 0.18 }
       }
     ]'
   >
