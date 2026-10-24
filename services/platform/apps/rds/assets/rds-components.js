@@ -91,6 +91,8 @@ class RdsNavLink extends HTMLElement {
     const toggleValue = this.getAttribute('toggle-value') || '';
     const selectedValues = this._getSelectedValues(toggleParam);
     const isActive = toggleValue ? selectedValues.has(toggleValue) : selectedValues.size === 0;
+    const checkbox = this.querySelector('input[type="checkbox"]');
+    if (checkbox) checkbox.checked = isActive;
     const button = this.querySelector('.filter-button');
 
     if (button) {
@@ -167,8 +169,10 @@ class RdsFilterSelection extends HTMLElement {
     const remaining = values.filter(selectedValue => selectedValue !== value);
     const url = new URL('/resource/page:Start', window.location.origin);
     const preserveParam = this.getAttribute('preserve-param');
-    const preservedValue = preserveParam && params.get(preserveParam);
-    if (preservedValue) url.searchParams.set(preserveParam, preservedValue);
+    for (const key of (preserveParam || '').split(',')) {
+      const preservedValue = params.get(key);
+      if (preservedValue) url.searchParams.set(key, preservedValue);
+    }
     if (remaining.length > 0) url.searchParams.set(paramName, remaining.join(','));
 
     const link = document.createElement('rds-nav-link');
