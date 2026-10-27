@@ -1054,6 +1054,7 @@ ol.page-breadcrumb {
 }
 .filter-button {
   padding: 2px 6px;
+  line-height: 1.2;
   font-size: 18px;
   font-family: 'Geist Mono', 'Courier New', monospace;
   border: 1px solid #000000;
@@ -1637,7 +1638,8 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 28px;
+  flex-basis: 100%;
+  min-height: 27.6px;
   margin-left: 0;
   line-height: 1;
   white-space: nowrap;
@@ -1648,20 +1650,21 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 28px;
+  min-height: 27.6px;
   margin: 0;
   font-weight: 400;
   line-height: 1;
   cursor: pointer;
 }
 .wikidata-filter input[type="checkbox"] {
-  width: 22px;
-  height: 22px;
+  box-sizing: border-box;
+  width: 27.6px;
+  height: 27.6px;
   margin: 0;
   appearance: none;
   -webkit-appearance: none;
   position: relative;
-  flex: 0 0 22px;
+  flex: 0 0 27.6px;
   border: 1px solid #000000;
   border-radius: 0;
   background: transparent;
@@ -1683,13 +1686,13 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
 .wikidata-filter input[type="checkbox"]:checked::after {
   content: "";
   position: absolute;
-  left: 7px;
-  top: 3px;
+  left: 50%;
+  top: 50%;
   width: 6px;
   height: 11px;
   border: solid #F9FAFB;
   border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  transform: translate(-50%, -60%) rotate(45deg);
 }
 .wikidata-filter input[type="checkbox"]:focus-visible {
   outline: 2px solid #000000;
@@ -1697,11 +1700,6 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
 }
 .wikidata-filter .wikidata-filter-info {
   cursor: help;
-}
-@media (min-width: 768px) {
-  .filter-container > div:first-child {
-    min-width: 315px;
-  }
 }
 .wikidata-filter:hover .filter-tooltip,
 .wikidata-filter:focus-within .filter-tooltip {
