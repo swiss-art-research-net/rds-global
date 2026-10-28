@@ -18,7 +18,7 @@ tasks:
           --endpoint "{{.QLEVER_ENDPOINT}}" \
           --os-host opensearch-node \
           --os-index rds-entities \
-          --page-size 1000 \
+          --page-size 10000 \
           {{.CLI_ARGS}}
 
   _generate-dataset-metadata-file:

@@ -33,4 +33,6 @@ datasets:
         FILTER(isiri(?subject))
       matches: |
         ?subject skos:exactMatch ?value .
-    wikidata_match_property: P244
+    wikidata_matching:
+      - property: P244
+        prefix: http://id.loc.gov/authorities/names/

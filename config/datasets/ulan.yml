@@ -30,4 +30,6 @@ datasets:
         ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
       matches: |
         ?subject (skos:exactMatch | skos:closeMatch) ?value .
-    wikidata_match_property: P245
+    wikidata_matching:
+      - property: P245
+        prefix: http://vocab.getty.edu/ulan/
