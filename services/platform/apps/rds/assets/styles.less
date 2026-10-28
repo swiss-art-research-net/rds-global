@@ -135,6 +135,8 @@ ol.page-breadcrumb {
     }
 }
 
+@filter-control-height: (@font-size-body-large * 1.2 + 6px);
+
 .filter-button-group {
   display: flex;
   gap: 0.6rem;
@@ -148,6 +150,7 @@ ol.page-breadcrumb {
 
 .filter-button {
   padding: 2px 6px;
+  line-height: 1.2;
   font-size: @font-size-body-large;
   font-family: @font-data;
   border: 1px solid @col-black;
@@ -650,4 +653,87 @@ rds-text-truncate.is-expanded .rds-text-truncate-text {
   &:hover {
     text-decoration: underline;
   }
+}
+
+.wikidata-filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-basis: 100%;
+  min-height: @filter-control-height;
+  margin-left: 0;
+  line-height: 1;
+  white-space: nowrap;
+  font-family: @font-data;
+  font-size: @font-size-body-large;
+
+  .wikidata-filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: @filter-control-height;
+    margin: 0;
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    box-sizing: border-box;
+    width: @filter-control-height;
+    height: @filter-control-height;
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    flex: 0 0 @filter-control-height;
+    border: 1px solid @col-black;
+    border-radius: 0;
+    background: transparent;
+    vertical-align: middle;
+    cursor: pointer;
+
+    &::before {
+      content: none;
+      display: none;
+    }
+
+    &:checked,
+    &:hover,
+    &:focus {
+      border-color: @col-black;
+    }
+
+    &:checked {
+      background: @col-black;
+    }
+
+    &:checked::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 11px;
+      border: solid @col-bg;
+      border-width: 0 2px 2px 0;
+      transform: translate(-50%, -60%) rotate(45deg);
+    }
+
+    &:focus-visible {
+      outline: 2px solid @col-black;
+      outline-offset: 3px;
+    }
+  }
+
+  .wikidata-filter-info {
+    cursor: help;
+  }
+}
+
+.wikidata-filter-info:hover + .filter-tooltip,
+.wikidata-filter-info:focus + .filter-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
