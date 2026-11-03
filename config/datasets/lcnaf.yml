@@ -18,6 +18,7 @@ datasets:
     namespace: http://id.loc.gov/authorities/names/
     prefixes:
       skos: http://www.w3.org/2004/02/skos/core#
+      xsd: http://www.w3.org/2001/XMLSchema#
     types:
       Concept:
         - skos:Concept
@@ -27,7 +28,7 @@ datasets:
         FILTER(isiri(?subject))
       prefLabel: |
         ?subject skos:prefLabel ?value .
-        FILTER(isiri(?subject))
+        FILTER(isIRI(?subject) && DATATYPE(?value) = xsd:string)
       labels: |
         ?subject (skos:prefLabel | skos:altLabel) ?value .
         FILTER(isiri(?subject))
