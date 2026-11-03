@@ -4,7 +4,7 @@
   --result-table-row-padding-x: 18px;
   --result-table-column-gap: 22px;
   --result-table-header-columns: minmax(120px, 0.9fr) minmax(0, 2.6fr) minmax(0, 2fr) minmax(100px, 1fr) minmax(170px, 1fr);
-  --result-table-member-columns: max-content repeat(4, minmax(0, 1fr)) minmax(0, 2fr);
+  --result-table-member-columns: max-content minmax(0, 0.8fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 2fr);
 }
 .page-resulttable .semantic-data-table {
   display: block;
@@ -384,7 +384,7 @@
   }
   .page-resulttable .single-row {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'heading heading' 'uri uri' 'id types' 'description description' 'related related';
+    grid-template-areas: 'heading heading' 'uri uri' 'types types' 'description description' 'related related';
     gap: 12px;
     padding: var(--result-table-row-padding-y) 14px;
     min-height: 0;
@@ -415,9 +415,6 @@
   }
   .page-resulttable .single-row-uri {
     grid-area: uri;
-  }
-  .page-resulttable .single-row-id {
-    grid-area: id;
   }
   .page-resulttable .single-row-types {
     grid-area: types;

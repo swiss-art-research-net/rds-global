@@ -120,16 +120,8 @@
                 </rds-copy-value>
               </div>
             </div>
-            <div class="single-row-field single-row-id">
-              <div class="single-row-heading">ID</div>
-              <div>
-                <rds-copy-value value="{{recordId.value}}" copy-only copy-label="ID">
-                  {{recordId.value}}
-                </rds-copy-value>
-              </div>
-            </div>
             <div class="single-row-field single-row-types">
-              <div class="single-row-heading">Source Type(s)</div>
+              <div class="single-row-heading">Source types</div>
                 {{#each (arraySplit types.value)}}
                   <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
                 {{/each}}
@@ -162,7 +154,7 @@
                       {{#if bindings}}
                         <div class="related-records">
                           <div class="single-row-heading single-row-related-heading">
-                            Links from source record in RDS
+                            Links from this record in RDS
                           </div>
                           <rds-item-truncate class="related-records-list" limit="3">
                             {{#each bindings}}

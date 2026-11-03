@@ -16,7 +16,9 @@
     minmax(170px, 1fr);
   --result-table-member-columns:
     max-content
-    repeat(4, minmax(0, 1fr))
+    minmax(0, 0.8fr)
+    minmax(0, 1.4fr)
+    minmax(0, 1fr)
     minmax(0, 2fr);
 
   .semantic-data-table {
@@ -473,7 +475,7 @@
       grid-template-areas:
         'heading heading'
         'uri uri'
-        'id types'
+        'types types'
         'description description'
         'related related';
       gap: 12px;
@@ -510,7 +512,6 @@
       display: none;
     }
     .single-row-uri { grid-area: uri; }
-    .single-row-id { grid-area: id; }
     .single-row-types { grid-area: types; }
     .single-row-description { grid-area: description; }
     .single-row-related { grid-area: related; }
