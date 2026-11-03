@@ -167,6 +167,9 @@
   /* border-top: 1px solid @col-black; */
 }
 .page-resulttable .group-members-summary {
+  position: sticky;
+  top: 63px;
+  align-self: start;
   min-width: 0;
   padding: var(--result-table-row-padding-y) var(--result-table-row-padding-x);
   box-sizing: border-box;

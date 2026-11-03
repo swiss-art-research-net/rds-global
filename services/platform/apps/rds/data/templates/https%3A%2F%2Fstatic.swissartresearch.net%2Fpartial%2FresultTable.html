@@ -75,7 +75,7 @@
   <template id="groupMemberRowsTemplate">
     <div class="group-members">
       <div class="group-members-summary">
-        <div class="group-members-count">{{memberCount}} equivalent records</div>
+        <div class="group-members-count">{{#ifCond memberCount "==" 1}}1 record for{{else}}{{memberCount}} related records for{{/ifCond}}</div>
         <div class="group-members-label">{{rows.0.prefLabel.value}}</div>
       </div>
       <div class="group-members-list">
