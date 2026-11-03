@@ -9,12 +9,11 @@
   --result-table-row-padding-x: 18px;
   --result-table-column-gap: 22px;
   --result-table-header-columns:
-    minmax(0, 0.6fr)
+    minmax(120px, 0.9fr)
+    minmax(0, 2.6fr)
     minmax(0, 2fr)
-    minmax(0, 1fr)
-    minmax(0, 1fr)
-    minmax(0, 2fr)
-    minmax(0, 0.6fr);
+    minmax(100px, 1fr)
+    minmax(170px, 1fr);
   --result-table-member-columns:
     max-content
     repeat(4, minmax(0, 1fr))
@@ -24,22 +23,52 @@
     display: block;
     width: 100%;
 
+    thead {
+      display: block;
+      width: 100%;
+    }
+
     thead tr {
       display: grid;
       grid-template-columns: var(--result-table-header-columns);
       width: 100%;
+      box-sizing: border-box;
+      border: 1px solid transparent;
+      border-bottom: none;
     }
 
     thead th {
       display: block;
       min-width: 0;
+      padding: 0 10px 8px;
       border: 0;
       box-sizing: border-box;
       cursor: default;
     }
 
+    thead th {
+      white-space: nowrap;
+    }
+
+    thead th:last-child .semantic-data-table__header-content {
+      justify-content: flex-end;
+      text-align: right;
+    }
+
     tbody {
+      display: block;
+      width: 100%;
       border-bottom: 1px solid @col-black;
+    }
+
+    tbody tr,
+    tbody td {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      box-sizing: border-box;
     }
 
     &-widget-holder > nav {
@@ -109,12 +138,12 @@
     width: 100%;
     border: 1px solid @col-black;
     border-bottom: none;
-    min-height: 10rem;
+    min-height: 6rem;
   }
 
   .group-row > * {
     min-width: 0;
-    padding: var(--result-table-row-padding-y) 14px;
+    padding: var(--result-table-row-padding-y) 10px;
     box-sizing: border-box;
   }
 
@@ -153,19 +182,6 @@
   .group-row-label-text {
     font-size: @font-size-large;
     line-height: 1;
-  }
-
-  .group-row-reference-uri {
-    word-break: break-all;
-
-    > span {
-      margin-right: 0.25em;
-      font-weight: 700;
-    }
-
-    > div {
-      display: inline;
-    }
   }
 
   .group-row-datasets {
@@ -410,12 +426,10 @@
       grid-template-columns: minmax(0, 1fr) max-content;
       grid-template-areas:
         'label score'
-        'uri uri'
         'datasets datasets'
         'type type'
-        'description description'
         'toggle toggle';
-      padding: var(--result-table-row-padding-y) 14px;
+      padding: var(--result-table-row-padding-y) 10px;
       gap: 12px;
       min-height: 0;
     }
@@ -427,11 +441,9 @@
 
     .group-row-label { display: contents; }
     .group-row-label-text { grid-area: label; }
-    .group-row-reference-uri { grid-area: uri; }
     .group-row-score { grid-area: score; }
     .group-row-datasets { grid-area: datasets; }
     .group-row-type { grid-area: type; }
-    .group-row-description { grid-area: description; }
 
     .group-row-field-heading {
       display: block;

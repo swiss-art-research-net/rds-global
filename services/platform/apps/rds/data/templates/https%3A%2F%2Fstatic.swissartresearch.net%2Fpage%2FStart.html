@@ -36,7 +36,7 @@
       <template id="datasetSearchControls">
         <div class="filter-search-bar">
           <div class="keyword-search">
-            <div class="eyebrow-label">Query</div>
+            <div class="eyebrow-label">Search</div>
             <div class="input-wrap">
               <semantic-search-query-keyword
                 class="keyword-search-search-input"
@@ -109,7 +109,7 @@
                   </div>
             </div>
             <div>
-              <div class="eyebrow-label">Types</div>
+              <div class="eyebrow-label">RDS TYPES</div>
               <semantic-query
                 query='SELECT ?type ?typeLabel ?selectedType WHERE {
                   BIND("[[urlParam "type"]]" AS ?selectedType)

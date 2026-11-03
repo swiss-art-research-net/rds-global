@@ -29,23 +29,23 @@
     },
     {
       "variableName": "scoreDisplay",
-      "displayName": "Score"
+      "displayName": "Search score"
     },
     {
       "variableName": "prefLabel",
-      "displayName": "Reference Record"
+      "displayName": "RDS reference label"
     },
     {
       "variableName": "dataset",
-      "displayName": "Datasets"
+      "displayName": "Datasets represented"
     },
     {
       "variableName": "typeClass",
-      "displayName": "Type"
+      "displayName": "RDS type"
     },
     {
-      "variableName": "description",
-      "displayName": "Description"
+      "variableName": "memberCount",
+      "displayName": "Group size"
     }
   ]'
 >
@@ -54,12 +54,6 @@
       <div class="group-row-score">{{rows.0.scoreDisplay.value}}</div>
       <div class="group-row-label">
         <div class="group-row-label-text">{{rows.0.prefLabel.value}}</div>
-        <div class="group-row-reference-uri">
-          <span>URI: </span>
-          <rds-copy-value value="{{rows.0.subject.value}}">
-            {{rows.0.subject.value}}
-          </rds-copy-value>
-        </div>
       </div>
       <div class="group-row-datasets">
         {{#each rows}}
@@ -70,8 +64,7 @@
           </rds-copy-popover>
         {{/each}}
       </div>
-      <div class="group-row-type"><div class="group-row-field-heading">Type</div>{{rows.0.typeClass.value}}</div>
-      <div class="group-row-description"><div class="group-row-field-heading">Description</div>{{rows.0.description.value}}</div>
+      <div class="group-row-type"><div class="group-row-field-heading">RDS type</div>{{rows.0.typeClass.value}}</div>
       <button type="button" class="rs-row-toggle group-row-toggle{{#if isExpanded}} is-expanded{{/if}}" aria-label="Toggle grouped records">
         <span class="group-row-toggle-count">{{memberCount}}</span>
         <img class="group-row-toggle-chevron" src="/assets/no-auth/chevron.svg" alt="" />
