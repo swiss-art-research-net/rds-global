@@ -107,7 +107,7 @@
   width: 100%;
   border: 1px solid #000000;
   border-bottom: none;
-  min-height: 6rem;
+  min-height: 8rem;
 }
 .page-resulttable .group-row > * {
   min-width: 0;
@@ -119,7 +119,6 @@
 }
 .page-resulttable .group-row-toggle {
   justify-self: end;
-  align-self: end;
   display: inline-flex;
   gap: 4px;
   border: none;
