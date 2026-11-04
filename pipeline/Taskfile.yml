@@ -23,6 +23,7 @@ tasks:
     desc: Tasks that run on container startup
     cmds:
       - task: generate-datasets-configuration
+      - task: generate-type-mapping-ontology
       - task: generate-frontend-configuration
 
   default:
@@ -127,6 +128,14 @@ tasks:
     cmds:
       - python /pipeline/scripts/generateFrontendConfiguration.py --config "{{.DATASETS_CONFIG_YML}}" --datasets "$DATASETS" --output-app "{{.OUTPUT_DIRECTORY}}"
 
+  generate-type-mapping-ontology:
+    desc: Generate RDF subclass mappings from the datasets configuration
+    vars:
+      ONTOLOGY_FILE: /config/types/rds-type-ontology.ttl
+      OUTPUT_FILE: /data/source/rds-metadata/type-mapping.ttl
+    cmds:
+      - python /pipeline/scripts/generateTypeMappingRDF.py --config "{{.DATASETS_CONFIG_YML}}" --ontology-file "{{.ONTOLOGY_FILE}}" --output-file "{{.OUTPUT_FILE}}"
+
   generate-sameas-statements:
     desc: Generates SameAs statements between entities
     vars:
@@ -214,6 +223,7 @@ tasks:
       - /data/source/rds-metadata/type-mapping.ttl
     cmds:
       - task: generate-dataset-metadata
+      - task: generate-type-mapping-ontology
       - task: _prepareFileForIndexing
         vars:
           FILE_FORMAT: ttl
