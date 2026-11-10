@@ -6,7 +6,7 @@
         <div class="detail-panel-section detail-panel-header">
           <div class="detail-panel-heading">
             <h3>{{prefLabel}}</h3>
-            <div class="detail-panel-uri"><span>URI: </span><rds-copy-value value="{{subjectUri}}">{{subjectUri}}</rds-copy-value></div>
+            <div class="detail-panel-uri"><span>URI: </span><rds-copy-popover uri="{{subjectUri}}" record-id="{{recordId}}" rds-record="true">{{subjectUri}}</rds-copy-popover></div>
           </div>
           <mp-event-trigger
             type="Component.TemplateUpdate"
@@ -26,7 +26,7 @@
             <div class="detail-row">
               <span class="detail-property">Dataset</span>
               <span class="detail-value">
-                <rds-copy-popover uri="{{subjectUri}}" record-id="{{recordId}}" placement="left">
+                <rds-copy-popover uri="{{subjectUri}}" record-id="{{recordId}}" rds-record="true">
                   <button type="button" class="rds-badge" data-ds="{{dataset}}">{{dataset}}</button>
                 </rds-copy-popover>
               </span>
@@ -127,15 +127,15 @@
         <rds-item-truncate class="detail-related-list" limit="5">
           {{#each bindings}}
             <div class="detail-row detail-related-record">
-              {{#if datasetKey.value}}
-                <rds-copy-popover uri="{{related.value}}">
+              <rds-copy-popover uri="{{related.value}}" rds-record="{{datasetKey.value}}">
+                {{#if datasetKey.value}}
                   <button type="button" class="rds-badge" data-ds="{{datasetKey.value}}">
                     <rds-dataset-label key="{{datasetKey.value}}"></rds-dataset-label>
                   </button>
-                </rds-copy-popover>
-              {{else}}
-                <span class="rds-badge">{{external.value}}</span>
-              {{/if}}
+                {{else}}
+                  <button type="button" class="rds-badge">{{external.value}}</button>
+                {{/if}}
+              </rds-copy-popover>
               <div class="detail-related-content">
                 {{#if labels.value}}
                   <rds-item-truncate class="detail-related-label" limit="3">
@@ -144,9 +144,7 @@
                     {{/each}}
                   </rds-item-truncate>
                 {{/if}}
-                <rds-copy-value class="detail-related-uri" value="{{related.value}}">
-                  {{related.value}}
-                </rds-copy-value>
+                <rds-copy-popover class="detail-related-uri" uri="{{related.value}}" rds-record="{{datasetKey.value}}">{{related.value}}</rds-copy-popover>
               </div>
             </div>
           {{/each}}

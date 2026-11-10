@@ -293,7 +293,7 @@
 .page-resulttable .related-record {
   display: contents;
 }
-.page-resulttable .related-record > rds-copy-popover {
+.page-resulttable .related-record > rds-copy-popover:not(.related-record-uri) {
   justify-self: start;
 }
 .page-resulttable .related-record-label,
@@ -425,7 +425,7 @@
     row-gap: 0px;
     align-items: center;
   }
-  .page-resulttable .related-record + .related-record > rds-copy-popover,
+  .page-resulttable .related-record + .related-record > rds-copy-popover:not(.related-record-uri),
   .page-resulttable .related-record + .related-record > .related-record-label {
     margin-top: 10px;
   }

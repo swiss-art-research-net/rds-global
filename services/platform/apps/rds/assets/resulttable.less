@@ -368,7 +368,7 @@
     display: contents;
   }
 
-  .related-record > rds-copy-popover {
+  .related-record > rds-copy-popover:not(.related-record-uri) {
     justify-self: start;
   }
 
@@ -512,7 +512,7 @@
       align-items: center;
     }
 
-    .related-record + .related-record > rds-copy-popover,
+    .related-record + .related-record > rds-copy-popover:not(.related-record-uri),
     .related-record + .related-record > .related-record-label {
       margin-top: 10px;
     }

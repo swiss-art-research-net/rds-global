@@ -228,7 +228,7 @@ class RdsRecordSelect extends HTMLElement {
 
     this._handleRowClick = (e) => {
       if (this.contains(e.target)) return;
-      if (e.target.closest('a, button, input, select, textarea, rds-copy-popover, rds-copy-value')) return;
+      if (e.target.closest('a, button, input, select, textarea, rds-copy-popover')) return;
       this.click();
     };
 
@@ -385,6 +385,16 @@ async function writeToClipboard(value) {
   }
 }
 
+const RDS_ACTION_ICONS = {
+  copy: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M11 3H3V11H11V3Z" stroke="currentColor" stroke-width="1.5"/><path d="M1 9V1H9" stroke="currentColor" stroke-width="1.5"/></svg>',
+  copied: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 6.5L4.5 9.5L10.5 2.5" stroke="currentColor" stroke-width="1.6"/></svg>',
+  source: '<svg width="11" height="12" viewBox="0 0 11 12" aria-hidden="true"><path d="M1.1201 11.0144L0 9.89426L8.32898 1.55091H1.89556L1.90992 0H11V9.10444H9.43473L9.44909 2.67102L1.1201 11.0144Z" fill="currentColor"/></svg>',
+  rds: '<svg width="16" height="10" viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6H16M11 1L16 6L11 11" stroke="currentColor" stroke-width="1.5"/></svg>',
+  close: '<svg width="10" height="10" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="currentColor"/></svg>'
+};
+
+const RDS_POPOVER_LEAVE_DELAY = 400;
+
 class RdsCopyPopover extends HTMLElement {
   static active = null;
 
@@ -392,137 +402,292 @@ class RdsCopyPopover extends HTMLElement {
     if (this._initialized) return;
     this._initialized = true;
 
-    const values = {
-      URI: this.getAttribute('uri'),
-      ID: this.getAttribute('record-id')
-    };
+    this._uri = this.getAttribute('uri');
+    if (!this._uri) return;
 
-    this._trigger = this.querySelector('button');
-    if (!this._trigger || !Object.values(values).some(Boolean)) return;
+    this._isRdsRecord = Boolean(this.getAttribute('rds-record'));
+    this._recordId = this.getAttribute('record-id');
+    if (this._recordId === null && (this._isRdsRecord || this.getAttribute('copy-id'))) {
+      this._recordId = this._uri.replace(/^.*[/#]/, '');
+    }
 
-    this._popup = document.createElement('div');
-    this._popup.className = 'rds-copy-popover';
-    this._popup.hidden = true;
-    this._popup.setAttribute('role', 'dialog');
-    this._popup.setAttribute('aria-label', 'Copy identifier');
+    this._trigger = this.querySelector('button') || this._createTextTrigger();
+    if (!this._trigger) return;
 
-    Object.entries(values).forEach(([label, value]) => {
-      if (!value) return;
-      this._popup.appendChild(this._createCopyButton(label, value));
+    this._trigger.setAttribute('aria-haspopup', 'dialog');
+    this._trigger.setAttribute('aria-expanded', 'false');
+    this._trigger.addEventListener('click', event => {
+      event.stopPropagation();
+      this._toggle(event.detail === 0);
     });
+    this._trigger.addEventListener('keydown', event => this._handleTriggerKeydown(event));
+    this._trigger.addEventListener('pointerenter', () => this._cancelLeaveClose());
+    this._trigger.addEventListener('pointerleave', event => this._scheduleLeaveClose(event));
+  }
+
+  disconnectedCallback() {
+    this.close();
+  }
+
+  _createTextTrigger() {
+    const text = this.textContent.trim();
+    if (!text) return null;
+
+    const trigger = document.createElement('span');
+    trigger.className = 'rds-copy-trigger';
+    trigger.setAttribute('role', 'button');
+    trigger.tabIndex = 0;
+    trigger.textContent = text;
+    this.replaceChildren(trigger);
+    return trigger;
+  }
+
+  _createPopup() {
+    const popup = document.createElement('div');
+    popup.className = 'rds-copy-popover';
+    popup.hidden = true;
+    popup.setAttribute('role', 'dialog');
+    popup.setAttribute('aria-label', `Actions for ${this._uri}`);
+
+    const controls = document.createElement('div');
+    controls.className = 'rds-copy-popover-controls';
+    popup.appendChild(controls);
+
+    controls.appendChild(this._createCopyAction('URI', this._uri));
+    if (this._recordId) {
+      controls.appendChild(this._createCopyAction('ID', this._recordId));
+    }
+    controls.appendChild(
+      this._createLinkAction(
+        'Source',
+        this._uri,
+        RDS_ACTION_ICONS.source,
+        `Open at source in a new tab: ${this._uri}`
+      )
+    );
+    if (this._isRdsRecord) {
+      controls.appendChild(
+        this._createLinkAction(
+          'Open in RDS',
+          `/resource/?uri=${encodeURIComponent(this._uri)}`,
+          RDS_ACTION_ICONS.rds,
+          `Open the RDS record in a new tab: ${this._uri}`
+        )
+      );
+    }
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'rds-copy-popover-close';
+    closeButton.setAttribute('aria-label', 'Close');
+    closeButton.innerHTML = RDS_ACTION_ICONS.close;
+    controls.appendChild(closeButton);
 
     this._status = document.createElement('div');
     this._status.className = 'rds-copy-popover-status';
     this._status.setAttribute('role', 'status');
     this._status.setAttribute('aria-live', 'polite');
+    popup.appendChild(this._status);
 
-    this._popup.appendChild(this._status);
-    this._isPortaled = this.getAttribute('placement') === 'left';
-    if (this._isPortaled) {
-      this._popup.classList.add('rds-copy-popover--left');
-      document.body.appendChild(this._popup);
-      this._popup.addEventListener('click', event => this._handleClick(event));
-    } else {
-      this.appendChild(this._popup);
-    }
-
-    this._trigger.setAttribute('aria-haspopup', 'dialog');
-    this._trigger.setAttribute('aria-expanded', 'false');
-    this.addEventListener('click', event => this._handleClick(event));
+    popup.addEventListener('click', event => this._handlePopupClick(event));
+    popup.addEventListener('keydown', event => this._handlePopupKeydown(event));
+    popup.addEventListener('pointerenter', () => this._cancelLeaveClose());
+    popup.addEventListener('pointerleave', event => this._scheduleLeaveClose(event));
+    return popup;
   }
 
-  disconnectedCallback() {
-    clearTimeout(this._closeTimer);
-    if (this._isPortaled) this._popup?.remove();
-    if (RdsCopyPopover.active === this) RdsCopyPopover.active = null;
+  _scheduleLeaveClose(event) {
+    if (event.pointerType !== 'mouse' || !this._isOpen()) return;
+    this._cancelLeaveClose();
+    this._leaveTimer = setTimeout(() => this.close(), RDS_POPOVER_LEAVE_DELAY);
   }
 
-  _createCopyButton(label, value) {
+  _cancelLeaveClose() {
+    clearTimeout(this._leaveTimer);
+  }
+
+  _createCopyAction(label, value) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'rds-copy-popover-action';
     button.dataset.copyValue = value;
     button.dataset.copyLabel = label;
+    button.setAttribute('aria-label', `Copy ${label} ${value}`);
 
-    const icon = document.createElement('img');
-    icon.src = '/assets/no-auth/copy-icon.svg';
-    icon.alt = '';
-
-    const name = document.createElement('strong');
-    name.textContent = label;
+    const icon = document.createElement('span');
+    icon.className = 'rds-copy-popover-icon';
+    icon.innerHTML = RDS_ACTION_ICONS.copy;
 
     const text = document.createElement('span');
-    text.textContent = value;
+    text.className = 'rds-copy-popover-text';
+    text.textContent = `Copy ${label}`;
 
-    button.append(icon, name, text);
+    button.append(icon, text);
     return button;
   }
 
-  _handleClick(event) {
-    event.stopPropagation();
+  _createLinkAction(label, href, iconMarkup, ariaLabel) {
+    const link = document.createElement('a');
+    link.className = 'rds-copy-popover-action';
+    link.href = href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('aria-label', ariaLabel);
 
-    const action = event.target.closest('[data-copy-value]');
-    if (action) {
-      this._copy(action, action.dataset.copyLabel, action.dataset.copyValue);
-    } else if (this._trigger.contains(event.target)) {
-      this._popup.hidden ? this.open() : this.close();
+    const text = document.createElement('span');
+    text.className = 'rds-copy-popover-text';
+    text.textContent = label;
+
+    const icon = document.createElement('span');
+    icon.className = 'rds-copy-popover-icon';
+    icon.innerHTML = iconMarkup;
+
+    link.append(text, icon);
+    return link;
+  }
+
+  _getActions() {
+    return Array.from(this._popup.querySelectorAll('.rds-copy-popover-action'));
+  }
+
+  _isOpen() {
+    return Boolean(this._popup) && !this._popup.hidden;
+  }
+
+  _toggle(focusFirstAction) {
+    if (this._isOpen()) {
+      this.close();
+    } else {
+      this.open(focusFirstAction);
     }
   }
 
-  open() {
-    RdsCopyPopover.active?.close();
-    clearTimeout(this._closeTimer);
-    this._status.textContent = '';
-    this._popup.style.width = '';
-    this._popup.hidden = false;
-    this._popup.style.width = `${this._popup.getBoundingClientRect().width}px`;
-    if (this._isPortaled) this._positionPortaledPopup();
-    this._trigger.setAttribute('aria-expanded', 'true');
-    RdsCopyPopover.active = this;
+  _handleTriggerKeydown(event) {
+    const isButton = this._trigger.tagName === 'BUTTON';
+    if (!isButton && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._toggle(true);
+    } else if (event.key === 'Tab' && !event.shiftKey && this._isOpen()) {
+      event.preventDefault();
+      this._getActions()[0]?.focus();
+    }
   }
 
-  _positionPortaledPopup() {
-    const triggerRect = this._trigger.getBoundingClientRect();
-    const popupRect = this._popup.getBoundingClientRect();
-    const viewportMargin = 16;
+  _handlePopupClick(event) {
+    event.stopPropagation();
 
-    this._popup.style.left =
-      `${Math.max(viewportMargin, triggerRect.left - popupRect.width - 12)}px`;
-    this._popup.style.top =
-      `${Math.min(
-        window.innerHeight - popupRect.height - viewportMargin,
-        Math.max(
-          viewportMargin,
-          triggerRect.top + (triggerRect.height - popupRect.height) / 2
-        )
-      )}px`;
+    const copyAction = event.target.closest('[data-copy-value]');
+    if (copyAction) {
+      this._copy(copyAction);
+    } else if (event.target.closest('.rds-copy-popover-close')) {
+      this.close();
+    } else if (event.target.closest('a')) {
+      setTimeout(() => this.close(), 0);
+    }
+  }
+
+  _handlePopupKeydown(event) {
+    if (event.key !== 'Tab') return;
+
+    const controls = Array.from(this._popup.querySelectorAll('a, button'));
+    const edge = event.shiftKey ? controls[0] : controls[controls.length - 1];
+    if (document.activeElement !== edge) return;
+
+    event.preventDefault();
+    this.close();
+    this._trigger.focus();
+  }
+
+  open(focusFirstAction = false) {
+    RdsCopyPopover.active?.close();
+    clearTimeout(this._closeTimer);
+    clearTimeout(this._leaveTimer);
+
+    if (!this._popup) this._popup = this._createPopup();
+    if (!this._popup.isConnected) document.body.appendChild(this._popup);
+
+    this._popup.hidden = false;
+    const actions = this._getActions();
+    actions.forEach(action => {
+      action.style.minWidth = '';
+    });
+    actions
+      .map(action => action.getBoundingClientRect().width)
+      .forEach((width, index) => {
+        actions[index].style.minWidth = `${width}px`;
+      });
+    this._position();
+    this._trigger.setAttribute('aria-expanded', 'true');
+    RdsCopyPopover.active = this;
+
+    if (focusFirstAction) this._getActions()[0]?.focus();
+  }
+
+  _position() {
+    const viewportMargin = 16;
+    const gap = 12;
+    const arrowInset = 14;
+    const triggerBox = this._trigger.getBoundingClientRect();
+    const firstLine = this._trigger.getClientRects()[0] || triggerBox;
+    const popupBox = this._popup.getBoundingClientRect();
+    const navBottom = document.querySelector('.nav-bar')?.getBoundingClientRect().bottom || 0;
+    const minTop = Math.max(viewportMargin, navBottom);
+
+    const fitsAbove = firstLine.top - popupBox.height - gap >= minTop;
+    const top = fitsAbove
+      ? firstLine.top - popupBox.height - gap
+      : triggerBox.bottom + gap;
+    const anchorLeft = fitsAbove ? firstLine.left : triggerBox.left;
+    const left = Math.max(
+      viewportMargin,
+      Math.min(anchorLeft, window.innerWidth - popupBox.width - viewportMargin)
+    );
+    const arrowLeft = Math.max(
+      arrowInset,
+      Math.min(anchorLeft - left + arrowInset, popupBox.width - arrowInset * 2)
+    );
+
+    this._popup.classList.toggle('is-below', !fitsAbove);
+    this._popup.style.left = `${left}px`;
+    this._popup.style.top = `${top}px`;
+    this._popup.style.setProperty('--rds-copy-popover-arrow-left', `${arrowLeft}px`);
   }
 
   close() {
-    if (!this._popup) return;
     clearTimeout(this._closeTimer);
-    this._status.textContent = '';
-    this._resetActions();
-    this._popup.hidden = true;
-    this._trigger.setAttribute('aria-expanded', 'false');
+    clearTimeout(this._leaveTimer);
     if (RdsCopyPopover.active === this) RdsCopyPopover.active = null;
+    if (!this._popup) return;
+
+    const hadFocus = this._popup.contains(document.activeElement);
+    this._resetActions();
+    this._status.textContent = '';
+    this._popup.hidden = true;
+    this._popup.remove();
+    this._trigger.setAttribute('aria-expanded', 'false');
+    if (hadFocus && this.isConnected) this._trigger.focus();
   }
 
   _resetActions() {
     this._popup.querySelectorAll('[data-copy-value]').forEach(action => {
       action.classList.remove('is-copied');
-      action.querySelector('span').textContent = action.dataset.copyValue;
+      action.querySelector('.rds-copy-popover-icon').innerHTML = RDS_ACTION_ICONS.copy;
+      action.querySelector('.rds-copy-popover-text').textContent =
+        `Copy ${action.dataset.copyLabel}`;
     });
   }
 
-  async _copy(action, label, value) {
+  async _copy(action) {
     clearTimeout(this._closeTimer);
+    const label = action.dataset.copyLabel;
 
     try {
-      await writeToClipboard(value);
+      await writeToClipboard(action.dataset.copyValue);
       this._resetActions();
       action.classList.add('is-copied');
-      action.querySelector('span').textContent = 'copied';
+      action.querySelector('.rds-copy-popover-icon').innerHTML = RDS_ACTION_ICONS.copied;
+      action.querySelector('.rds-copy-popover-text').textContent = 'Copied';
       this._status.textContent = `${label} copied`;
       this._closeTimer = setTimeout(() => this.close(), 900);
     } catch (error) {
@@ -534,101 +699,30 @@ class RdsCopyPopover extends HTMLElement {
 
 customElements.define('rds-copy-popover', RdsCopyPopover);
 
-class RdsCopyValue extends HTMLElement {
-  connectedCallback() {
-    if (this._initialized) return;
-    this._initialized = true;
+let rdsLastPointerType = 'mouse';
 
-    this._value = this.getAttribute('value');
-    if (!this._value) return;
-    this._copyLabel = this.getAttribute('copy-label') || 'URI';
-    const copyOnly = this.hasAttribute('copy-only');
-
-    const valueText = document.createElement('span');
-    valueText.className = 'rds-copy-value-text';
-    const displayValue = Array.from(this.textContent.trim() || this._value);
-    valueText.textContent = displayValue.slice(0, -1).join('');
-
-    const valueEnding = document.createElement('span');
-    valueEnding.className = 'rds-copy-value-text';
-    valueEnding.textContent = displayValue.slice(-1).join('');
-
-    const valueTail = document.createElement('span');
-    valueTail.className = 'rds-copy-value-tail';
-
-    const copyIcon = document.createElement('img');
-    copyIcon.className = 'rds-copy-value-copy-icon';
-    copyIcon.src = '/assets/no-auth/copy-icon.svg';
-    copyIcon.alt = '';
-
-    this._copyIconButton = document.createElement('button');
-    this._copyIconButton.type = 'button';
-    this._copyIconButton.className = 'rds-copy-value-copy';
-    this._copyIconButton.setAttribute('aria-label', `Copy ${this._copyLabel} ${this._value}`);
-    this._copyIconButton.appendChild(copyIcon);
-
-    const actions = document.createElement('span');
-    actions.className = 'rds-copy-value-actions';
-    if (!copyOnly) {
-      const openLink = document.createElement('a');
-      openLink.className = 'rds-copy-value-open';
-      openLink.href = this._value;
-      openLink.target = '_blank';
-      openLink.rel = 'noopener noreferrer';
-      openLink.setAttribute('aria-label', `Open URI in a new tab: ${this._value}`);
-
-      const openIcon = document.createElement('img');
-      openIcon.src = '/assets/no-auth/arrow.svg';
-      openIcon.alt = '';
-      openLink.appendChild(openIcon);
-      openLink.addEventListener('click', event => {
-        event.stopPropagation();
-        openLink.blur();
-      });
-      actions.appendChild(openLink);
-    }
-    actions.appendChild(this._copyIconButton);
-
-    valueTail.append(valueEnding, actions);
-    this.replaceChildren(valueText, valueTail);
-
-    this._copyIconButton.addEventListener('click', event => {
-      event.stopPropagation();
-      this._copy();
-    });
-
-  }
-
-  async _copy() {
-    clearTimeout(this._resetTimer);
-
-    try {
-      await writeToClipboard(this._value);
-      this.classList.add('is-copied');
-      this._copyIconButton.blur();
-      this._copyIconButton.setAttribute('aria-label', `${this._copyLabel} copied`);
-      this._resetTimer = setTimeout(() => {
-        this.classList.remove('is-copied');
-        this._copyIconButton.setAttribute('aria-label', `Copy ${this._copyLabel} ${this._value}`);
-      }, 900);
-    } catch (error) {
-      console.error(`Could not copy ${this._copyLabel}`, error);
-      this._copyIconButton.setAttribute('aria-label', `Could not copy ${this._copyLabel}`);
-    }
-  }
-
-  disconnectedCallback() {
-    clearTimeout(this._resetTimer);
-  }
-}
-
-customElements.define('rds-copy-value', RdsCopyValue);
+document.addEventListener('pointerdown', event => {
+  rdsLastPointerType = event.pointerType;
+}, true);
 
 document.addEventListener('click', event => {
   const active = RdsCopyPopover.active;
   const clickedInside =
     active?.contains(event.target) || active?._popup?.contains(event.target);
-  if (active && !clickedInside) active.close();
+  if (!active || clickedInside) return;
+
+  active.close();
+
+  const isTouch = (event.pointerType || rdsLastPointerType) === 'touch';
+  const opensRecord =
+    event.target.closest('.single-row') &&
+    !event.target.closest(
+      'a, button, input, select, textarea, rds-copy-popover, rds-record-select'
+    );
+  if (isTouch && opensRecord) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 }, true);
 
 document.addEventListener('keydown', event => {
@@ -636,4 +730,13 @@ document.addEventListener('keydown', event => {
   if (event.key !== 'Escape' || !active) return;
   active.close();
   active._trigger.focus();
+});
+
+window.addEventListener('scroll', event => {
+  const active = RdsCopyPopover.active;
+  if (active && !active._popup?.contains(event.target)) active.close();
+}, true);
+
+window.addEventListener('resize', () => {
+  RdsCopyPopover.active?.close();
 });
