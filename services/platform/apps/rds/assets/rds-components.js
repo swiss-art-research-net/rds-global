@@ -387,7 +387,7 @@ async function writeToClipboard(value) {
 
 const RDS_ACTION_ICONS = {
   copy: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M11 3H3V11H11V3Z" stroke="currentColor" stroke-width="1.5"/><path d="M1 9V1H9" stroke="currentColor" stroke-width="1.5"/></svg>',
-  copied: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 6.5L4.5 9.5L10.5 2.5" stroke="currentColor" stroke-width="1.6"/></svg>',
+  copied: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1 0V4H8" transform="translate(2 2.5) rotate(-45 4 2.5)" stroke="currentColor" stroke-width="2"/></svg>',
   source: '<svg width="11" height="12" viewBox="0 0 11 12" aria-hidden="true"><path d="M1.1201 11.0144L0 9.89426L8.32898 1.55091H1.89556L1.90992 0H11V9.10444H9.43473L9.44909 2.67102L1.1201 11.0144Z" fill="currentColor"/></svg>',
   rds: '<svg width="16" height="10" viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6H16M11 1L16 6L11 11" stroke="currentColor" stroke-width="1.5"/></svg>',
   close: '<svg width="10" height="10" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M18.4985 0L10.0005 8.49798L1.50255 0L0 1.50202L8.49851 10L0 18.498L1.50255 20L10.0005 11.502L18.4985 20L20.0011 18.498L11.5025 10L20.0011 1.50202L18.4985 0Z" fill="currentColor"/></svg>'
@@ -449,9 +449,40 @@ class RdsCopyPopover extends HTMLElement {
     popup.setAttribute('role', 'dialog');
     popup.setAttribute('aria-label', `Actions for ${this._uri}`);
 
+    this._preview = document.createElement('div');
+    this._preview.className = 'rds-copy-popover-preview';
+    this._preview.setAttribute('aria-hidden', 'true');
+
+    this._previewIcon = document.createElement('span');
+    this._previewIcon.className = 'rds-copy-popover-preview-icon';
+    this._previewIcon.innerHTML = RDS_ACTION_ICONS.copied;
+    this._previewIcon.hidden = true;
+
+    this._previewVerb = document.createElement('span');
+    this._previewVerb.className = 'rds-copy-popover-preview-verb';
+
+    this._previewStart = document.createElement('span');
+    this._previewStart.className = 'rds-copy-popover-preview-start';
+
+    this._previewEnd = document.createElement('span');
+    this._previewEnd.className = 'rds-copy-popover-preview-end';
+
+    const previewValue = document.createElement('span');
+    previewValue.className = 'rds-copy-popover-preview-value';
+    previewValue.append(this._previewStart, this._previewEnd);
+
+    this._preview.append(this._previewIcon, this._previewVerb, previewValue);
+    popup.appendChild(this._preview);
+
     const controls = document.createElement('div');
     controls.className = 'rds-copy-popover-controls';
     popup.appendChild(controls);
+
+    const previewTarget = event => event.target.closest('.rds-copy-popover-action');
+    controls.addEventListener('pointerover', event => this._showPreview(previewTarget(event)));
+    controls.addEventListener('pointerleave', () => this._showPreview(null));
+    controls.addEventListener('focusin', event => this._showPreview(previewTarget(event)));
+    controls.addEventListener('focusout', () => this._showPreview(null));
 
     controls.appendChild(this._createCopyAction('URI', this._uri));
     if (this._recordId) {
@@ -462,7 +493,8 @@ class RdsCopyPopover extends HTMLElement {
         'Source',
         this._uri,
         RDS_ACTION_ICONS.source,
-        `Open at source in a new tab: ${this._uri}`
+        `Open at source in a new tab: ${this._uri}`,
+        this._uri.replace(/^https?:\/\//, '').split('/')[0]
       )
     );
     if (this._isRdsRecord) {
@@ -471,7 +503,8 @@ class RdsCopyPopover extends HTMLElement {
           'Open in RDS',
           `/resource/?uri=${encodeURIComponent(this._uri)}`,
           RDS_ACTION_ICONS.rds,
-          `Open the RDS record in a new tab: ${this._uri}`
+          `Open the RDS record in a new tab: ${this._uri}`,
+          'RDS record'
         )
       );
     }
@@ -506,12 +539,32 @@ class RdsCopyPopover extends HTMLElement {
     clearTimeout(this._leaveTimer);
   }
 
+  _showPreview(action, verb) {
+    if (this._previewLocked && !verb) return;
+
+    if (!action) {
+      this._preview.classList.remove('is-visible');
+      return;
+    }
+
+    const value = action.dataset.previewValue;
+    const tailLength = 6;
+    const isLong = value.length > tailLength + 6;
+    this._previewIcon.hidden = !verb;
+    this._previewVerb.textContent = verb || action.dataset.previewVerb;
+    this._previewStart.textContent = isLong ? value.slice(0, -tailLength) : '';
+    this._previewEnd.textContent = isLong ? value.slice(-tailLength) : value;
+    this._preview.classList.add('is-visible');
+  }
+
   _createCopyAction(label, value) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'rds-copy-popover-action';
     button.dataset.copyValue = value;
     button.dataset.copyLabel = label;
+    button.dataset.previewVerb = 'Copy';
+    button.dataset.previewValue = value;
     button.setAttribute('aria-label', `Copy ${label} ${value}`);
 
     const icon = document.createElement('span');
@@ -526,9 +579,11 @@ class RdsCopyPopover extends HTMLElement {
     return button;
   }
 
-  _createLinkAction(label, href, iconMarkup, ariaLabel) {
+  _createLinkAction(label, href, iconMarkup, ariaLabel, previewValue) {
     const link = document.createElement('a');
     link.className = 'rds-copy-popover-action';
+    link.dataset.previewVerb = 'Open';
+    link.dataset.previewValue = previewValue;
     link.href = href;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
@@ -631,10 +686,11 @@ class RdsCopyPopover extends HTMLElement {
     const triggerBox = this._trigger.getBoundingClientRect();
     const firstLine = this._trigger.getClientRects()[0] || triggerBox;
     const popupBox = this._popup.getBoundingClientRect();
+    const previewHeight = this._preview.offsetHeight;
     const navBottom = document.querySelector('.nav-bar')?.getBoundingClientRect().bottom || 0;
     const minTop = Math.max(viewportMargin, navBottom);
 
-    const fitsAbove = firstLine.top - popupBox.height - gap >= minTop;
+    const fitsAbove = firstLine.top - popupBox.height - previewHeight - gap >= minTop;
     const top = fitsAbove
       ? firstLine.top - popupBox.height - gap
       : triggerBox.bottom + gap;
@@ -661,6 +717,8 @@ class RdsCopyPopover extends HTMLElement {
     if (!this._popup) return;
 
     const hadFocus = this._popup.contains(document.activeElement);
+    this._previewLocked = false;
+    this._showPreview(null);
     this._resetActions();
     this._status.textContent = '';
     this._popup.hidden = true;
@@ -688,6 +746,8 @@ class RdsCopyPopover extends HTMLElement {
       action.classList.add('is-copied');
       action.querySelector('.rds-copy-popover-icon').innerHTML = RDS_ACTION_ICONS.copied;
       action.querySelector('.rds-copy-popover-text').textContent = 'Copied';
+      this._showPreview(action, 'Copied');
+      this._previewLocked = true;
       this._status.textContent = `${label} copied`;
       this._closeTimer = setTimeout(() => this.close(), 900);
     } catch (error) {
