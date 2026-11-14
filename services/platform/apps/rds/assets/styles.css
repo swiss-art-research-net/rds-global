@@ -1301,7 +1301,7 @@ rds-copy-popover > .rds-copy-trigger[aria-expanded='true'] {
   line-height: 1.2;
   white-space: nowrap;
   box-sizing: border-box;
-  pointer-events: none;
+  cursor: pointer;
   visibility: hidden;
 }
 .rds-copy-popover-preview.is-visible {
@@ -1367,7 +1367,8 @@ rds-copy-popover > .rds-copy-trigger[aria-expanded='true'] {
   cursor: pointer;
 }
 .rds-copy-popover-action:hover,
-.rds-copy-popover-action:focus-visible {
+.rds-copy-popover-action:focus-visible,
+.rds-copy-popover-action.is-previewed {
   background: #DEE7ED;
   color: #000000;
   text-decoration: none;

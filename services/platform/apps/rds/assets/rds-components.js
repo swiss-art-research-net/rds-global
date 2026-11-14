@@ -472,6 +472,7 @@ class RdsCopyPopover extends HTMLElement {
     previewValue.append(this._previewStart, this._previewEnd);
 
     this._preview.append(this._previewIcon, this._previewVerb, previewValue);
+    this._preview.addEventListener('mousedown', event => event.preventDefault());
     popup.appendChild(this._preview);
 
     const controls = document.createElement('div');
@@ -479,8 +480,15 @@ class RdsCopyPopover extends HTMLElement {
     popup.appendChild(controls);
 
     const previewTarget = event => event.target.closest('.rds-copy-popover-action');
-    controls.addEventListener('pointerover', event => this._showPreview(previewTarget(event)));
-    controls.addEventListener('pointerleave', () => this._showPreview(null));
+    popup.addEventListener('pointerover', event => {
+      const action = previewTarget(event);
+      if (action) {
+        this._showPreview(action);
+      } else if (event.target.closest('.rds-copy-popover-close')) {
+        this._showPreview(null);
+      }
+    });
+    popup.addEventListener('pointerleave', () => this._showPreview(null));
     controls.addEventListener('focusin', event => this._showPreview(previewTarget(event)));
     controls.addEventListener('focusout', () => this._showPreview(null));
 
@@ -542,10 +550,15 @@ class RdsCopyPopover extends HTMLElement {
   _showPreview(action, verb) {
     if (this._previewLocked && !verb) return;
 
+    this._previewAction?.classList.remove('is-previewed');
+    this._previewAction = action || null;
+
     if (!action) {
       this._preview.classList.remove('is-visible');
       return;
     }
+
+    action.classList.add('is-previewed');
 
     const value = action.dataset.previewValue;
     const tailLength = 6;
@@ -631,6 +644,17 @@ class RdsCopyPopover extends HTMLElement {
 
   _handlePopupClick(event) {
     event.stopPropagation();
+
+    if (this._preview.contains(event.target)) {
+      const action = this._previewAction;
+      if (!action) return;
+      if (action.dataset.copyValue !== undefined) {
+        this._copy(action);
+      } else {
+        action.click();
+      }
+      return;
+    }
 
     const copyAction = event.target.closest('[data-copy-value]');
     if (copyAction) {

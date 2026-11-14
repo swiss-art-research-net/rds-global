@@ -483,7 +483,7 @@ rds-copy-popover {
   line-height: 1.2;
   white-space: nowrap;
   box-sizing: border-box;
-  pointer-events: none;
+  cursor: pointer;
   visibility: hidden;
 
   &.is-visible {
@@ -559,7 +559,8 @@ rds-copy-popover {
   cursor: pointer;
 
   &:hover,
-  &:focus-visible {
+  &:focus-visible,
+  &.is-previewed {
     background: @col-highlight-dark;
     color: @col-black;
     text-decoration: none;
