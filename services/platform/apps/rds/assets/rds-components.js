@@ -687,10 +687,7 @@ class RdsCopyPopover extends HTMLElement {
     const firstLine = this._trigger.getClientRects()[0] || triggerBox;
     const popupBox = this._popup.getBoundingClientRect();
     const previewHeight = this._preview.offsetHeight;
-    const navBottom = document.querySelector('.nav-bar')?.getBoundingClientRect().bottom || 0;
-    const minTop = Math.max(viewportMargin, navBottom);
-
-    const fitsAbove = firstLine.top - popupBox.height - previewHeight - gap >= minTop;
+    const fitsAbove = firstLine.top - popupBox.height - previewHeight - gap >= 0;
     const top = fitsAbove
       ? firstLine.top - popupBox.height - gap
       : triggerBox.bottom + gap;
