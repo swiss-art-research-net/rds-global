@@ -27,7 +27,9 @@
               <span class="detail-property">Dataset</span>
               <span class="detail-value">
                 <rds-copy-popover uri="{{subjectUri}}" record-id="{{recordId}}" placement="left">
-                  <button type="button" class="rds-badge" data-ds="{{dataset}}">{{dataset}}</button>
+                  <button type="button" class="rds-badge" data-ds="{{dataset}}">
+                    <rds-dataset-label key="{{dataset}}"></rds-dataset-label>
+                  </button>
                 </rds-copy-popover>
               </span>
             </div>
