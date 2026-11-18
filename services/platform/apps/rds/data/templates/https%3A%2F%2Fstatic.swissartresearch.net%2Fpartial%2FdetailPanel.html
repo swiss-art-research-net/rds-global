@@ -20,6 +20,33 @@
           </mp-event-trigger>
         </div>
 
+        {{#ifCond memberCount ">" 1}}
+          <div class="detail-panel-graph is-closed">
+            <rds-panel-graph current="{{subjectUri}}" hidden></rds-panel-graph>
+            <button type="button" class="detail-panel-graph-toggle" aria-label="Graph" aria-expanded="false">
+              <svg width="17" height="10" viewBox="0 0 24 14" aria-hidden="true">
+                <polyline points="2,2 12,12 22,2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            </button>
+            <div class="detail-panel-graph-map">
+              [[> partial:groupLinkMap]]
+            </div>
+            <div class="detail-panel-graph-badges">
+              {{#each rows}}
+                <button
+                  type="button"
+                  class="rds-badge"
+                  data-ds="{{dataset.value}}"
+                  data-uri="{{subject.value}}"
+                  aria-label="Show {{dataset.value}} record {{prefLabel.value}}"
+                >
+                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                </button>
+              {{/each}}
+            </div>
+          </div>
+        {{/ifCond}}
+
         <div class="detail-panel-content">
 
           <div class="detail-panel-section detail-panel-summary">
@@ -53,7 +80,7 @@
 
           {{#if localMatches}}
             <semantic-query
-              query='SELECT ?related ?datasetKey ?external (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="|||") AS ?labels) WHERE {
+              query='SELECT ?related ?datasetKey ?external ?groupNode (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR="|||") AS ?labels) WHERE {
                 VALUES ?related {
                   {{#each localMatches}}
                     <{{this}}>
@@ -77,9 +104,21 @@
                     ?related rds:label ?label .
                   }
                 }
+                OPTIONAL {
+                  SELECT ?related (?datasetLabel AS ?prefixLabel) WHERE {
+                    VALUES ?related {
+                      {{#each localMatches}}
+                        <{{this}}>
+                      {{/each}}
+                    }
+                    [[> partial:valuesDatasetLabels]]
+                    FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
+                  }
+                }
                 BIND(REPLACE(STR(?related), "^https?://([^/?#]+).*$", "$1") AS ?external)
+                BIND(IRI(CONCAT("urn:rds:link-map:outside:", ENCODE_FOR_URI(COALESCE(?prefixLabel, ?external)))) AS ?groupNode)
               }
-              GROUP BY ?related ?datasetKey ?external'
+              GROUP BY ?related ?datasetKey ?external ?groupNode'
               template="{{> source-links}}"
               no-result-template=""
             >
@@ -126,7 +165,7 @@
         <div class="detail-section-title">Links from source record</div>
         <rds-item-truncate class="detail-related-list" limit="5">
           {{#each bindings}}
-            <div class="detail-row detail-related-record">
+            <div class="detail-row detail-related-record" data-node="{{related.value}}" data-group-node="{{groupNode.value}}">
               {{#if datasetKey.value}}
                 <rds-copy-popover uri="{{related.value}}">
                   <button type="button" class="rds-badge" data-ds="{{datasetKey.value}}">

@@ -42,6 +42,87 @@
   }
 }
 
+.detail-panel-graph {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-bottom: 1px solid @col-black;
+}
+
+.detail-panel-graph-toggle {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: @col-black;
+  cursor: pointer;
+
+  svg {
+    display: block;
+    transform: rotate(180deg);
+  }
+
+  &[aria-expanded="false"] svg {
+    transform: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .detail-panel-graph-toggle:hover {
+    background: @col-highlight;
+  }
+}
+
+.detail-panel-graph.is-closed .detail-panel-graph-map {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.detail-panel-graph-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 25px;
+  padding-right: 40px;
+
+  &[hidden] {
+    display: none;
+  }
+
+  > .rds-badge {
+    background: transparent;
+    color: @col-black;
+    cursor: pointer;
+  }
+
+  > .rds-badge.is-current {
+    background: @col-black;
+    color: @col-bg;
+    cursor: default;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .detail-panel-graph-badges > .rds-badge:not(.is-current):hover {
+    background: @col-highlight;
+  }
+}
+
+.detail-related-record.is-graph-highlighted {
+  background: @col-highlight;
+  box-shadow: -8px 0 0 @col-highlight, 8px 0 0 @col-highlight;
+}
+
 .detail-panel-content {
   flex-grow: 1;
   overflow-y: auto;

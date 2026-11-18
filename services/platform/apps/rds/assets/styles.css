@@ -149,6 +149,75 @@
   font-size: 28px;
   font-weight: 400;
 }
+.detail-panel-graph {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-bottom: 1px solid #000000;
+}
+.detail-panel-graph-toggle {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+}
+.detail-panel-graph-toggle svg {
+  display: block;
+  transform: rotate(180deg);
+}
+.detail-panel-graph-toggle[aria-expanded="false"] svg {
+  transform: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-panel-graph-toggle:hover {
+    background: #ECF0F3;
+  }
+}
+.detail-panel-graph.is-closed .detail-panel-graph-map {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+.detail-panel-graph-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 25px;
+  padding-right: 40px;
+}
+.detail-panel-graph-badges[hidden] {
+  display: none;
+}
+.detail-panel-graph-badges > .rds-badge {
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+}
+.detail-panel-graph-badges > .rds-badge.is-current {
+  background: #000000;
+  color: #F9FAFB;
+  cursor: default;
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-panel-graph-badges > .rds-badge:not(.is-current):hover {
+    background: #ECF0F3;
+  }
+}
+.detail-related-record.is-graph-highlighted {
+  background: #ECF0F3;
+  box-shadow: -8px 0 0 #ECF0F3, 8px 0 0 #ECF0F3;
+}
 .detail-panel-content {
   flex-grow: 1;
   overflow-y: auto;

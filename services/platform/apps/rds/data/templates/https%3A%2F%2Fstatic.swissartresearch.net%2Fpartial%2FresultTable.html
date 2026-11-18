@@ -84,7 +84,6 @@
       <div class="group-members-summary">
         <div class="group-members-count">{{memberCount}} equivalent records</div>
         <div class="group-members-label">{{rows.0.prefLabel.value}}</div>
-        [[> partial:groupLinkMap]]
       </div>
       <div class="group-members-list">
         {{#each rows}}
@@ -109,9 +108,15 @@
                   "prefLabel": {{stringify prefLabel.value}},
                   "dataset": {{stringify dataset.value}},
                   "rdsType": {{stringify typeClass.value}},
-                  "matches": [{{#each (arraySplit matches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
                   "localMatches": [{{#each (arraySplit localMatches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
-                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}]}'
+                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
+                  "memberCount": {{../memberCount}},
+                  "rows": [{{#each ../rows}} {
+                    "subject": { "value": {{stringify subject.value}} },
+                    "prefLabel": { "value": {{stringify prefLabel.value}} },
+                    "dataset": { "value": {{stringify dataset.value}} },
+                    "localMatches": { "value": {{stringify localMatches.value}} }
+                  }{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select
                   class="single-row-link"

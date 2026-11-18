@@ -634,91 +634,38 @@ document.addEventListener('keydown', event => {
   active._trigger.focus();
 });
 
+function selectedGroupRows() {
+  const group = document.querySelector('.single-row.is-selected')?.closest('.group-members');
+  return Array.from(group?.querySelectorAll('rds-graph-hover') || []);
+}
+
+function findGroupRow(uri) {
+  return selectedGroupRows().find(marker => marker.getAttribute('uri') === uri)?.closest('.single-row') || null;
+}
+
+function selectGroupRecord(uri) {
+  findGroupRow(uri)?.querySelector('rds-record-select')?.click();
+}
+
 class RdsGraphHover extends HTMLElement {
   connectedCallback() {
     this._row = this.closest('.single-row');
-    this._enter = () => this._highlight();
-    this._leave = () => this._clear();
+    this._enter = () => this._focus(this.getAttribute('uri'));
+    this._leave = () => this._focus(null);
     this._focusOut = event => {
-      if (!this._row.contains(event.relatedTarget)) this._clear();
+      if (!this._row.contains(event.relatedTarget)) this._focus(null);
     };
     this._row?.addEventListener('mouseenter', this._enter);
     this._row?.addEventListener('mouseleave', this._leave);
     this._row?.addEventListener('focusin', this._enter);
     this._row?.addEventListener('focusout', this._focusOut);
-    this._graphEnter = event => {
-      const node = event.cyTarget || event.target;
-      if (node.data('node')?.value !== this.getAttribute('uri')) return;
-      this._row.classList.add('is-graph-highlighted');
-      this._highlight();
-    };
-    this._graphLeave = event => {
-      const node = event.cyTarget || event.target;
-      if (node.data('node')?.value !== this.getAttribute('uri')) return;
-      this._row.classList.remove('is-graph-highlighted');
-      this._clear();
-    };
-    this._canvasLeave = () => {
-      this._row.classList.remove('is-graph-highlighted');
-      this._clear();
-    };
-    this._bindGraph = () => {
-      const group = this.closest('.group-members');
-      const container = Array.from(group?.querySelectorAll('.group-link-map div') || [])
-        .find(element => element._cyreg?.cy);
-      const cy = container?._cyreg?.cy;
-      if (cy === this._graph) return;
-      if (this._graph) {
-        this._graph.off('mouseover', 'node', this._graphEnter);
-        this._graph.off('mouseout', 'node', this._graphLeave);
-      }
-      this._graphContainer?.removeEventListener('mouseleave', this._canvasLeave);
-      this._graphContainer = container;
-      container?.addEventListener('mouseleave', this._canvasLeave);
-      this._graph = cy;
-      if (cy) {
-        cy.on('mouseover', 'node', this._graphEnter);
-        cy.on('mouseout', 'node', this._graphLeave);
-      }
-    };
-    this._bindGraph();
-    this._graphTimer = setInterval(this._bindGraph, 500);
   }
 
-  _highlight() {
-    const group = this.closest('.group-members');
-    const container = Array.from(group?.querySelectorAll('.group-link-map div') || [])
-      .find(element => element._cyreg?.cy);
-    const cy = container?._cyreg?.cy;
-    if (!cy || cy.destroyed?.()) return;
-    this._clear();
-    const node = cy.nodes().filter((index, element) => element.data('node')?.value === this.getAttribute('uri'));
-    if (!node.length) return;
-    this._cy = cy;
-    cy.batch(() => {
-      const connected = node.closedNeighborhood();
-      cy.elements().difference(connected).addClass('rds-map-muted');
-      node.addClass('rds-map-active');
-      node.connectedEdges().addClass('rds-map-active');
-    });
-  }
-
-  _clear() {
-    if (this._cy && !this._cy.destroyed?.()) {
-      this._cy.elements().removeClass('rds-map-muted rds-map-active');
-    }
-    this._cy = null;
+  _focus(uri) {
+    document.dispatchEvent(new CustomEvent('rds-graph-focus', { detail: { uri } }));
   }
 
   disconnectedCallback() {
-    clearInterval(this._graphTimer);
-    this._graphContainer?.removeEventListener('mouseleave', this._canvasLeave);
-    if (this._graph) {
-      this._graph.off('mouseover', 'node', this._graphEnter);
-      this._graph.off('mouseout', 'node', this._graphLeave);
-    }
-    this._row?.classList.remove('is-graph-highlighted');
-    this._clear();
     this._row?.removeEventListener('mouseenter', this._enter);
     this._row?.removeEventListener('mouseleave', this._leave);
     this._row?.removeEventListener('focusin', this._enter);
@@ -727,3 +674,161 @@ class RdsGraphHover extends HTMLElement {
 }
 
 customElements.define('rds-graph-hover', RdsGraphHover);
+
+let rdsPanelGraphOpen = false;
+
+class RdsPanelGraph extends HTMLElement {
+  connectedCallback() {
+    if (this._initialized) return;
+    this._initialized = true;
+    this._current = this.getAttribute('current');
+    this._root = this.closest('.detail-panel-graph');
+    this._panel = this.closest('.detail-panel');
+
+    this._onRootClick = event => {
+      if (event.target.closest('.detail-panel-graph-toggle')) {
+        rdsPanelGraphOpen = !rdsPanelGraphOpen;
+        this._render();
+        if (rdsPanelGraphOpen) requestAnimationFrame(() => {
+          this._cy?.resize();
+          this._place();
+        });
+        return;
+      }
+      const badge = event.target.closest('.detail-panel-graph-badges [data-uri]');
+      if (badge && badge.dataset.uri !== this._current) selectGroupRecord(badge.dataset.uri);
+    };
+    this._onExternalFocus = event => this._mark(event.detail.uri);
+    this._onPanelOver = event => {
+      const badge = event.target.closest('.detail-panel-graph-badges [data-uri]');
+      const item = event.target.closest('.detail-related-record[data-node]');
+      if (badge) this._mark(badge.dataset.uri);
+      else if (item) this._mark(this._itemNode(item), true);
+      else if (!event.target.closest('.detail-panel-graph-map')) this._mark(null);
+    };
+    this._onPanelLeave = () => this._mark(null);
+
+    this._root?.addEventListener('click', this._onRootClick);
+    this._panel?.addEventListener('mouseover', this._onPanelOver);
+    this._panel?.addEventListener('mouseleave', this._onPanelLeave);
+    document.addEventListener('rds-graph-focus', this._onExternalFocus);
+
+    this._render();
+    this._bindGraph();
+    this._bindTimer = setInterval(() => this._bindGraph(), 300);
+  }
+
+  _render() {
+    if (!this._root) return;
+    const toggle = this._root.querySelector('.detail-panel-graph-toggle');
+    const badges = this._root.querySelector('.detail-panel-graph-badges');
+    this._root.classList.toggle('is-closed', !rdsPanelGraphOpen);
+    toggle?.setAttribute('aria-expanded', String(rdsPanelGraphOpen));
+    if (badges) badges.hidden = rdsPanelGraphOpen;
+    badges?.querySelectorAll('[data-uri]').forEach(badge => {
+      const isCurrent = badge.dataset.uri === this._current;
+      badge.classList.toggle('is-current', isCurrent);
+      badge.setAttribute('aria-pressed', String(isCurrent));
+    });
+  }
+
+  _bindGraph() {
+    const container = Array.from(this._root?.querySelectorAll('.detail-panel-graph-map div') || [])
+      .find(element => element._cyreg?.cy);
+    const cy = container?._cyreg?.cy;
+    if (!cy || cy === this._cy) return;
+    this._cy = cy;
+    this._container = container;
+
+    cy.off('tap', 'node');
+    cy.off('tap', 'edge');
+    cy.on('tap', 'node', event => {
+      const uri = this._nodeId(event.cyTarget || event.target);
+      if (uri !== this._current && findGroupRow(uri)) selectGroupRecord(uri);
+    });
+    cy.on('mouseover', 'node', event => {
+      const uri = this._nodeId(event.cyTarget || event.target);
+      container.style.cursor = uri !== this._current && findGroupRow(uri) ? 'pointer' : '';
+      this._mark(uri);
+    });
+    cy.on('mouseout', 'node', () => {
+      container.style.cursor = '';
+      this._mark(null);
+    });
+    cy.on('layoutstop', () => this._place());
+    cy.on('viewport', () => {
+      if (!this._placing && Math.abs(cy.zoom() - (this._zoom || 1)) > 0.001) this._place();
+    });
+    this._place();
+  }
+
+  _nodeId(node) {
+    return node?.data('node')?.value || null;
+  }
+
+  _node(uri) {
+    if (!this._cy || !uri) return null;
+    const node = this._cy.nodes().filter((index, element) => this._nodeId(element) === uri);
+    return node.length ? node : null;
+  }
+
+  _itemNode(item) {
+    return this._node(item.dataset.node) ? item.dataset.node : item.dataset.groupNode;
+  }
+
+  _place() {
+    const cy = this._cy;
+    if (!cy || cy.destroyed?.() || !cy.nodes().length) return;
+    const box = cy.elements().boundingBox();
+    const width = cy.width();
+    const zoom = box.w > width - 8 ? (width - 8) / box.w : 1;
+    this._placing = true;
+    this._zoom = zoom;
+    cy.zoom(zoom);
+    cy.pan({ x: (width - box.w * zoom) / 2 - box.x1 * zoom, y: 10 - box.y1 * zoom });
+    this._placing = false;
+    this._mark(null);
+  }
+
+  _mark(uri, pair) {
+    const cy = this._cy;
+    if (cy && !cy.destroyed?.()) {
+      const current = this._node(this._current);
+      const target = this._node(uri);
+      cy.batch(() => {
+        cy.elements().removeClass('rds-map-muted');
+        if (pair && current && target) {
+          const keep = current.union(target).union(current.edgesWith(target));
+          cy.elements().difference(keep).addClass('rds-map-muted');
+        } else {
+          const focus = target || current;
+          if (focus) cy.elements().difference(focus.closedNeighborhood()).addClass('rds-map-muted');
+        }
+      });
+    }
+
+    this._panel?.querySelectorAll('.detail-related-record[data-node]').forEach(item => {
+      item.classList.toggle('is-graph-highlighted', uri !== null && this._itemNode(item) === uri);
+    });
+    selectedGroupRows().forEach(marker => {
+      marker.closest('.single-row')?.classList.toggle(
+        'is-graph-highlighted',
+        uri !== null && marker.getAttribute('uri') === uri
+      );
+    });
+  }
+
+  disconnectedCallback() {
+    clearInterval(this._bindTimer);
+    this._root?.removeEventListener('click', this._onRootClick);
+    this._panel?.removeEventListener('mouseover', this._onPanelOver);
+    this._panel?.removeEventListener('mouseleave', this._onPanelLeave);
+    document.removeEventListener('rds-graph-focus', this._onExternalFocus);
+    document.querySelectorAll('.single-row.is-graph-highlighted')
+      .forEach(row => row.classList.remove('is-graph-highlighted'));
+    this._initialized = false;
+    this._cy = null;
+  }
+}
+
+customElements.define('rds-panel-graph', RdsPanelGraph);
