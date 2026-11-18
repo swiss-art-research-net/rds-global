@@ -70,37 +70,40 @@
 
 [[#*inline "resource-header"]]
   <div class="rds-resource-header">
-    <div class="rds-resource-header-top">
-      <div class="rds-resource-title-row">
-        <h1><mp-label iri="[[this]]"></mp-label></h1>
-        <semantic-query
-          query='SELECT ?dataset WHERE {
-            BIND(?? AS ?subject)
-            [[> partial:valuesDatasetLabels]]
-            FILTER(STRSTARTS(STR(?subject), ?datasetPrefix))
-          }
-          LIMIT 1'
-          template="{{> dataset-badge}}"
-          no-result-template=""
-        >
-          <template id="dataset-badge">
-            {{#each bindings}}
-              <rds-copy-popover uri="[[this]]" placement="left">
-                <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                  <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                </button>
-              </rds-copy-popover>
-            {{/each}}
-          </template>
-        </semantic-query>
-      </div>
-    </div>
-    <div class="rds-resource-meta">
-      <span class="rds-resource-meta-key">URI:</span>
-      <span class="rds-resource-meta-value">
-        <rds-copy-value value="[[this]]">[[this]]</rds-copy-value>
-      </span>
-    </div>
+    <semantic-query
+      query='SELECT ?dataset WHERE {
+        OPTIONAL {
+          ?? a ?type .
+          [[> partial:valuesDatasetLabels]]
+          FILTER(STRSTARTS(STR(??), ?datasetPrefix))
+        }
+      }
+      LIMIT 1'
+      template="{{> resource-identity}}"
+    >
+      <template id="resource-identity">
+        {{#each bindings}}
+          <div class="rds-resource-header-top">
+            <div class="rds-resource-title-row">
+              <h1><mp-label iri="[[this]]"></mp-label></h1>
+              {{#if dataset.value}}
+                <rds-copy-popover uri="[[this]]" copy-id="true">
+                  <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
+                    <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
+                  </button>
+                </rds-copy-popover>
+              {{/if}}
+            </div>
+          </div>
+          <div class="rds-resource-meta">
+            <span class="rds-resource-meta-key">URI:</span>
+            <span class="rds-resource-meta-value">
+              <rds-copy-popover uri="[[this]]" copy-id="{{dataset.value}}">[[this]]</rds-copy-popover>
+            </span>
+          </div>
+        {{/each}}
+      </template>
+    </semantic-query>
     <semantic-query
       query='SELECT DISTINCT ?rdsType WHERE {
         ?? a ?rdsType .
@@ -149,7 +152,7 @@
     <div class="detail-row">
       <span class="detail-property">URI</span>
       <span class="detail-value">
-        <rds-copy-value value="[[this]]">[[this]]</rds-copy-value>
+        <rds-copy-popover uri="[[this]]" copy-id="{{dataset.value}}">[[this]]</rds-copy-popover>
       </span>
     </div>
     <div class="detail-row">
@@ -350,22 +353,20 @@
             <rds-item-truncate class="detail-related-list" limit="3">
               {{#each bindings}}
                 <div class="detail-row detail-related-record">
-                  {{#if dataset.value}}
-                    <rds-copy-popover uri="{{related.value}}">
+                  <rds-copy-popover uri="{{related.value}}" rds-record="{{dataset.value}}">
+                    {{#if dataset.value}}
                       <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
                         <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
                       </button>
-                    </rds-copy-popover>
-                  {{else}}
-                    <span class="rds-badge">{{external.value}}</span>
-                  {{/if}}
+                    {{else}}
+                      <button type="button" class="rds-badge">{{external.value}}</button>
+                    {{/if}}
+                  </rds-copy-popover>
                   <div class="detail-related-content">
                     {{#if label.value}}
                       <div class="detail-related-label">{{label.value}}</div>
                     {{/if}}
-                    <rds-copy-value class="detail-related-uri" value="{{related.value}}">
-                      {{related.value}}
-                    </rds-copy-value>
+                    <rds-copy-popover class="detail-related-uri" uri="{{related.value}}" rds-record="{{dataset.value}}">{{related.value}}</rds-copy-popover>
                   </div>
                 </div>
               {{/each}}
@@ -408,7 +409,7 @@
             <rds-item-truncate class="detail-related-list" limit="3">
               {{#each bindings}}
                 <div class="detail-row detail-related-record">
-                  <rds-copy-popover uri="{{related.value}}">
+                  <rds-copy-popover uri="{{related.value}}" rds-record="true">
                     <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
                       <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
                     </button>
@@ -417,9 +418,7 @@
                     {{#if label.value}}
                       <div class="detail-related-label">{{label.value}}</div>
                     {{/if}}
-                    <rds-copy-value class="detail-related-uri" value="{{related.value}}">
-                      {{related.value}}
-                    </rds-copy-value>
+                    <rds-copy-popover class="detail-related-uri" uri="{{related.value}}" rds-record="{{dataset.value}}">{{related.value}}</rds-copy-popover>
                   </div>
                 </div>
               {{/each}}

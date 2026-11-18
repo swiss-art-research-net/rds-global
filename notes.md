@@ -67,7 +67,8 @@ curl -X POST 'http://127.0.0.1:9200/rds-entities/_update/http%3A%2F%2Fwww.wikida
   -d '{
     "doc": {
       "prefLabels": ["Bunk Johnson"],
-      "labels": ["Bunk Johnson"]
+      "labels": ["Bunk Johnson"],
+      "description": "American musician (1879-1949)"
     }
   }'
   ```
@@ -111,4 +112,12 @@ WHERE {
   }
 }
 SPARQL
+```
+
+## Errors when processing sameas statements
+
+Wikidata SameAs statements can contain extra spaces within LOC URIs. To fix them:
+
+```bash
+sed -i -E ':a; s|(<http://id\.loc\.gov/authorities/[^>]*)\s+([^>]*>)|\1\2|; ta' data/sameAsStatements/sources/wikidataSameAs.ttl
 ```

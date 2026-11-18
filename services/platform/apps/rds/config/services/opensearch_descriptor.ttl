@@ -11,7 +11,7 @@ PREFIX : <http://www.researchspace.org/resource/system/service/custom#>
 
 :OpenSearchService a ephedra:Service ;
 	sail:sailType "researchspace:RESTSail" ;
-	rdfs:label "A wrapper for the LibraryCloud service.";
+	rdfs:label "A wrapper for the OpenSearch connector.";
 	ephedra:hasSPARQLPattern (
 
     [

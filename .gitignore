@@ -29,3 +29,5 @@ services/platform/apps/rds-config/
 config/datasets.yml
 services/qlever-datasets/scripts/endpoints.csv
 services/search-evaluation/output/*
+services/jobs/pipeline/scripts/sameAsProcessing/processing_db/*
+services/jobs/pipeline/.task/checksum/*

@@ -110,7 +110,7 @@ tasks:
     cmds:
       - mkdir -p "{{.DIRECTORY_SAMEAS_STATEMENTS}}"
       - mkdir -p "{{.DIRECTORY_WIKIDATA_ENTITIES}}"
-      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "{{.WIKIDATA_ENDPOINT}}" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
+      - python /pipeline/scripts/fetchMatchesFromWikidata.py --endpoint "{{.QLEVER_ENDPOINT}}" --wikidata-endpoint "$WIKIDATA_ENDPOINT" --wikidata-properties-csv "{{.WIKIDATA_IDS_CSV}}" --output-directory "{{.DIRECTORY_SAMEAS_STATEMENTS}}" --output-wd-entities-directory "{{.DIRECTORY_WIKIDATA_ENTITIES}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}"
 
   generate-datasets-configuration:
     desc: Generate the unified datasets configuration
@@ -136,6 +136,8 @@ tasks:
     cmds:
       - task: fetch-all-sameas-statements
       - mkdir -p {{.DATA_DIRECTORY}}
+      # Clean up extra spaces in LOC URIs within Wikidata SameAs statements
+      - sed -i -E ':a; s|(<http://id\.loc\.gov/authorities/[^>]*)\s+([^>]*>)|\1\2|; ta' /data/sameAsStatements/sources/wikidataSameAs.ttl
       - task: process-sameas-statements
       - task: _prepareForIndexing
         vars:
@@ -169,7 +171,7 @@ tasks:
           var: DATASETS
           split: ','
           as: DATASET
-        cmd: python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
+        cmd: rm  -rf {{.OUTPUT_DIRECTORY}}/labels_{{.DATASET}}*.nq && python /pipeline/scripts/generateLabels.py --endpoint "{{.QLEVER_ENDPOINT}}" --config "{{.DATASETS_CONFIG_YML}}" --dataset "{{.DATASET}}" --output-directory "{{.OUTPUT_DIRECTORY}}" {{.CLI_ARGS}}
 
   generate-dataset-metadata:
     desc: Generate dataset metadata RDF
