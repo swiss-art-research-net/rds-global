@@ -115,7 +115,8 @@
                     "subject": { "value": {{stringify subject.value}} },
                     "prefLabel": { "value": {{stringify prefLabel.value}} },
                     "dataset": { "value": {{stringify dataset.value}} },
-                    "localMatches": { "value": {{stringify localMatches.value}} }
+                    "localMatches": { "value": {{stringify localMatches.value}} },
+                    "matches": { "value": {{stringify matches.value}} }
                   }{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select

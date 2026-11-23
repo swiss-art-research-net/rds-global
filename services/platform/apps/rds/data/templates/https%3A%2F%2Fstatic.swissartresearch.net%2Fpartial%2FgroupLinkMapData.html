@@ -2,14 +2,37 @@
           VALUES (?node ?index ?nodeDataset) {
             {{#each mapRecords}}{{#if displayIndex}} (<{{subject.value}}> {{displayIndex.value}} "{{nodeDataset.value}}") {{/if}}{{/each}}
           }
+          { SELECT (COUNT(DISTINCT ?pathNode) AS ?pathCount) WHERE { VALUES ?pathNode { {{#each mapRecords}}{{#unless displayIndex}} <{{subject.value}}> {{/unless}}{{/each}} } } }
           [[> partial:valuesDatasetLabels]]
           FILTER(?dataset = ?nodeDataset)
           BIND(?datasetLabel AS ?nodeLabel)
           BIND("member" AS ?scope)
-          BIND(IF({{mapRecords.0.memberCount.value}} < 3, 0, IF({{mapRecords.0.memberCount.value}} * 8 > 36, {{mapRecords.0.memberCount.value}} * 8, 36)) AS ?radiusY)
+          BIND(IF({{mapRecords.0.memberCount.value}} < 3, 0, IF({{mapRecords.0.memberCount.value}} * 8 > 36, {{mapRecords.0.memberCount.value}} * 8, 36) + IF(?pathCount > 0, 30, 0)) AS ?radiusY)
+          BIND(200 + IF(?pathCount > 1, 65 * (?pathCount - 1), 0) AS ?radiusX)
           BIND(6.283185307179586 * ?index / {{mapRecords.0.memberCount.value}} - 1.570796326794897 AS ?angle)
-          BIND(IF({{mapRecords.0.memberCount.value}} = 2, 180 * ?index - 90, 200 * math:cos(?angle)) AS ?x)
+          BIND(IF({{mapRecords.0.memberCount.value}} = 2, (2 * ?index - 1) * (90 + 65 * ?pathCount), ?radiusX * math:cos(?angle)) AS ?x)
           BIND(IF({{mapRecords.0.memberCount.value}} = 2, 0, ?radiusY * math:sin(?angle)) AS ?y)
+        }
+        UNION
+        {
+          VALUES (?node ?nodeDataset) {
+            {{#each mapRecords}}{{#unless displayIndex}} (<{{subject.value}}> "{{nodeDataset.value}}") {{/unless}}{{/each}}
+          }
+          {
+            SELECT ?node (COUNT(DISTINCT ?earlierNode) AS ?rank) WHERE {
+              VALUES ?node { {{#each mapRecords}}{{#unless displayIndex}} <{{subject.value}}> {{/unless}}{{/each}} }
+              VALUES ?earlierNode { {{#each mapRecords}}{{#unless displayIndex}} <{{subject.value}}> {{/unless}}{{/each}} }
+              FILTER(STR(?earlierNode) <= STR(?node))
+            }
+            GROUP BY ?node
+          }
+          { SELECT (COUNT(DISTINCT ?pathNode) AS ?pathCount) WHERE { VALUES ?pathNode { {{#each mapRecords}}{{#unless displayIndex}} <{{subject.value}}> {{/unless}}{{/each}} } } }
+          [[> partial:valuesDatasetLabels]]
+          FILTER(?dataset = ?nodeDataset)
+          BIND(?datasetLabel AS ?nodeLabel)
+          BIND("path" AS ?scope)
+          BIND(130 * (?rank - 1) - 65 * (?pathCount - 1) AS ?x)
+          BIND(0 AS ?y)
         }
         UNION
         {
@@ -27,22 +50,23 @@
             }
             GROUP BY ?groupLabel
           }
+          { SELECT (COUNT(DISTINCT ?pathNode) AS ?pathCount) WHERE { VALUES ?pathNode { {{#each mapRecords}}{{#unless displayIndex}} <{{subject.value}}> {{/unless}}{{/each}} } } }
           BIND(?groupNode AS ?node)
           BIND(CONCAT(?groupLabel, IF(?targetCount > 1, CONCAT(" × ", STR(?targetCount)), "")) AS ?nodeLabel)
           BIND(?rank - 1 AS ?position)
           BIND("outside" AS ?scope)
-          BIND(IF({{mapRecords.0.memberCount.value}} < 3, 0, IF({{mapRecords.0.memberCount.value}} * 8 > 36, {{mapRecords.0.memberCount.value}} * 8, 36)) AS ?radiusY)
+          BIND(IF({{mapRecords.0.memberCount.value}} < 3, 0, IF({{mapRecords.0.memberCount.value}} * 8 > 36, {{mapRecords.0.memberCount.value}} * 8, 36) + IF(?pathCount > 0, 30, 0)) AS ?radiusY)
           BIND(-180 + 180 * (?position - 3 * FLOOR(?position / 3)) AS ?x)
           BIND(?radiusY + 50 + 31 * FLOOR(?position / 3) AS ?y)
         }
         UNION
         {
-          VALUES (?source ?target) { {{#each mapRecords}}{{#if displayIndex}}{{#each (arraySplit localMatches.value)}} (<{{../subject.value}}> <{{this}}>) {{/each}}{{/if}}{{/each}} }
+          VALUES (?source ?target) { {{#each mapRecords}}{{#each (arraySplit localMatches.value)}} (<{{../subject.value}}> <{{this}}>) {{/each}}{{/each}} }
           FILTER(?source != ?target)
-          FILTER(?target IN ({{#each mapRecords}}{{#if displayIndex}} <{{subject.value}}>, {{/if}}{{/each}} <urn:rds:link-map:no-record>))
+          FILTER(?target IN ({{#each mapRecords}} <{{subject.value}}>, {{/each}} <urn:rds:link-map:no-record>))
           OPTIONAL {
             VALUES (?source ?target) {
-              {{#each mapRecords}}{{#if displayIndex}}{{#each (arraySplit localMatches.value)}} (<{{this}}> <{{../subject.value}}>) {{/each}}{{/if}}{{/each}}
+              {{#each mapRecords}}{{#each (arraySplit localMatches.value)}} (<{{this}}> <{{../subject.value}}>) {{/each}}{{/each}}
             }
             BIND(true AS ?mutual)
           }

@@ -1,16 +1,70 @@
+<div class="rds-link-map-loading" role="status" aria-label="Loading connections" style="position:relative;height:40px" hidden>
+  <div class="system-spinner" style="margin-top:0"><i class="system-spinner__icon material-icons-round" aria-hidden="true">motion_photos_on</i></div>
+</div>
+<div class="rds-link-map-error" role="alert" hidden>
+  <span></span>
+  <button type="button" class="rds-link-map-retry">Retry</button>
+</div>
+<div hidden>
+<rds-link-map-loader hidden rows="{{stringify rows}}" current="{{subjectUri}}" member-count="{{memberCount}}"></rds-link-map-loader>
+<mp-event-target-template-render id="rds-link-map-load" template="{{> groupLinkMapLoad}}">
+  <template id="groupLinkMapLoad">
+    {{#if requestId}}
+<div data-rds-request="{{requestId}}">
 <semantic-query
-  query='SELECT ?subject ?nodeDataset ?localMatches ?displayIndex ?memberCount ?current WHERE {
-    VALUES (?subject ?nodeDataset ?localMatches ?displayIndex) {
-      {{#each rows}}
-        (<{{subject.value}}> "{{dataset.value}}" {{stringify localMatches.value}} {{@index}})
-      {{/each}}
-    }
+  query='SELECT ?candidate ?displayRows ?memberCount ?current ?requestId WHERE {
+    BIND({{stringify (stringify rows)}} AS ?displayRows)
     BIND({{memberCount}} AS ?memberCount)
     BIND(<{{subjectUri}}> AS ?current)
+    BIND({{requestId}} AS ?requestId)
+    OPTIONAL {
+      SELECT DISTINCT ?candidate WHERE {
+        VALUES ?candidate { {{#each rows}}{{#each (arraySplit matches.value)}} <{{this}}> {{/each}}{{/each}} }
+        ?candidate a ?candidateType .
+        FILTER(?candidate NOT IN ({{#each rows}} <{{subject.value}}>, {{/each}} <urn:rds:link-map:no-record>))
+      }
+    }
   }'
-  template="{{> groupLinkMapRecords}}"
+  template="{{> groupLinkMapCandidates}}"
 >
-  <template id="groupLinkMapRecords">
-    [[> partial:groupLinkMapGraph]]
+  <template id="groupLinkMapCandidates">
+    <semantic-query
+      query='PREFIX os: <http://www.researchspace.com/resource/assets/Ontologies/opensearch#>
+      SELECT DISTINCT ?subject ?nodeDataset ?localMatches ?displayIndex ?memberCount ?current ?requestId WHERE {
+        {
+          VALUES (?subject ?nodeDataset ?localMatches ?displayIndex) {
+            {{#each (arraySplit bindings.0.displayRows.value)}}
+              (<{{subject.value}}> "{{dataset.value}}" {{stringify localMatches.value}} {{@index}})
+            {{/each}}
+          }
+        }
+        {{#each bindings}}{{#if candidate}}
+        UNION {
+          SERVICE <http://platform:8080/sparql?repository=opensearch> {
+            ?lookup os:searchTerm <{{candidate.value}}> ;
+              os:hasSubject ?subject ;
+              os:hasDataset ?nodeDataset ;
+              os:hasLocalMatches ?localMatches .
+          }
+          FILTER(?subject = <{{candidate.value}}>)
+        }
+        {{/if}}{{/each}}
+        BIND({{bindings.0.memberCount.value}} AS ?memberCount)
+        BIND(<{{bindings.0.current.value}}> AS ?current)
+        BIND({{bindings.0.requestId.value}} AS ?requestId)
+      }'
+      template="{{> groupLinkMapEnriched}}"
+    >
+      <template id="groupLinkMapEnriched">
+        <rds-link-map-paths hidden records="{{stringify bindings}}" request-id="{{bindings.0.requestId.value}}"></rds-link-map-paths>
+      </template>
+    </semantic-query>
   </template>
 </semantic-query>
+
+</div>
+    {{/if}}
+  </template>
+</mp-event-target-template-render>
+
+</div>

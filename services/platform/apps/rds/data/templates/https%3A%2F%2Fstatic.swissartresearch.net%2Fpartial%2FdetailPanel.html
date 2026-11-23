@@ -1,3 +1,17 @@
+<div id="rds-link-map-parking">
+  <div id="rds-link-map-host" hidden>
+<mp-event-target-template-render id="rds-link-map-paths" template="{{> groupLinkMapPaths}}">
+  <template id="groupLinkMapPaths">
+    {{#if bindings}}
+      <div data-rds-graph-request="{{bindings.0.requestId.value}}">
+        [[> partial:groupLinkMapGraph]]
+      </div>
+    {{/if}}
+  </template>
+</mp-event-target-template-render>
+
+  </div>
+</div>
 <mp-event-target-template-render id="detail-panel" template="{{> detail-panel-template}}">
   <template id="detail-panel-template">
     {{#if subjectUri}}

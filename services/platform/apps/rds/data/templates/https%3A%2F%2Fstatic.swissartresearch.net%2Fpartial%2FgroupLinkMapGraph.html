@@ -69,7 +69,7 @@
         }
       },
       {
-        "selector": "node[property(<urn:rds:link-map:scope>) *= literal(outside)]",
+        "selector": "node[property(<urn:rds:link-map:scope>) *= literal(outside)], node[property(<urn:rds:link-map:scope>) *= literal(path)]",
         "style": { "border-style": "dashed" }
       },
       {
@@ -93,12 +93,20 @@
         "style": { "source-arrow-shape": "triangle", "source-arrow-color": "#000000" }
       }
       ,{
-        "selector": "node[resource = iri(<{{mapRecords.0.current.value}}>)]",
+        "selector": "node.rds-map-current",
         "style": { "background-color": "#000000", "color": "#F9FAFB" }
       }
       ,{
-        "selector": ".rds-map-muted",
+        "selector": "node.rds-map-muted",
+        "style": { "text-opacity": 0.45, "border-opacity": 0.45 }
+      }
+      ,{
+        "selector": "edge.rds-map-muted",
         "style": { "opacity": 0.45 }
+      }
+      ,{
+        "selector": "node.rds-map-muted.rds-map-current",
+        "style": { "text-opacity": 1, "border-opacity": 1 }
       }
     ]'
   >
