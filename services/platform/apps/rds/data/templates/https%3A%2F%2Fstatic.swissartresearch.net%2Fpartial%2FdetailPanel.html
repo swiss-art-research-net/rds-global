@@ -38,7 +38,7 @@
               <span class="detail-value">{{rdsType}}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-property">Source type(s)</span>
+              <span class="detail-property">Source types</span>
               <span class="detail-value">
                 {{#each sourceTypes}}
                   <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
@@ -91,7 +91,7 @@
         </div>
 
         <semantic-link class="detail-resource-link" iri="{{subjectUri}}" target="_blank">
-          Open full record
+          Open record page
         </semantic-link>
       </div>
     {{/if}}
@@ -125,7 +125,7 @@
   <template id="source-links">
     {{#if bindings}}
       <div class="detail-panel-section detail-section--related">
-        <div class="detail-section-title">Links from source record</div>
+        <div class="detail-section-title">Links from this source</div>
         <rds-item-truncate class="detail-related-list" limit="5">
           {{#each bindings}}
             <div class="detail-row detail-related-record">
