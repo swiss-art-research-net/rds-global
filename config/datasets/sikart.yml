@@ -16,7 +16,7 @@ datasets:
           - unzip
     file_format: ttl
     graph: http://recherche.sik-isea.ch/graph
-    namespace: https://recherche.sik-isea.ch/person-
+    namespace: https://recherche.sik-isea.ch/
     prefixes:
       crm: http://www.cidoc-crm.org/cidoc-crm/
       crmdig: http://www.ics.forth.gr/isl/CRMdig/
@@ -46,4 +46,6 @@ datasets:
         ?subject crm:P1_is_identified_by/rdfs:label ?value .
       matches:
         ?subject crmdig:L54_same_as ?value .
-    wikidata_match_property: P781
+    wikidata_matching:
+      - property: P781
+        prefix: https://recherche.sik-isea.ch/person-

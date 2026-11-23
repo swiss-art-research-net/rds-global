@@ -6,6 +6,7 @@ data/**/*
 !data/ingest/.gitkeep
 !data/source/.gitkeep
 !data/source/rds-metadata/**
+data/source/rds-metadata/type-mapping.ttl
 data-preparation/labelAdjustment/*/*
 data-preparation/update-scripts/aat-data/*
 data-preparation/update-scripts/geonames-data/*
@@ -29,3 +30,5 @@ services/platform/apps/rds-config/
 config/datasets.yml
 services/qlever-datasets/scripts/endpoints.csv
 services/search-evaluation/output/*
+services/jobs/pipeline/scripts/sameAsProcessing/processing_db/*
+services/jobs/pipeline/.task/checksum/*
