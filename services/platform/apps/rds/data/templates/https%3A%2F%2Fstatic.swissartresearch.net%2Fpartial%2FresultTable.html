@@ -143,53 +143,6 @@
               <div class="single-row-heading">Description</div>
               <div>{{description.value}}</div>
             </div>
-            <div class="single-row-related">
-              {{#ifCond localMatches.value "!==" "[]"}}
-                <semantic-query
-                    query='SELECT ?related ?dataset ?datasetLabel ?sourceDataset
-                    (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR=" | ") AS ?labels)
-                    WHERE {
-                      VALUES (?related) {
-                        {{#each (arraySplit localMatches.value)}}
-                          (<{{this}}>)
-                        {{/each}}
-                      }
-                      ?related a ?type .
-                      BIND("{{dataset.value}}" AS ?sourceDataset)
-                      [[> partial:valuesDatasetLabels]]
-                      FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-                      OPTIONAL { ?related rds:label ?label }
-                    }
-                    GROUP BY ?related ?dataset ?datasetLabel ?sourceDataset'
-                    template="{{> relatedRecordsTemplate}}"
-                  >
-                    <template id="relatedRecordsTemplate">
-                      {{#if bindings}}
-                        <div class="related-records">
-                          <div class="single-row-heading single-row-related-heading">
-                            Links from this record in RDS
-                          </div>
-                          <rds-item-truncate class="related-records-list" limit="3">
-                            {{#each bindings}}
-                              <div class="related-record">
-                                <rds-copy-popover uri="{{related.value}}" rds-record="true">
-                                  <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                                    <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                                  </button>
-                                </rds-copy-popover>
-                                {{#if labels.value}}
-                                  <div class="related-record-label">{{labels.value}}</div>
-                                {{/if}}
-                                <rds-copy-popover class="related-record-uri" uri="{{related.value}}" rds-record="true">{{related.value}}</rds-copy-popover>
-                              </div>
-                            {{/each}}
-                          </rds-item-truncate>
-                        </div>
-                      {{/if}}
-                    </template>
-                </semantic-query>
-              {{/ifCond}}
-            </div>
           </div>
         {{/each}}
       </div>
