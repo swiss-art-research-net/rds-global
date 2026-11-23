@@ -16,7 +16,7 @@
   border: 1px solid @col-black;
   background: @col-bg;
 
-  &:has(.detail-panel) {
+  &:has(.detail-panel:not([hidden])) {
     width: @detail-panel-width;
   }
 }
@@ -28,6 +28,38 @@
   overflow: hidden;
 }
 
+
+.detail-panel[hidden],
+.page-resulttable .detail-panel[hidden],
+.detail-panel-graph[hidden] {
+  display: none;
+}
+
+.detail-panel-graph-map {
+  position: relative;
+  margin-right: 32px;
+}
+
+.detail-panel-graph-map.is-loading .rds-link-map-host {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  visibility: hidden;
+}
+
+.detail-panel-graph-map.is-error .rds-link-map-host {
+  display: none;
+}
+
+.rds-link-map-loading {
+  position: relative;
+  height: 40px;
+
+  .system-spinner {
+    margin-top: 0;
+  }
+}
 
 .detail-panel-header {
   display: flex;
@@ -89,9 +121,6 @@
 }
 
 .detail-panel-graph-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   min-height: 25px;
   padding-right: 40px;
 
@@ -99,21 +128,27 @@
     display: none;
   }
 
-  > .rds-badge {
+  .rds-badge {
     background: transparent;
     color: @col-black;
     cursor: pointer;
   }
 
-  > .rds-badge.is-current {
+  .rds-badge.is-current {
     background: @col-black;
     color: @col-bg;
     cursor: default;
   }
 }
 
+.detail-panel-graph-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .detail-panel-graph-badges > .rds-badge:not(.is-current):hover {
+  .detail-panel-graph-badges .rds-badge:not(.is-current):hover {
     background: @col-highlight;
   }
 }
@@ -227,7 +262,7 @@
   column-gap: 2rem;
 
   > rds-copy-popover,
-  > .rds-badge {
+  .rds-badge {
     justify-self: start;
   }
 }
@@ -307,9 +342,9 @@
     overflow-wrap: anywhere;
   }
 
-  html:has(.page-resulttable .detail-panel),
-  body:has(.page-resulttable .detail-panel),
-  #application:has(.page-resulttable .detail-panel) {
+  html:has(.page-resulttable .detail-panel:not([hidden])),
+  body:has(.page-resulttable .detail-panel:not([hidden])),
+  #application:has(.page-resulttable .detail-panel:not([hidden])) {
     overflow: hidden;
   }
 
@@ -318,7 +353,7 @@
     z-index: 0;
   }
 
-  .page-resulttable .detail-col:has(.detail-panel) {
+  .page-resulttable .detail-col:has(.detail-panel:not([hidden])) {
     top: calc(var(--nav-height, 63px) + 10px);
     right: 10px;
     bottom: 10px;
@@ -359,7 +394,7 @@
   :is(.page-resulttable, .rds-resource-page) .detail-related-record {
     row-gap: 8px;
 
-    > .rds-badge,
+    .rds-badge,
     > rds-copy-popover {
       max-width: 100%;
       min-width: 0;

@@ -1,31 +1,6 @@
 {{#bind mapRecords=bindings}}
-<semantic-query
-  query='PREFIX map: <urn:rds:link-map:>
-  PREFIX math: <http://www.w3.org/2005/xpath-functions/math#>
-  SELECT ?records ?zoom ?panX ?panY ?height WHERE {
-    {
-      SELECT
-        (MIN(?x - (STRLEN(?nodeLabel) * 4.8 + 9)) AS ?left)
-        (MAX(?x + (STRLEN(?nodeLabel) * 4.8 + 9)) AS ?right)
-        (MIN(?y - 13) AS ?top)
-        (MAX(?y + 13) AS ?bottom)
-      WHERE {
-        { [[> partial:groupLinkMapData]] }
-        FILTER(BOUND(?x) && BOUND(?y) && BOUND(?nodeLabel))
-      }
-    }
-    BIND({{stringify (stringify mapRecords)}} AS ?records)
-    BIND(1 AS ?zoom)
-    BIND(4 - ?left * ?zoom AS ?panX)
-    BIND(10 - ?top * ?zoom AS ?panY)
-    BIND(CEIL((?bottom - ?top) * ?zoom + 20) AS ?height)
-  }'
-  template="{{> groupLinkMapPositioned}}"
->
-  <template id="groupLinkMapPositioned">
-    {{#bind mapRecords=(arraySplit bindings.0.records.value)}}
   <semantic-graph
-    height="{{bindings.0.height.value}}"
+    height="40"
     user-zooming-enabled=false
     query='
       PREFIX map: <urn:rds:link-map:>
@@ -56,6 +31,7 @@
           "padding-right": 8,
           "background-color": "#ECF0F3",
           "background-image": "none",
+          "overlay-opacity": 0,
           "border-color": "#000000",
           "border-width": 1,
           "font-family": "Geist Mono, Courier New, monospace",
@@ -114,13 +90,8 @@
       position-x="<urn:rds:link-map:x>"
       position-y="<urn:rds:link-map:y>"
       fit=false
-      zoom="{{bindings.0.zoom.value}}"
-      pan='{"x": {{bindings.0.panX.value}}, "y": {{bindings.0.panY.value}} }'
       animate=false
     ></semantic-graph-layout-preset>
   </semantic-graph>
 
-    {{/bind}}
-  </template>
-</semantic-query>
 {{/bind}}

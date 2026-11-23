@@ -906,7 +906,6 @@ function selectLinkMapRecords(records) {
   }
 }
 
-const rdsLinkMapRecords = new Map();
 let rdsLinkMapRequestId = 0;
 
 function renderLinkMapEvent(host, target, data) {
@@ -918,139 +917,63 @@ function renderLinkMapEvent(host, target, data) {
   trigger.setAttribute('data', JSON.stringify(data));
   const template = document.createElement('mp-template-item');
   template.append(trigger);
-  host.append(template);
+  template.dataset.eventTarget = target;
+  const previous = Array.from(host.children).find(child => child.dataset.eventTarget === target);
+  if (previous) previous.replaceWith(template);
+  else host.append(template);
 }
-
-class RdsLinkMapLoader extends HTMLElement {
-  load() {
-    if (this._loaded) return;
-    const rows = JSON.parse(this.getAttribute('rows') || '[]');
-    const groupKey = JSON.stringify(rows.slice().sort((a, b) => a.subject.value.localeCompare(b.subject.value)));
-    const host = document.getElementById('rds-link-map-host');
-    if (host?.dataset.groupKey === groupKey && host.dataset.recordsReady === 'true') {
-      this._loaded = true;
-      return;
-    }
-    const requestId = ++rdsLinkMapRequestId;
-    if (host) {
-      host.dataset.groupKey = groupKey;
-      host.dataset.requestId = String(requestId);
-      delete host.dataset.recordsReady;
-      delete host.dataset.error;
-    }
-    const current = this.getAttribute('current');
-    const cached = rdsLinkMapRecords.get(groupKey);
-    this._loaded = true;
-    if (cached) {
-      if (host) host.dataset.recordsReady = 'true';
-      const bindings = cached.map(record => ({ ...record, current: { value: current }, requestId: { value: String(requestId) } }));
-      renderLinkMapEvent(this, 'rds-link-map-paths', { bindings });
-      return;
-    }
-    renderLinkMapEvent(this, 'rds-link-map-paths', { bindings: [] });
-    renderLinkMapEvent(this, 'rds-link-map-load', {
-      rows, requestId, subjectUri: current, memberCount: Number(this.getAttribute('member-count'))
-    });
-  }
-}
-
-customElements.define('rds-link-map-loader', RdsLinkMapLoader);
 
 class RdsLinkMapPaths extends HTMLElement {
   connectedCallback() {
-    if (this.firstElementChild) return;
+    const requestId = this.closest('[data-rds-request]')?.dataset.rdsRequest;
     const records = JSON.parse(this.getAttribute('records') || '[]');
-    if (!records.length) return;
-    const bindings = selectLinkMapRecords(records);
-    const host = document.getElementById('rds-link-map-host');
-    if (host?.dataset.requestId !== this.getAttribute('request-id')) return;
-    const key = host.dataset.groupKey;
-    host.dataset.recordsReady = 'true';
-    rdsLinkMapRecords.delete(key);
-    rdsLinkMapRecords.set(key, bindings);
-    if (rdsLinkMapRecords.size > 20) rdsLinkMapRecords.delete(rdsLinkMapRecords.keys().next().value);
-    renderLinkMapEvent(this, 'rds-link-map-paths', { bindings });
+    this.closest('.detail-panel-graph')?.querySelector('rds-panel-graph')?.receiveRecords(records, requestId);
   }
 }
 
 customElements.define('rds-link-map-paths', RdsLinkMapPaths);
 
-let rdsPanelGraphOpen = false;
-let rdsActivePanelGraph = null;
+class RdsPanelSelection extends HTMLElement {
+  connectedCallback() {
+    queueMicrotask(() => {
+      if (!this.isConnected) return;
+      this.closest('.detail-panel')?.querySelector('rds-panel-graph')?.updateRecord({
+        current: this.getAttribute('current') || '',
+        rows: JSON.parse(this.getAttribute('rows') || '[]'),
+        memberCount: Number(this.getAttribute('member-count')) || 0
+      });
+    });
+  }
+}
+
+customElements.define('rds-panel-selection', RdsPanelSelection);
 
 class RdsPanelGraph extends HTMLElement {
   connectedCallback() {
     if (this._initialized) return;
     this._initialized = true;
-    this._current = this.getAttribute('current');
+    this._expanded = false;
+    this._records = new Map();
     this._root = this.closest('.detail-panel-graph');
     this._panel = this.closest('.detail-panel');
-    this._host = document.getElementById('rds-link-map-host');
+    this._host = this._root.querySelector('#rds-link-map-host');
     this._slot = this._root.querySelector('.detail-panel-graph-map');
-    rdsActivePanelGraph = this;
-    this._syncHost = () => {
-      if (!this.isConnected || !this._host || !this._slot) return;
-      const box = this._slot.getBoundingClientRect();
-      const ready = this._host.dataset.renderedRequest === this._host.dataset.requestId && Boolean(this._host.dataset.renderedRequest);
-      const failed = this._host.dataset.error;
-      const error = this._slot.querySelector('.rds-link-map-error');
-      if (error) {
-        error.hidden = !rdsPanelGraphOpen || !failed;
-        const message = error.querySelector('span');
-        if (message && message.textContent !== (failed || '')) message.textContent = failed || '';
-      }
-      this._host.hidden = !rdsPanelGraphOpen;
-      this._host.style.visibility = ready && !failed ? 'visible' : 'hidden';
-      const loading = this._slot.querySelector('.rds-link-map-loading');
-      if (loading) loading.hidden = !rdsPanelGraphOpen || ready || Boolean(failed);
-      Object.assign(this._host.style, {
-        position: 'fixed', top: `${box.top}px`, left: `${box.left}px`, width: `${Math.max(0, box.width - 32)}px`,
-        zIndex: String((Number(getComputedStyle(this._panel).zIndex) || 4) + 1),
-        background: getComputedStyle(this._panel).backgroundColor
-      });
-      const height = rdsPanelGraphOpen ? (ready && !failed ? `${this._host.getBoundingClientRect().height}px` : '40px') : '0px';
-      if (this._slot.style.height !== height) this._slot.style.height = height;
-      if (rdsPanelGraphOpen && box.width > 0 && this._graphWidth !== box.width) {
-        this._graphWidth = box.width;
-        this._cy?.resize();
-        this._place();
-      }
-    };
-    this._hostObserver = new ResizeObserver(this._syncHost);
-    this._hostObserver.observe(this._panel);
-    if (this._host) this._hostObserver.observe(this._host);
-    window.addEventListener('scroll', this._syncHost, true);
-    window.addEventListener('resize', this._syncHost);
-
-    this._errorObserver = new MutationObserver(() => {
-      const requestId = this._host?.dataset.requestId;
-      if (!requestId || !this.isConnected) return;
-      const selector = `[data-rds-request="${requestId}"] .error-notification, [data-rds-graph-request="${requestId}"] .error-notification`;
-      const failure = this._root.querySelector(selector) || this._host.querySelector(selector);
-      if (failure) {
-        this._host.dataset.error = failure.textContent.trim() || 'Could not load connections.';
-        const loader = this._root.querySelector('rds-link-map-loader');
-        if (loader) loader._loaded = false;
-        this._syncHost();
-      }
-    });
-    this._errorObserver.observe(this._root, { childList: true, subtree: true });
-    if (this._host) this._errorObserver.observe(this._host, { childList: true, subtree: true });
+    this._events = this._root.querySelector('.rds-link-map-events');
 
     this._onRootClick = event => {
       if (event.target.closest('.rds-link-map-retry')) {
-        delete this._host.dataset.recordsReady;
-        rdsLinkMapRecords.delete(this._host.dataset.groupKey);
-        this._root.querySelector('rds-link-map-loader')?.load();
-        this._syncHost();
+        this._records.delete(this._groupKey);
+        this._resetGraph();
+        this._render();
         return;
       }
       if (event.target.closest('.detail-panel-graph-toggle')) {
-        rdsPanelGraphOpen = !rdsPanelGraphOpen;
+        this._expanded = !this._expanded;
         this._render();
-        if (rdsPanelGraphOpen) requestAnimationFrame(() => {
+        if (this._expanded) requestAnimationFrame(() => {
           this._cy?.resize();
           this._place();
+          this._finishGraph();
         });
         return;
       }
@@ -1066,33 +989,125 @@ class RdsPanelGraph extends HTMLElement {
       else if (!event.target.closest('.detail-panel-graph-map')) this._mark(null);
     };
     this._onPanelLeave = () => this._mark(null);
-
-    this._root?.addEventListener('click', this._onRootClick);
-    this._panel?.addEventListener('mouseover', this._onPanelOver);
-    this._panel?.addEventListener('mouseleave', this._onPanelLeave);
+    this._root.addEventListener('click', this._onRootClick);
+    this._panel.addEventListener('mouseover', this._onPanelOver);
+    this._panel.addEventListener('mouseleave', this._onPanelLeave);
     document.addEventListener('rds-graph-focus', this._onExternalFocus);
 
+    this._contentObserver = new MutationObserver(() => {
+      this._updateBadges();
+      const requestId = this._requestId;
+      if (requestId) {
+        const failure = this._root.querySelector(`[data-rds-request="${requestId}"] .error-notification, [data-rds-graph-request="${requestId}"] .error-notification`);
+        if (failure) {
+          this._error = failure.textContent.trim() || 'Could not load connections.';
+        }
+      }
+      this._bindGraph();
+      this._renderGraphState();
+    });
+    this._contentObserver.observe(this._root, { childList: true, subtree: true });
+    this._resizeObserver = new ResizeObserver(() => {
+      const width = this._slot.getBoundingClientRect().width;
+      if (width <= 0) {
+        this._width = 0;
+        return;
+      }
+      if (width === this._width) return;
+      this._width = width;
+      this._cy?.resize();
+      this._place();
+      this._finishGraph();
+    });
+    this._resizeObserver.observe(this._slot);
+  }
+
+  updateRecord({ current, rows, memberCount }) {
+    this._current = current;
+    if (current) this._memberCount = memberCount;
+    this._panel.hidden = !current;
+    if (current) {
+      const key = JSON.stringify(rows.slice().sort((a, b) => a.subject.value.localeCompare(b.subject.value)));
+      if (key !== this._groupKey) {
+        this._groupKey = key;
+        this._rows = rows;
+        this._resetGraph();
+        renderLinkMapEvent(this._events, 'detail-panel-graph-badges', { rows });
+      }
+    }
     this._render();
-    this._bindGraph();
-    this._bindTimer = setInterval(() => this._bindGraph(), 300);
+    if (current) this._finishGraph();
   }
 
   _render() {
-    if (!this._root) return;
-    const toggle = this._root.querySelector('.detail-panel-graph-toggle');
-    const badges = this._root.querySelector('.detail-panel-graph-badges');
-    this._root.classList.toggle('is-closed', !rdsPanelGraphOpen);
-    toggle?.setAttribute('aria-expanded', String(rdsPanelGraphOpen));
-    if (badges) badges.hidden = rdsPanelGraphOpen;
-    this._syncHost();
-    if (rdsPanelGraphOpen) requestAnimationFrame(() => {
-      if (this.isConnected) this._root.querySelector('rds-link-map-loader')?.load();
+    this._root.hidden = !this._current || this._memberCount <= 1;
+    this._root.classList.toggle('is-closed', !this._expanded);
+    this._root.querySelector('.detail-panel-graph-toggle').setAttribute('aria-expanded', String(this._expanded));
+    this._root.querySelector('.detail-panel-graph-badges').hidden = this._expanded;
+    this._updateBadges();
+    this._renderGraphState();
+    if (this._current && this._memberCount > 1 && this._expanded) {
+      this._loadGraph();
+    }
+  }
+
+  _resetGraph() {
+    this._loadStarted = false;
+    this._requestId = String(++rdsLinkMapRequestId);
+    delete this._renderedRequest;
+    delete this._error;
+    renderLinkMapEvent(this._events, 'rds-link-map-load', {});
+    renderLinkMapEvent(this._events, 'rds-link-map-paths', { bindings: [] });
+  }
+
+  _loadGraph() {
+    if (this._loadStarted) return;
+    this._loadStarted = true;
+    const requestId = this._requestId;
+    const cached = this._records.get(this._groupKey);
+    if (cached) {
+      renderLinkMapEvent(this._events, 'rds-link-map-paths', { ...cached, requestId });
+      return;
+    }
+    renderLinkMapEvent(this._events, 'rds-link-map-load', {
+      rows: this._rows, requestId
     });
-    badges?.querySelectorAll('[data-uri]').forEach(badge => {
+  }
+
+  receiveRecords(records, requestId) {
+    if (requestId !== this._requestId || !records.length) return;
+    const selected = selectLinkMapRecords(records);
+    const paths = [...new Set(selected.filter(record => !record.displayIndex).map(record => record.subject.value))].sort();
+    const radiusY = this._memberCount < 3 ? 0 : Math.max(this._memberCount * 8, 36) + (paths.length ? 30 : 0);
+    const bindings = selected.map(record => ({
+      ...record,
+      ...(record.displayIndex ? {} : { pathIndex: { value: String(paths.indexOf(record.subject.value)) } })
+    }));
+    const graph = { bindings, memberCount: this._memberCount, pathCount: paths.length, radiusY };
+    this._records.delete(this._groupKey);
+    this._records.set(this._groupKey, graph);
+    if (this._records.size > 20) this._records.delete(this._records.keys().next().value);
+    renderLinkMapEvent(this._events, 'rds-link-map-paths', { ...graph, requestId });
+  }
+
+  _updateBadges() {
+    this._root.querySelectorAll('.detail-panel-graph-badges [data-uri]').forEach(badge => {
       const isCurrent = badge.dataset.uri === this._current;
       badge.classList.toggle('is-current', isCurrent);
       badge.setAttribute('aria-pressed', String(isCurrent));
     });
+  }
+
+  _renderGraphState() {
+    const ready = Boolean(this._renderedRequest) && this._renderedRequest === this._requestId;
+    const failed = this._error;
+    this._slot.classList.toggle('is-loading', !ready && !failed);
+    this._slot.classList.toggle('is-error', Boolean(failed));
+    this._slot.querySelector('.rds-link-map-loading').hidden = !this._expanded || ready || Boolean(failed);
+    const error = this._slot.querySelector('.rds-link-map-error');
+    error.hidden = !this._expanded || !failed;
+    const message = error.querySelector('span');
+    if (message.textContent !== (failed || '')) message.textContent = failed || '';
   }
 
   _bindGraph() {
@@ -1101,6 +1116,7 @@ class RdsPanelGraph extends HTMLElement {
     const cy = container?._cyreg?.cy;
     if (!cy || cy.destroyed?.()) return;
     if (cy === this._cy) {
+      if (!container.dataset.rdsPositioned) this._place();
       this._finishGraph();
       return;
     }
@@ -1134,6 +1150,7 @@ class RdsPanelGraph extends HTMLElement {
     cy.on('mouseout', 'node', this._graphOut);
     cy.on('layoutstop', this._graphLayout);
     cy.on('viewport', this._graphViewport);
+    this._place();
     this._finishGraph();
   }
 
@@ -1141,19 +1158,15 @@ class RdsPanelGraph extends HTMLElement {
     const cy = this._cy;
     if (!cy || cy.destroyed?.() || !cy.nodes().length || cy.width() <= 0) return;
     const requestId = this._container.closest('[data-rds-graph-request]')?.dataset.rdsGraphRequest;
-    if (requestId !== this._host.dataset.requestId) return;
-    if (!this._container.dataset.rdsPositioned) {
-      this._place();
-      this._container.dataset.rdsPositioned = 'true';
-    }
+    if (requestId !== this._requestId) return;
     const current = this._node(this._current);
     if (current && !current.hasClass('rds-map-current')) {
       cy.nodes().removeClass('rds-map-current');
       current.addClass('rds-map-current');
       this._mark(null);
     }
-    this._host.dataset.renderedRequest = requestId;
-    this._syncHost();
+    this._renderedRequest = requestId;
+    this._renderGraphState();
   }
 
   _nodeId(node) {
@@ -1175,13 +1188,19 @@ class RdsPanelGraph extends HTMLElement {
     if (!cy || cy.destroyed?.() || !cy.nodes().length) return;
     const box = cy.elements().boundingBox();
     const width = cy.width();
+    if (width <= 0) return;
     const zoom = box.w > width - 8 ? (width - 8) / box.w : 1;
     this._placing = true;
+    const height = Math.ceil(box.h * zoom + 20);
+    if (this._container.style.height !== `${height}px`) {
+      this._container.style.height = `${height}px`;
+      cy.resize();
+    }
     this._zoom = zoom;
     cy.zoom(zoom);
     cy.pan({ x: (width - box.w * zoom) / 2 - box.x1 * zoom, y: 10 - box.y1 * zoom });
     this._placing = false;
-    this._mark(null);
+    this._container.dataset.rdsPositioned = 'true';
   }
 
   _mark(uri, pair) {
@@ -1213,17 +1232,8 @@ class RdsPanelGraph extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this._hostObserver?.disconnect();
-    this._errorObserver?.disconnect();
-    window.removeEventListener('scroll', this._syncHost, true);
-    window.removeEventListener('resize', this._syncHost);
-    requestAnimationFrame(() => {
-      if (rdsActivePanelGraph === this) {
-        if (this._host) this._host.hidden = true;
-        rdsActivePanelGraph = null;
-      }
-    });
-    clearInterval(this._bindTimer);
+    this._contentObserver?.disconnect();
+    this._resizeObserver?.disconnect();
     const cy = this._cy;
     if (cy && !cy.destroyed?.()) {
       cy.off('tap', 'node', this._graphTap);
@@ -1232,18 +1242,17 @@ class RdsPanelGraph extends HTMLElement {
       cy.off('layoutstop', this._graphLayout);
       cy.off('viewport', this._graphViewport);
     }
-    this._root?.removeEventListener('click', this._onRootClick);
-    this._panel?.removeEventListener('mouseover', this._onPanelOver);
-    this._panel?.removeEventListener('mouseleave', this._onPanelLeave);
+    this._root.removeEventListener('click', this._onRootClick);
+    this._panel.removeEventListener('mouseover', this._onPanelOver);
+    this._panel.removeEventListener('mouseleave', this._onPanelLeave);
     document.removeEventListener('rds-graph-focus', this._onExternalFocus);
-    document.querySelectorAll('.single-row.is-graph-highlighted')
-      .forEach(row => row.classList.remove('is-graph-highlighted'));
     this._initialized = false;
     this._cy = null;
   }
 }
 
 customElements.define('rds-panel-graph', RdsPanelGraph);
+
 
 window.addEventListener('scroll', event => {
   const active = RdsCopyPopover.active;
