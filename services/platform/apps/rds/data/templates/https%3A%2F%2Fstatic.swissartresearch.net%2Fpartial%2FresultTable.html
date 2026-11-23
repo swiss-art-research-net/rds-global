@@ -90,6 +90,7 @@
           <div class="single-row">
             <div class="single-row-record-heading">
             <div class="single-row-dataset">
+              <rds-graph-hover uri="{{subject.value}}" hidden></rds-graph-hover>
               <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}" rds-record="true">
                 <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
                   <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
@@ -100,16 +101,23 @@
               <div class="single-row-heading">Label</div>
               <mp-event-trigger
                 type="Component.TemplateUpdate"
-                targets='["detail-panel"]'
+                targets='["detail-panel","detail-panel-header","detail-panel-content","detail-panel-footer"]'
                 data='{
                   "subjectUri": {{stringify subject.value}},
                   "recordId": {{stringify recordId.value}},
                   "prefLabel": {{stringify prefLabel.value}},
                   "dataset": {{stringify dataset.value}},
                   "rdsType": {{stringify typeClass.value}},
-                  "matches": [{{#each (arraySplit matches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
                   "localMatches": [{{#each (arraySplit localMatches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
-                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}]}'
+                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
+                  "memberCount": {{../memberCount}},
+                  "rows": [{{#each ../rows}} {
+                    "subject": { "value": {{stringify subject.value}} },
+                    "prefLabel": { "value": {{stringify prefLabel.value}} },
+                    "dataset": { "value": {{stringify dataset.value}} },
+                    "localMatches": { "value": {{stringify localMatches.value}} },
+                    "matches": { "value": {{stringify matches.value}} }
+                  }{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select
                   class="single-row-link"

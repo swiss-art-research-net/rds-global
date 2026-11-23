@@ -129,7 +129,7 @@
   border: 1px solid #000000;
   background: #F9FAFB;
 }
-.detail-col:has(.detail-panel) {
+.detail-col:has(.detail-panel:not([hidden])) {
   width: 600px;
 }
 .detail-panel {
@@ -137,6 +137,32 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+}
+.detail-panel[hidden],
+.page-resulttable .detail-panel[hidden],
+.detail-panel-graph[hidden] {
+  display: none;
+}
+.detail-panel-graph-map {
+  position: relative;
+  margin-right: 32px;
+}
+.detail-panel-graph-map.is-loading .rds-link-map-host {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  visibility: hidden;
+}
+.detail-panel-graph-map.is-error .rds-link-map-host {
+  display: none;
+}
+.rds-link-map-loading {
+  position: relative;
+  height: 40px;
+}
+.rds-link-map-loading .system-spinner {
+  margin-top: 0;
 }
 .detail-panel-header {
   display: flex;
@@ -148,6 +174,77 @@
   margin: 0;
   font-size: 28px;
   font-weight: 400;
+}
+.detail-panel-graph {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-bottom: 1px solid #000000;
+}
+.detail-panel-graph-toggle {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+}
+.detail-panel-graph-toggle svg {
+  display: block;
+  transform: rotate(180deg);
+}
+.detail-panel-graph-toggle[aria-expanded="false"] svg {
+  transform: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-panel-graph-toggle:hover {
+    background: #ECF0F3;
+  }
+}
+.detail-panel-graph.is-closed .detail-panel-graph-map {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+.detail-panel-graph-badges {
+  min-height: 25px;
+  padding-right: 40px;
+}
+.detail-panel-graph-badges[hidden] {
+  display: none;
+}
+.detail-panel-graph-badges .rds-badge {
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+}
+.detail-panel-graph-badges .rds-badge.is-current {
+  background: #000000;
+  color: #F9FAFB;
+  cursor: default;
+}
+.detail-panel-graph-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-panel-graph-badges .rds-badge:not(.is-current):hover {
+    background: #ECF0F3;
+  }
+}
+.detail-related-record.is-graph-highlighted {
+  background: #ECF0F3;
+  box-shadow: -8px 0 0 #ECF0F3, 8px 0 0 #ECF0F3;
 }
 .detail-panel-content {
   flex-grow: 1;
@@ -235,7 +332,7 @@
   column-gap: 2rem;
 }
 .detail-related-record > rds-copy-popover,
-.detail-related-record > .rds-badge {
+.detail-related-record .rds-badge {
   justify-self: start;
 }
 .detail-related-content {
@@ -301,16 +398,16 @@
     word-break: normal;
     overflow-wrap: anywhere;
   }
-  html:has(.page-resulttable .detail-panel),
-  body:has(.page-resulttable .detail-panel),
-  #application:has(.page-resulttable .detail-panel) {
+  html:has(.page-resulttable .detail-panel:not([hidden])),
+  body:has(.page-resulttable .detail-panel:not([hidden])),
+  #application:has(.page-resulttable .detail-panel:not([hidden])) {
     overflow: hidden;
   }
   .page-resulttable .facets-col {
     position: relative;
     z-index: 0;
   }
-  .page-resulttable .detail-col:has(.detail-panel) {
+  .page-resulttable .detail-col:has(.detail-panel:not([hidden])) {
     top: calc(var(--nav-height, 63px) + 10px);
     right: 10px;
     bottom: 10px;
@@ -345,7 +442,7 @@
   :is(.page-resulttable, .rds-resource-page) .detail-related-record {
     row-gap: 8px;
   }
-  :is(.page-resulttable, .rds-resource-page) .detail-related-record > .rds-badge,
+  :is(.page-resulttable, .rds-resource-page) .detail-related-record .rds-badge,
   :is(.page-resulttable, .rds-resource-page) .detail-related-record > rds-copy-popover {
     max-width: 100%;
     min-width: 0;
