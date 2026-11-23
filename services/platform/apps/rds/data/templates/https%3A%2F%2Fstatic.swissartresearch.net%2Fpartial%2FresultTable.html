@@ -29,23 +29,23 @@
     },
     {
       "variableName": "scoreDisplay",
-      "displayName": "Score"
+      "displayName": "Search score"
     },
     {
       "variableName": "prefLabel",
-      "displayName": "Reference Record"
+      "displayName": "RDS reference label"
     },
     {
       "variableName": "dataset",
-      "displayName": "Datasets"
+      "displayName": "Datasets in group"
     },
     {
       "variableName": "typeClass",
-      "displayName": "Type"
+      "displayName": "RDS type"
     },
     {
-      "variableName": "description",
-      "displayName": "Description"
+      "variableName": "memberCount",
+      "displayName": "Group size"
     }
   ]'
 >
@@ -54,24 +54,17 @@
       <div class="group-row-score">{{rows.0.scoreDisplay.value}}</div>
       <div class="group-row-label">
         <div class="group-row-label-text">{{rows.0.prefLabel.value}}</div>
-        <div class="group-row-reference-uri">
-          <span>URI: </span>
-          <rds-copy-value value="{{rows.0.subject.value}}">
-            {{rows.0.subject.value}}
-          </rds-copy-value>
-        </div>
       </div>
       <div class="group-row-datasets">
         {{#each rows}}
-          <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
+          <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}" rds-record="true">
             <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
               <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
             </button>
           </rds-copy-popover>
         {{/each}}
       </div>
-      <div class="group-row-type"><div class="group-row-field-heading">Type</div>{{rows.0.typeClass.value}}</div>
-      <div class="group-row-description"><div class="group-row-field-heading">Description</div>{{rows.0.description.value}}</div>
+      <div class="group-row-type"><div class="group-row-field-heading">RDS type</div>{{rows.0.typeClass.value}}</div>
       <button type="button" class="rs-row-toggle group-row-toggle{{#if isExpanded}} is-expanded{{/if}}" aria-label="Toggle grouped records">
         <span class="group-row-toggle-count">{{memberCount}}</span>
         <img class="group-row-toggle-chevron" src="/assets/no-auth/chevron.svg" alt="" />
@@ -82,15 +75,23 @@
   <template id="groupMemberRowsTemplate">
     <div class="group-members">
       <div class="group-members-summary">
-        <div class="group-members-count">{{memberCount}} equivalent records</div>
+        <div class="group-members-count">{{#ifCond memberCount "==" 1}}1 record for{{else}}{{memberCount}} related records for{{/ifCond}}</div>
         <div class="group-members-label">{{rows.0.prefLabel.value}}</div>
       </div>
       <div class="group-members-list">
+        <div class="group-members-header">
+          <div>Dataset</div>
+          <div>Label</div>
+          <div>URI</div>
+          <div>Source types</div>
+          <div>Description</div>
+        </div>
         {{#each rows}}
           <div class="single-row">
             <div class="single-row-record-heading">
             <div class="single-row-dataset">
-              <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}">
+              <rds-graph-hover uri="{{subject.value}}" hidden></rds-graph-hover>
+              <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}" rds-record="true">
                 <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
                   <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
                 </button>
@@ -100,16 +101,23 @@
               <div class="single-row-heading">Label</div>
               <mp-event-trigger
                 type="Component.TemplateUpdate"
-                targets='["detail-panel"]'
+                targets='["detail-panel","detail-panel-header","detail-panel-content","detail-panel-footer"]'
                 data='{
                   "subjectUri": {{stringify subject.value}},
                   "recordId": {{stringify recordId.value}},
                   "prefLabel": {{stringify prefLabel.value}},
                   "dataset": {{stringify dataset.value}},
                   "rdsType": {{stringify typeClass.value}},
-                  "matches": [{{#each (arraySplit matches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
                   "localMatches": [{{#each (arraySplit localMatches.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
-                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}]}'
+                  "sourceTypes": [{{#each (arraySplit types.value)}}{{stringify this}}{{#unless @last}},{{/unless}}{{/each}}],
+                  "memberCount": {{../memberCount}},
+                  "rows": [{{#each ../rows}} {
+                    "subject": { "value": {{stringify subject.value}} },
+                    "prefLabel": { "value": {{stringify prefLabel.value}} },
+                    "dataset": { "value": {{stringify dataset.value}} },
+                    "localMatches": { "value": {{stringify localMatches.value}} },
+                    "matches": { "value": {{stringify matches.value}} }
+                  }{{#unless @last}},{{/unless}}{{/each}}]}'
               >
                 <rds-record-select
                   class="single-row-link"
@@ -122,21 +130,11 @@
             <div class="single-row-field single-row-uri">
               <div class="single-row-heading">URI</div>
               <div>
-                <rds-copy-value value="{{subject.value}}">
-                  {{subject.value}}
-                </rds-copy-value>
-              </div>
-            </div>
-            <div class="single-row-field single-row-id">
-              <div class="single-row-heading">ID</div>
-              <div>
-                <rds-copy-value value="{{recordId.value}}" copy-only copy-label="ID">
-                  {{recordId.value}}
-                </rds-copy-value>
+                <rds-copy-popover uri="{{subject.value}}" record-id="{{recordId.value}}" rds-record="true">{{subject.value}}</rds-copy-popover>
               </div>
             </div>
             <div class="single-row-field single-row-types">
-              <div class="single-row-heading">Source Type(s)</div>
+              <div class="single-row-heading">Source types</div>
                 {{#each (arraySplit types.value)}}
                   <span><mp-label iri="{{this}}"></mp-label>{{#unless @last}}, {{/unless}}</span>
                 {{/each}}
@@ -144,55 +142,6 @@
             <div class="single-row-field single-row-description">
               <div class="single-row-heading">Description</div>
               <div>{{description.value}}</div>
-            </div>
-            <div class="single-row-related">
-              {{#ifCond localMatches.value "!==" "[]"}}
-                <semantic-query
-                    query='SELECT ?related ?dataset ?datasetLabel ?sourceDataset
-                    (GROUP_CONCAT(DISTINCT STR(?label); SEPARATOR=" | ") AS ?labels)
-                    WHERE {
-                      VALUES (?related) {
-                        {{#each (arraySplit localMatches.value)}}
-                          (<{{this}}>)
-                        {{/each}}
-                      }
-                      ?related a ?type .
-                      BIND("{{dataset.value}}" AS ?sourceDataset)
-                      [[> partial:valuesDatasetLabels]]
-                      FILTER(STRSTARTS(STR(?related), ?datasetPrefix))
-                      OPTIONAL { ?related rds:label ?label }
-                    }
-                    GROUP BY ?related ?dataset ?datasetLabel ?sourceDataset'
-                    template="{{> relatedRecordsTemplate}}"
-                  >
-                    <template id="relatedRecordsTemplate">
-                      {{#if bindings}}
-                        <div class="related-records">
-                          <div class="single-row-heading single-row-related-heading">
-                            Links from source record in RDS
-                          </div>
-                          <rds-item-truncate class="related-records-list" limit="3">
-                            {{#each bindings}}
-                              <div class="related-record">
-                                <rds-copy-popover uri="{{related.value}}">
-                                  <button type="button" class="rds-badge" data-ds="{{dataset.value}}">
-                                    <rds-dataset-label key="{{dataset.value}}"></rds-dataset-label>
-                                  </button>
-                                </rds-copy-popover>
-                                {{#if labels.value}}
-                                  <div class="related-record-label">{{labels.value}}</div>
-                                {{/if}}
-                                <rds-copy-value class="related-record-uri" value="{{related.value}}">
-                                  {{related.value}}
-                                </rds-copy-value>
-                              </div>
-                            {{/each}}
-                          </rds-item-truncate>
-                        </div>
-                      {{/if}}
-                    </template>
-                </semantic-query>
-              {{/ifCond}}
             </div>
           </div>
         {{/each}}
