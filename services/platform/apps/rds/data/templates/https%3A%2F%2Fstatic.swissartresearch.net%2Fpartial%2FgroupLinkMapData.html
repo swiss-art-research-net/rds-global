@@ -43,8 +43,8 @@
           BIND(CONCAT(?groupLabel, IF(?targetCount > 1, CONCAT(" × ", STR(?targetCount)), "")) AS ?nodeLabel)
           BIND(?rank - 1 AS ?position)
           BIND("outside" AS ?scope)
-          BIND(-180 + 180 * (?position - 3 * FLOOR(?position / 3)) AS ?x)
-          BIND({{radiusY}} + 50 + 31 * FLOOR(?position / 3) AS ?y)
+          BIND(IF(FLOOR(?position / 2) - 2 * FLOOR(?position / 4) = 1, -55, -165) + 220 * (?position - 2 * FLOOR(?position / 2)) AS ?x)
+          BIND({{radiusY}} + 50 + 31 * FLOOR(?position / 2) AS ?y)
         }
         UNION
         {
