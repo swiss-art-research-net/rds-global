@@ -81,11 +81,89 @@
               </div>
             </div>
 
-            {{#ifCond dataset "==" "gnd"}}
-              <semantic-query query='[[> partial:queryGnd subject="{{subjectUri}}"]]' template="{{> detail-fields}}" no-result-template="">
-                [[> detailFieldsTemplate]]
-              </semantic-query>
-            {{/ifCond}}
+            {{#switch dataset}}
+              {{#case "gnd" break=true}}
+                <semantic-query
+                  query='[[> partial:queryGnd subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "geonames" break=true}}
+                <semantic-query
+                  query='[[> partial:queryGeoNames subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "aat" break=true}}
+                <semantic-query
+                  query='[[> partial:queryAat subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "ulan" break=true}}
+                <semantic-query
+                  query='[[> partial:queryUlan subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "sikart" break=true}}
+                <semantic-query
+                  query='[[> partial:querySikart subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "lcnaf" break=true}}
+                <semantic-query
+                  query='[[> partial:queryLcnaf subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "grp" break=true}}
+                <semantic-query
+                  query='[[> partial:queryGrp subject="{{subjectUri}}"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "thesarchesp" break=true}}
+                <semantic-query
+                  query='[[> partial:queryFrenchThesaurus subject="{{subjectUri}}" graph="http://data.culture.fr/thesaurus/resource/ark:/67717/T96/graph"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+              {{#case "thesobjmob" break=true}}
+                <semantic-query
+                  query='[[> partial:queryFrenchThesaurus subject="{{subjectUri}}" graph="http://data.culture.fr/thesaurus/resource/ark:/67717/T69/graph"]]'
+                  template="{{> detail-fields}}"
+                  no-result-template=""
+                >
+                  [[> detailFieldsTemplate]]
+                </semantic-query>
+              {{/case}}
+            {{/switch}}
 
             {{#if localMatches}}
               <semantic-query
@@ -158,14 +236,14 @@
         {{#each bindings}}
           <div class="detail-row">
             <span class="detail-property">{{field.value}}</span>
-            <mp-text-truncate 
+            <rds-text-truncate
               class="detail-value"
-              lines=3 
-              expand='<div class="detail-value-expand"> ...<a>show more</a></div>' 
-              collapse='<div class="detail-value-collapse">(<a>show less</a>)</div>'
+              lines="3"
+              show-more-label="Show more"
+              show-less-label="Show less"
             >
               {{value.value}}
-            </mp-text-truncate>
+            </rds-text-truncate>
           </div>
         {{/each}}
       </div>
