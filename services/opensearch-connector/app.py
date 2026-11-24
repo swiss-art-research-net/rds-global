@@ -46,6 +46,7 @@ import argparse
 import asyncio
 import os
 import json
+import re
 from typing import Any, Dict, Optional, List
 
 import httpx
@@ -304,7 +305,12 @@ def build_msearch_query(
 
 def is_uri_query(query: str) -> bool:
     """Return whether a search term should be resolved as an entity URI."""
-    return query.startswith(("http://", "https://", "http\://", "https\://"))
+    return bool(re.match(r"^https?\\?://", query, re.IGNORECASE))
+
+
+def normalize_uri_query(query: str) -> str:
+    """Convert an upstream-escaped URI scheme separator to its canonical form."""
+    return re.sub(r"^(https?)\\:", r"\1:", query, count=1, flags=re.IGNORECASE)
 
 
 def build_uri_lookup_query(
@@ -1294,7 +1300,7 @@ async def search(body: SearchRequest) -> Any:
     uri_lookup = is_uri_query(clean_query)
     if uri_lookup:
         payload = build_uri_lookup_query(
-            uri=clean_query,
+            uri=normalize_uri_query(clean_query),
             limit=effective_limit,
             index=index,
             typeclass_filters=requested_typeclasses,
@@ -1309,8 +1315,6 @@ async def search(body: SearchRequest) -> Any:
             typeclass_filters=requested_typeclasses,
             requested_datasets=requested_datasets,
         )
-
-    #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
 
     auth = None
     user = getattr(app.state, "opensearch_user", None)
