@@ -304,7 +304,7 @@ def build_msearch_query(
 
 def is_uri_query(query: str) -> bool:
     """Return whether a search term should be resolved as an entity URI."""
-    return query.startswith(("http://", "https://"))
+    return query.startswith(("http://", "https://", "http\://", "https\://"))
 
 
 def build_uri_lookup_query(
