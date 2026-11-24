@@ -266,7 +266,7 @@ def build_msearch_query(
             {
                 "multi_match": {
                     "query": q,
-                    "fields": ["prefLabels^3", "labels"],
+                    "fields": ["prefLabels^3", "labels", "uri", "identifier^5"],
                     "operator": "and",
                     "fuzziness": "AUTO"
                 }
