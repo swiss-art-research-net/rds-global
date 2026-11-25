@@ -1,0 +1,13 @@
+SELECT DISTINCT ?target ?groupLabel ?groupNode WHERE {
+            VALUES ?target { {{#each mapRecords}}{{#if displayIndex}}{{#each (arraySplit localMatches.value)}} <{{this}}> {{/each}}{{/if}}{{/each}} }
+            FILTER(?target NOT IN ({{#each mapRecords}} <{{subject.value}}>, {{/each}} <urn:rds:link-map:no-record>))
+            OPTIONAL {
+              SELECT ?target (?datasetLabel AS ?prefixLabel) WHERE {
+                VALUES ?target { {{#each mapRecords}}{{#if displayIndex}}{{#each (arraySplit localMatches.value)}} <{{this}}> {{/each}}{{/if}}{{/each}} }
+                [[> partial:valuesDatasetLabels]]
+                FILTER(STRSTARTS(STR(?target), ?datasetPrefix))
+              }
+            }
+            BIND(COALESCE(?prefixLabel, REPLACE(STR(?target), "^https?://([^/?#]+).*$", "$1")) AS ?groupLabel)
+            BIND(IRI(CONCAT("urn:rds:link-map:outside:", ENCODE_FOR_URI(?groupLabel))) AS ?groupNode)
+          }

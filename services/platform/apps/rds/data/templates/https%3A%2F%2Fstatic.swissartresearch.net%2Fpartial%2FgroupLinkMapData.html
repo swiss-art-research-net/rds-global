@@ -1,0 +1,74 @@
+{
+          VALUES (?node ?index ?nodeDataset) {
+            {{#each mapRecords}}{{#if displayIndex}} (<{{subject.value}}> {{displayIndex.value}} "{{nodeDataset.value}}") {{/if}}{{/each}}
+          }
+          [[> partial:valuesDatasetLabels]]
+          FILTER(?dataset = ?nodeDataset)
+          BIND(?datasetLabel AS ?nodeLabel)
+          BIND("member" AS ?scope)
+          BIND(200 + IF({{pathCount}} > 1, 65 * ({{pathCount}} - 1), 0) AS ?radiusX)
+          BIND(6.283185307179586 * ?index / {{memberCount}} - 1.570796326794897 AS ?angle)
+          BIND(IF({{memberCount}} = 2, (2 * ?index - 1) * (90 + 65 * {{pathCount}}), ?radiusX * math:cos(?angle)) AS ?x)
+          BIND(IF({{memberCount}} = 2, 0, {{radiusY}} * math:sin(?angle)) AS ?y)
+        }
+        UNION
+        {
+          VALUES (?node ?nodeDataset ?pathIndex) {
+            {{#each mapRecords}}{{#unless displayIndex}} (<{{subject.value}}> "{{nodeDataset.value}}" {{pathIndex.value}}) {{/unless}}{{/each}}
+          }
+          [[> partial:valuesDatasetLabels]]
+          FILTER(?dataset = ?nodeDataset)
+          BIND(?datasetLabel AS ?nodeLabel)
+          BIND("path" AS ?scope)
+          BIND(130 * ?pathIndex - 65 * ({{pathCount}} - 1) AS ?x)
+          BIND(0 AS ?y)
+        }
+        UNION
+        {
+          {
+            SELECT ?groupNode ?groupLabel (COUNT(DISTINCT ?target) AS ?targetCount) WHERE {
+              { [[> partial:groupLinkMapExternal]] }
+            }
+            GROUP BY ?groupNode ?groupLabel
+          }
+          {
+            SELECT ?groupLabel (COUNT(DISTINCT ?earlierLabel) AS ?rank) WHERE {
+              { SELECT DISTINCT ?groupLabel WHERE { { [[> partial:groupLinkMapExternal]] } } }
+              { SELECT DISTINCT (?groupLabel AS ?earlierLabel) WHERE { { [[> partial:groupLinkMapExternal]] } } }
+              FILTER(STR(?earlierLabel) <= STR(?groupLabel))
+            }
+            GROUP BY ?groupLabel
+          }
+          BIND(?groupNode AS ?node)
+          BIND(CONCAT(?groupLabel, IF(?targetCount > 1, CONCAT(" × ", STR(?targetCount)), "")) AS ?nodeLabel)
+          BIND(?rank - 1 AS ?position)
+          BIND("outside" AS ?scope)
+          BIND(IF(FLOOR(?position / 2) - 2 * FLOOR(?position / 4) = 1, -55, -165) + 220 * (?position - 2 * FLOOR(?position / 2)) AS ?x)
+          BIND({{radiusY}} + 50 + 31 * FLOOR(?position / 2) AS ?y)
+        }
+        UNION
+        {
+          VALUES (?source ?target) { {{#each mapRecords}}{{#each (arraySplit localMatches.value)}} (<{{../subject.value}}> <{{this}}>) {{/each}}{{/each}} }
+          FILTER(?source != ?target)
+          FILTER(?target IN ({{#each mapRecords}} <{{subject.value}}>, {{/each}} <urn:rds:link-map:no-record>))
+          OPTIONAL {
+            VALUES (?source ?target) {
+              {{#each mapRecords}}{{#each (arraySplit localMatches.value)}} (<{{this}}> <{{../subject.value}}>) {{/each}}{{/each}}
+            }
+            BIND(true AS ?mutual)
+          }
+          FILTER(!BOUND(?mutual) || STR(?source) < STR(?target))
+          BIND(IF(COALESCE(?mutual, false), map:mutualLink, map:internalLink) AS ?linkPredicate)
+        }
+        UNION
+        {
+          {
+            SELECT DISTINCT ?source ?groupTarget WHERE {
+              VALUES (?source ?target) { {{#each mapRecords}}{{#if displayIndex}}{{#each (arraySplit localMatches.value)}} (<{{../subject.value}}> <{{this}}>) {{/each}}{{/if}}{{/each}} }
+              { [[> partial:groupLinkMapExternal]] }
+              BIND(?groupNode AS ?groupTarget)
+            }
+          }
+          BIND(?groupTarget AS ?target)
+          BIND(map:externalLink AS ?linkPredicate)
+        }

@@ -71,3 +71,43 @@
     text-decoration: underline;
   }
   }
+
+@media (max-width: 767px) {
+  .nav-bar {
+    .rs-header {
+      gap: 8px;
+    }
+
+    .navbar-header,
+    .navbar-collapse,
+    .rds-nav,
+    .rds-nav > li,
+    .rds-nav > li > a {
+      height: auto !important;
+    }
+
+    .rs-header-logo {
+      display: flex;
+    }
+
+    .collapse.navbar-collapse {
+      display: flex !important;
+      padding: 0;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .rds-nav {
+      gap: 8px;
+
+      > li {
+        margin: 0;
+      }
+
+      > li > a {
+        padding: 0;
+        font-size: 16px;
+      }
+    }
+  }
+}
