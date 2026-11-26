@@ -332,6 +332,31 @@ def build_uri_lookup_query(
 
     return json.dumps({"index": index}) + "\n" + json.dumps({"size": limit, "query": query}) + "\n"
 
+
+def build_identifier_lookup_query(
+    identifier: str,
+    config: Dict[str, Any],
+    limit: int,
+    index: str,
+    typeclass_filters: Optional[List[str]] = None,
+    requested_datasets: Optional[List[str]] = None,
+) -> str:
+    """Build an exact identifier lookup, constrained to enabled datasets."""
+    filters: List[Dict[str, Any]] = [
+        {"terms": {"dataset": resolve_dataset_names(config, requested_datasets)}}
+    ]
+    if typeclass_filters:
+        filters.append({"terms": {"typeClasses": typeclass_filters}})
+
+    query: Dict[str, Any] = {
+        "bool": {
+            "must": [{"term": {"identifier": identifier}}],
+            "filter": filters,
+        }
+    }
+    return json.dumps({"index": index}) + "\n" + json.dumps({"size": limit, "query": query}) + "\n"
+
+
 def normalize_entity_hits(
     response: Dict[str, Any],
     min_shared_matches: int = 1,
@@ -1298,6 +1323,7 @@ async def search(body: SearchRequest) -> Any:
         logger.debug("Received search request: %s", json.dumps(log_body))
     
     uri_lookup = is_uri_query(clean_query)
+    identifier_lookup = not uri_lookup
     if uri_lookup:
         payload = build_uri_lookup_query(
             uri=normalize_uri_query(clean_query),
@@ -1307,15 +1333,14 @@ async def search(body: SearchRequest) -> Any:
             requested_datasets=requested_datasets,
         )
     else:
-        payload = build_msearch_query(
-            q=clean_query,
+        payload = build_identifier_lookup_query(
+            identifier=clean_query,
             config=app.state.config,
-            total_limit=effective_limit,
+            limit=effective_limit,
             index=index,
             typeclass_filters=requested_typeclasses,
             requested_datasets=requested_datasets,
         )
-
     auth = None
     user = getattr(app.state, "opensearch_user", None)
     password = getattr(app.state, "opensearch_password", None)
@@ -1335,6 +1360,26 @@ async def search(body: SearchRequest) -> Any:
                 raise HTTPException(status_code=r.status_code, detail=r.text)
             
             raw_response = r.json()
+
+            # A complete identifier is unambiguous. If there is no exact match,
+            # preserve the normal fuzzy text-search behavior.
+            if identifier_lookup and not any(
+                response.get("hits", {}).get("hits")
+                for response in raw_response.get("responses", [])
+            ):
+                payload = build_msearch_query(
+                    q=clean_query,
+                    config=app.state.config,
+                    total_limit=effective_limit,
+                    index=index,
+                    typeclass_filters=requested_typeclasses,
+                    requested_datasets=requested_datasets,
+                )
+                r = await client.post(url, content=payload, headers=headers, auth=auth)
+                if r.status_code >= 400:
+                    logger.error("OpenSearch error response: %d - %s", r.status_code, r.text)
+                    raise HTTPException(status_code=r.status_code, detail=r.text)
+                raw_response = r.json()
             
             # Flattening for ResearchSpace Ephedra compatibility
             final_hits = []
