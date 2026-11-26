@@ -1321,7 +1321,11 @@ async def search(body: SearchRequest) -> Any:
             "limit": effective_limit,
         }
         logger.debug("Received search request: %s", json.dumps(log_body))
-    
+
+    # If the query is an URI, we look it up directly,
+    # otherwise we first treat it as an identifier
+    # search and fallback to text search if the
+    # identifier search does not return any results.
     uri_lookup = is_uri_query(clean_query)
     identifier_lookup = not uri_lookup
     if uri_lookup:
@@ -1361,8 +1365,7 @@ async def search(body: SearchRequest) -> Any:
             
             raw_response = r.json()
 
-            # A complete identifier is unambiguous. If there is no exact match,
-            # preserve the normal fuzzy text-search behavior.
+            # If identifier lookup yields nothing, try text search
             if identifier_lookup and not any(
                 response.get("hits", {}).get("hits")
                 for response in raw_response.get("responses", [])
