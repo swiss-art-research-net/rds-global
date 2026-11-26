@@ -14,22 +14,25 @@ datasets:
     graph: http://vocab.getty.edu/ulan/graph
     namespace: http://vocab.getty.edu/ulan/
     prefixes:
+      foaf: http://xmlns.com/foaf/0.1/
       gvp: http://vocab.getty.edu/ontology#
+      schema: http://schema.org/
       skos: http://www.w3.org/2004/02/skos/core#
       xl: http://www.w3.org/2008/05/skos-xl#
     types:
       Person:
         - gvp:PersonConcept
         - gvp:UnknownPersonConcept
+        - schema:Person
     queries:
       description: |
-        ?subject gvp:parentStringAbbrev ?value .
+        ?subject foaf:focus?/gvp:biographyPreferred/schema:description ?value .
       prefLabel: |
-        ?subject gvp:prefLabelGVP/xl:literalForm ?value .
+        ?subject ^foaf:focus?/gvp:prefLabelGVP/xl:literalForm ?value .
       labels: |
-        ?subject (gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
+        ?subject ^foaf:focus?/(gvp:prefLabelGVP | xl:prefLabel | xl:altLabel)/xl:literalForm ?value .
       matches: |
-        ?subject (skos:exactMatch | skos:closeMatch) ?value .
+        ?subject (skos:exactMatch | skos:closeMatch | foaf:focus ) ?value .
     wikidata_matching:
       - property: P245
         prefix: http://vocab.getty.edu/ulan/
