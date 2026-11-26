@@ -46,6 +46,7 @@ import argparse
 import asyncio
 import os
 import json
+import re
 from typing import Any, Dict, Optional, List
 
 import httpx
@@ -304,7 +305,12 @@ def build_msearch_query(
 
 def is_uri_query(query: str) -> bool:
     """Return whether a search term should be resolved as an entity URI."""
-    return query.startswith(("http://", "https://"))
+    return bool(re.match(r"^https?\\?://", query, re.IGNORECASE))
+
+
+def normalize_uri_query(query: str) -> str:
+    """Convert an upstream-escaped URI scheme separator to its canonical form."""
+    return re.sub(r"^(https?)\\:", r"\1:", query, count=1, flags=re.IGNORECASE)
 
 
 def build_uri_lookup_query(
@@ -325,6 +331,31 @@ def build_uri_lookup_query(
         query = {"bool": {"must": [query], "filter": filters}}
 
     return json.dumps({"index": index}) + "\n" + json.dumps({"size": limit, "query": query}) + "\n"
+
+
+def build_identifier_lookup_query(
+    identifier: str,
+    config: Dict[str, Any],
+    limit: int,
+    index: str,
+    typeclass_filters: Optional[List[str]] = None,
+    requested_datasets: Optional[List[str]] = None,
+) -> str:
+    """Build an exact identifier lookup, constrained to enabled datasets."""
+    filters: List[Dict[str, Any]] = [
+        {"terms": {"dataset": resolve_dataset_names(config, requested_datasets)}}
+    ]
+    if typeclass_filters:
+        filters.append({"terms": {"typeClasses": typeclass_filters}})
+
+    query: Dict[str, Any] = {
+        "bool": {
+            "must": [{"term": {"identifier": identifier}}],
+            "filter": filters,
+        }
+    }
+    return json.dumps({"index": index}) + "\n" + json.dumps({"size": limit, "query": query}) + "\n"
+
 
 def normalize_entity_hits(
     response: Dict[str, Any],
@@ -1290,28 +1321,30 @@ async def search(body: SearchRequest) -> Any:
             "limit": effective_limit,
         }
         logger.debug("Received search request: %s", json.dumps(log_body))
-    
+
+    # If the query is an URI, we look it up directly,
+    # otherwise we first treat it as an identifier
+    # search and fallback to text search if the
+    # identifier search does not return any results.
     uri_lookup = is_uri_query(clean_query)
+    identifier_lookup = not uri_lookup
     if uri_lookup:
         payload = build_uri_lookup_query(
-            uri=clean_query,
+            uri=normalize_uri_query(clean_query),
             limit=effective_limit,
             index=index,
             typeclass_filters=requested_typeclasses,
             requested_datasets=requested_datasets,
         )
     else:
-        payload = build_msearch_query(
-            q=clean_query,
+        payload = build_identifier_lookup_query(
+            identifier=clean_query,
             config=app.state.config,
-            total_limit=effective_limit,
+            limit=effective_limit,
             index=index,
             typeclass_filters=requested_typeclasses,
             requested_datasets=requested_datasets,
         )
-
-    #logger.debug("Constructed OpenSearch query (NDJSON payload)\n%s", payload)
-
     auth = None
     user = getattr(app.state, "opensearch_user", None)
     password = getattr(app.state, "opensearch_password", None)
@@ -1331,6 +1364,25 @@ async def search(body: SearchRequest) -> Any:
                 raise HTTPException(status_code=r.status_code, detail=r.text)
             
             raw_response = r.json()
+
+            # If identifier lookup yields nothing, try text search
+            if identifier_lookup and not any(
+                response.get("hits", {}).get("hits")
+                for response in raw_response.get("responses", [])
+            ):
+                payload = build_msearch_query(
+                    q=clean_query,
+                    config=app.state.config,
+                    total_limit=effective_limit,
+                    index=index,
+                    typeclass_filters=requested_typeclasses,
+                    requested_datasets=requested_datasets,
+                )
+                r = await client.post(url, content=payload, headers=headers, auth=auth)
+                if r.status_code >= 400:
+                    logger.error("OpenSearch error response: %d - %s", r.status_code, r.text)
+                    raise HTTPException(status_code=r.status_code, detail=r.text)
+                raw_response = r.json()
             
             # Flattening for ResearchSpace Ephedra compatibility
             final_hits = []

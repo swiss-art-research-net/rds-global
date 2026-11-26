@@ -308,6 +308,7 @@ def parse_rows(results_json: Dict[str, Any]) -> List[Dict[str, Any]]:
         rows.append(
             {
                 "uri": subject,
+                "identifier": subject.rsplit("/", 1)[-1],
                 "prefLabels": pref_labels,
                 "labels": labels,
                 "types": types,
@@ -405,6 +406,7 @@ def ensure_index(os_client: OpenSearch, index_name: str) -> None:
         "mappings": {
             "properties": {
                 "uri": {"type": "keyword"},
+                "identifier": {"type": "keyword"},
                 "prefLabels": {
                     "type": "text",
                     "fields": {"raw": {"type": "keyword", "ignore_above": 256}},
